@@ -1,0 +1,49 @@
+.editable-field {
+  position: relative;
+  cursor: text;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  padding: 4px 8px;
+  min-height: 20px;
+  outline: none;
+}
+
+.editable-field:hover {
+  background: rgba(79, 70, 229, 0.05);
+  border-color: rgba(79, 70, 229, 0.1);
+}
+
+.editable-field.editing {
+  background: rgba(79, 70, 229, 0.08);
+  border-color: #4F46E5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.editable-field.empty:not(.editing)::before {
+  content: attr(data-placeholder);
+  color: #9CA3AF;
+  font-style: italic;
+  pointer-events: none;
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.6;
+  word-spacing: normal;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editable-field:focus {
+  outline: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .editable-field {
+    padding: 6px 10px;
+  }
+}

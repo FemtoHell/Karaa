@@ -1,0 +1,264 @@
+import { API_ENDPOINTS } from '../config/api';
+
+// Get token from localStorage
+const getToken = () => localStorage.getItem('token');
+
+// API request wrapper
+const apiRequest = async (url, options = {}) => {
+  const token = getToken();
+
+  const defaultOptions = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    },
+    credentials: 'include',
+    ...options
+  };
+
+  try {
+    const response = await fetch(url, defaultOptions);
+
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Session expired');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Request failed');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+// Resume Services
+export const resumeService = {
+  // Get all resumes
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const url = query ? `${API_ENDPOINTS.RESUMES}?${query}` : API_ENDPOINTS.RESUMES;
+    return apiRequest(url);
+  },
+
+  // Get single resume
+  getById: async (id) => {
+    return apiRequest(API_ENDPOINTS.RESUME_BY_ID(id));
+  },
+
+  // Create resume
+  create: async (data) => {
+    return apiRequest(API_ENDPOINTS.RESUMES, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+  },
+
+  // Update resume
+  update: async (id, data) => {
+    return apiRequest(API_ENDPOINTS.RESUME_BY_ID(id), {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
+  // Delete resume
+  delete: async (id) => {
+    return apiRequest(API_ENDPOINTS.RESUME_BY_ID(id), {
+      method: 'DELETE'
+    });
+  },
+
+  // Duplicate resume
+  duplicate: async (id) => {
+    return apiRequest(`${API_ENDPOINTS.RESUME_BY_ID(id)}/duplicate`, {
+      method: 'POST'
+    });
+  },
+
+  // Get stats
+  getStats: async () => {
+    return apiRequest(`${API_ENDPOINTS.RESUMES}/stats`);
+  },
+
+  // Export resume as DOCX
+  exportDocx: async (id) => {
+    const token = getToken();
+    const response = await fetch(API_ENDPOINTS.EXPORT_DOCX(id), {
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export resume');
+    }
+
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'resume.docx';
+    if (contentDisposition) {
+      const matches = /filename="([^"]*)"/.exec(contentDisposition);
+      if (matches && matches[1]) {
+        filename = matches[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { blob, filename };
+  },
+
+  // Generate share link
+  generateShareLink: async (id, settings = {}) => {
+    return apiRequest(`${API_ENDPOINTS.RESUME_BY_ID(id)}/share`, {
+      method: 'POST',
+      body: JSON.stringify(settings)
+    });
+  },
+
+  // Update share settings
+  updateShareSettings: async (id, settings = {}) => {
+    return apiRequest(`${API_ENDPOINTS.RESUME_BY_ID(id)}/share`, {
+      method: 'PUT',
+      body: JSON.stringify(settings)
+    });
+  },
+
+  // Get shared resume
+  getSharedResume: async (shareId, password = null) => {
+    const url = password
+      ? `${API_ENDPOINTS.RESUMES}/share/${shareId}?password=${password}`
+      : `${API_ENDPOINTS.RESUMES}/share/${shareId}`;
+    return apiRequest(url);
+  },
+
+  // Export shared resume as DOCX
+  exportSharedDocx: async (shareId, password = null) => {
+    const url = password
+      ? `${API_ENDPOINTS.EXPORT_SHARED_DOCX(shareId)}?password=${password}`
+      : API_ENDPOINTS.EXPORT_SHARED_DOCX(shareId);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Failed to export shared resume');
+    }
+
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'resume.docx';
+    if (contentDisposition) {
+      const matches = /filename="([^"]*)"/.exec(contentDisposition);
+      if (matches && matches[1]) {
+        filename = matches[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { blob, filename };
+  }
+};
+
+// Template Services
+export const templateService = {
+  // Get all templates
+  getAll: async (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    const url = query ? `${API_ENDPOINTS.TEMPLATES}?${query}` : API_ENDPOINTS.TEMPLATES;
+    return apiRequest(url);
+  },
+
+  // Get single template
+  getById: async (id) => {
+    return apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(id));
+  },
+
+  // Get categories
+  getCategories: async () => {
+    return apiRequest(`${API_ENDPOINTS.TEMPLATES}/categories`);
+  },
+
+  // Get popular templates
+  getPopular: async (limit = 6) => {
+    return apiRequest(`${API_ENDPOINTS.TEMPLATES}/popular?limit=${limit}`);
+  }
+};
+
+// User Services
+export const userService = {
+  // Get profile
+  getProfile: async () => {
+    return apiRequest(API_ENDPOINTS.USER_PROFILE);
+  },
+
+  // Update profile
+  updateProfile: async (data) => {
+    return apiRequest(API_ENDPOINTS.UPDATE_PROFILE, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
+  // Change password
+  changePassword: async (data) => {
+    return apiRequest(`${API_ENDPOINTS.USER_PROFILE}/change-password`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+  },
+
+  // Get activity
+  getActivity: async (limit = 10) => {
+    return apiRequest(`${API_ENDPOINTS.USER_PROFILE}/activity?limit=${limit}`);
+  },
+
+  // Delete account
+  deleteAccount: async () => {
+    return apiRequest(`${API_ENDPOINTS.USER_PROFILE}/account`, {
+      method: 'DELETE'
+    });
+  }
+};
+
+// Auth Services
+export const authService = {
+  // Login
+  login: async (email, password) => {
+    return apiRequest(API_ENDPOINTS.LOGIN, {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+  },
+
+  // Register
+  register: async (name, email, password) => {
+    return apiRequest(API_ENDPOINTS.REGISTER, {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password })
+    });
+  },
+
+  // Logout
+  logout: async () => {
+    return apiRequest(API_ENDPOINTS.LOGOUT, {
+      method: 'POST'
+    });
+  }
+};
+
+// Export all services
+export default {
+  resume: resumeService,
+  template: templateService,
+  user: userService,
+  auth: authService
+};

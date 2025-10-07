@@ -1,0 +1,61 @@
+.language-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #F3F4F6;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.language-btn {
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #6B7280;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.language-btn:hover {
+  color: #111827;
+  background: #E5E7EB;
+}
+
+.language-btn.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
+
+/* For dashboard and other pages with light background */
+.dashboard-header .language-switcher,
+.editor-header .language-switcher,
+.page-header .language-switcher {
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+}
+
+.dashboard-header .language-btn,
+.editor-header .language-btn,
+.page-header .language-btn {
+  color: #6B7280;
+}
+
+.dashboard-header .language-btn:hover,
+.editor-header .language-btn:hover,
+.page-header .language-btn:hover {
+  color: #111827;
+  background: #E5E7EB;
+}
+
+.dashboard-header .language-btn.active,
+.editor-header .language-btn.active,
+.page-header .language-btn.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
