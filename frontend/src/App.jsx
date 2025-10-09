@@ -15,6 +15,7 @@ import Editor from './Editor';
 import Profile from './Profile';
 import HelpPage from './HelpPage';
 import OAuthCallback from './OAuthCallback';
+import DragTest from './DragTest';
 import './App.css';
 
 function App() {
@@ -38,6 +39,7 @@ function App() {
               <Route path="/editor/:id" element={<Editor />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/help" element={<HelpPage />} />
+              <Route path="/drag-test" element={<DragTest />} />
               {/* Redirect missing routes to main pages */}
               <Route path="/create" element={<Templates />} />
               <Route path="/settings" element={<Profile />} />

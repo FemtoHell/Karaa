@@ -62,18 +62,16 @@ const Dashboard = () => {
       const resume = resumes.find(r => r._id === resumeId);
       if (!resume) return;
 
-      const newResume = {
-        ...resume.content,
-        title: `${resume.title} (Copy)`
-      };
-
-      const response = await apiRequest(API_ENDPOINTS.RESUMES, {
-        method: 'POST',
-        body: JSON.stringify(newResume)
+      const response = await apiRequest(API_ENDPOINTS.DUPLICATE_RESUME(resumeId), {
+        method: 'POST'
       });
 
       if (response.success) {
-        setResumes([...resumes, response.data]);
+        // Refresh resumes list
+        const resumesResponse = await apiRequest(API_ENDPOINTS.RESUMES);
+        if (resumesResponse.success) {
+          setResumes(resumesResponse.data || []);
+        }
         alert(`Resume "${resume.title}" duplicated successfully!`);
       }
     } catch (err) {

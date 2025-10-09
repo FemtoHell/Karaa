@@ -137,26 +137,34 @@ exports.getResume = asyncHandler(async (req, res, next) => {
 exports.createResume = asyncHandler(async (req, res, next) => {
   const { title, template_id, content, customization } = req.body;
 
-  console.log('Creating resume for user:', req.user.id);
+  console.log('=== CREATE RESUME REQUEST ===');
+  console.log('User ID:', req.user.id);
   console.log('Template ID:', template_id);
   console.log('Title:', title);
+  console.log('Content keys:', content ? Object.keys(content) : 'none');
+  console.log('Customization:', customization);
 
   // Validate template exists if provided
   if (template_id) {
     const Template = require('../models/Template');
-    const templateExists = await Template.findById(template_id);
-    if (!templateExists) {
-      console.error('Template not found:', template_id);
-      return next(new ErrorResponse('Template not found', 404));
+    try {
+      const templateExists = await Template.findById(template_id);
+      if (!templateExists) {
+        console.error('❌ Template not found:', template_id);
+        return next(new ErrorResponse('Template not found', 404));
+      }
+      console.log('✅ Template found:', templateExists.name);
+    } catch (err) {
+      console.error('❌ Invalid template ID format:', template_id);
+      return next(new ErrorResponse('Invalid template ID format', 400));
     }
-    console.log('Template found:', templateExists.name);
   }
 
   // Create resume
   const resume = await Resume.create({
     user: req.user.id,
     template: template_id || null,
-    title,
+    title: title || 'Untitled Resume',
     content: content || {},
     customization: customization || {}
   });

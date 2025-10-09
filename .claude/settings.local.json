@@ -4,7 +4,12 @@
       "Bash(npm install:*)",
       "Bash(npm run seed:templates:*)",
       "Bash(npm run dev:*)",
-      "Bash(netstat:*)"
+      "Bash(netstat:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(redis-cli:*)",
+      "Bash(python:*)",
+      "Bash(timeout 5 curl -s http://localhost:5000/api/v1/templates)"
     ],
     "deny": [],
     "ask": []

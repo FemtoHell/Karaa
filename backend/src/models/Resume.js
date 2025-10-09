@@ -94,7 +94,19 @@ const ResumeSchema = new mongoose.Schema({
     },
     layout: {
       type: String,
-      enum: ['single-column', 'two-column', 'modern'],
+      enum: [
+        'single-column',
+        'two-column',
+        'modern',
+        'academic',
+        'creative-grid',
+        'traditional',
+        'portfolio-style',
+        'dynamic',
+        'minimal',
+        'marketing-focused',
+        'data-focused'
+      ],
       default: 'single-column'
     }
   },

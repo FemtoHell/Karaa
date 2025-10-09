@@ -48,11 +48,15 @@ const authValidation = {
 // Resume validation rules
 const resumeValidation = {
   create: [
-    body('title').trim().notEmpty().withMessage('Resume title is required'),
+    body('title').optional().trim().notEmpty().withMessage('Resume title is required'),
     body('template_id')
       .optional({ nullable: true, checkFalsy: true })
-      .isMongoId()
-      .withMessage('Invalid template ID'),
+      .custom((value) => {
+        if (!value) return true; // Allow null/undefined
+        // Check if it's a valid MongoDB ObjectId format
+        return /^[a-f\d]{24}$/i.test(value);
+      })
+      .withMessage('Invalid template ID format'),
     validate
   ],
 

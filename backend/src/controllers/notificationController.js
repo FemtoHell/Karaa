@@ -1,4 +1,4 @@
-const { executeQuery } = require('../config/database');
+const Notification = require('../models/Notification');
 const { cache } = require('../config/redis');
 const asyncHandler = require('../utils/asyncHandler');
 const { ErrorResponse } = require('../middleware/errorHandler');
@@ -8,7 +8,7 @@ const { ErrorResponse } = require('../middleware/errorHandler');
 // @access  Private
 exports.getNotifications = asyncHandler(async (req, res, next) => {
   const { page = 1, limit = 20, unread_only = false } = req.query;
-  const offset = (page - 1) * limit;
+  const skip = (page - 1) * limit;
 
   const cacheKey = `notifications:user:${req.user.id}:page:${page}:limit:${limit}:unread:${unread_only}`;
 
@@ -23,28 +23,20 @@ exports.getNotifications = asyncHandler(async (req, res, next) => {
   }
 
   // Build query
-  let whereClause = 'WHERE user_id = ?';
-  const params = [req.user.id];
-
+  const query = { user: req.user.id };
   if (unread_only === 'true') {
-    whereClause += ' AND is_read = 0';
+    query.isRead = false;
   }
 
   // Get total count
-  const countResult = await executeQuery(
-    `SELECT COUNT(*) as total FROM notifications ${whereClause}`,
-    params
-  );
-  const total = countResult[0].total;
+  const total = await Notification.countDocuments(query);
 
   // Get notifications
-  const notifications = await executeQuery(
-    `SELECT * FROM notifications
-     ${whereClause}
-     ORDER BY created_at DESC
-     LIMIT ? OFFSET ?`,
-    [...params, parseInt(limit), parseInt(offset)]
-  );
+  const notifications = await Notification.find(query)
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit))
+    .skip(parseInt(skip))
+    .lean();
 
   const response = {
     data: notifications,
@@ -81,12 +73,10 @@ exports.getUnreadCount = asyncHandler(async (req, res, next) => {
     });
   }
 
-  const result = await executeQuery(
-    'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0',
-    [req.user.id]
-  );
-
-  const count = result[0].count;
+  const count = await Notification.countDocuments({
+    user: req.user.id,
+    isRead: false
+  });
 
   // Cache for 30 seconds
   await cache.set(cacheKey, count, 30);
@@ -104,20 +94,19 @@ exports.markAsRead = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   // Check if notification exists and belongs to user
-  const notifications = await executeQuery(
-    'SELECT id FROM notifications WHERE id = ? AND user_id = ?',
-    [id, req.user.id]
-  );
+  const notification = await Notification.findOne({
+    _id: id,
+    user: req.user.id
+  });
 
-  if (notifications.length === 0) {
+  if (!notification) {
     return next(new ErrorResponse('Notification not found', 404));
   }
 
   // Mark as read
-  await executeQuery(
-    'UPDATE notifications SET is_read = 1, read_at = NOW() WHERE id = ?',
-    [id]
-  );
+  notification.isRead = true;
+  notification.readAt = new Date();
+  await notification.save();
 
   // Clear cache
   await cache.delPattern(`notifications:*:user:${req.user.id}:*`);
@@ -133,9 +122,9 @@ exports.markAsRead = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/v1/notifications/read-all
 // @access  Private
 exports.markAllAsRead = asyncHandler(async (req, res, next) => {
-  await executeQuery(
-    'UPDATE notifications SET is_read = 1, read_at = NOW() WHERE user_id = ? AND is_read = 0',
-    [req.user.id]
+  await Notification.updateMany(
+    { user: req.user.id, isRead: false },
+    { isRead: true, readAt: new Date() }
   );
 
   // Clear cache
@@ -155,20 +144,17 @@ exports.deleteNotification = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
 
   // Check if notification exists and belongs to user
-  const notifications = await executeQuery(
-    'SELECT id FROM notifications WHERE id = ? AND user_id = ?',
-    [id, req.user.id]
-  );
+  const notification = await Notification.findOne({
+    _id: id,
+    user: req.user.id
+  });
 
-  if (notifications.length === 0) {
+  if (!notification) {
     return next(new ErrorResponse('Notification not found', 404));
   }
 
   // Delete notification
-  await executeQuery(
-    'DELETE FROM notifications WHERE id = ?',
-    [id]
-  );
+  await notification.deleteOne();
 
   // Clear cache
   await cache.delPattern(`notifications:*:user:${req.user.id}:*`);
@@ -184,11 +170,12 @@ exports.deleteNotification = asyncHandler(async (req, res, next) => {
 // @access  Private
 exports.createNotification = async (userId, type, title, message, metadata = null) => {
   try {
-    await executeQuery(
-      `INSERT INTO notifications (user_id, type, title, message, metadata, created_at)
-       VALUES (?, ?, ?, ?, ?, NOW())`,
-      [userId, type, title, message, metadata ? JSON.stringify(metadata) : null]
-    );
+    await Notification.create({
+      user: userId,
+      type,
+      title,
+      message
+    });
 
     // Clear unread count cache
     await cache.del(`notifications:unread:user:${userId}`);
@@ -207,14 +194,23 @@ exports.broadcastNotification = async (type, title, message, metadata = null) =>
   try {
     // Get all users
     const User = require('../models/User');
-    const users = await User.find({ deletedAt: null }).select('_id');
+    const users = await User.find().select('_id');
 
     // Create notification for each user
-    const promises = users.map(user =>
-      exports.createNotification(user._id, type, title, message, metadata)
-    );
+    const notifications = users.map(user => ({
+      user: user._id,
+      type,
+      title,
+      message
+    }));
 
-    await Promise.all(promises);
+    await Notification.insertMany(notifications);
+
+    // Clear all users' caches
+    for (const user of users) {
+      await cache.del(`notifications:unread:user:${user._id}`);
+      await cache.delPattern(`notifications:*:user:${user._id}:*`);
+    }
 
     return true;
   } catch (error) {

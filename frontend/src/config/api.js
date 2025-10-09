@@ -17,12 +17,20 @@ export const API_ENDPOINTS = {
   // Resume endpoints
   RESUMES: `${API_BASE_URL}/resumes`,
   RESUME_BY_ID: (id) => `${API_BASE_URL}/resumes/${id}`,
+  DUPLICATE_RESUME: (id) => `${API_BASE_URL}/resumes/${id}/duplicate`,
+  RESUME_VERSIONS: (id) => `${API_BASE_URL}/resumes/${id}/versions`,
+  COMPARE_VERSIONS: (id, v1, v2) => `${API_BASE_URL}/resumes/${id}/compare/${v1}/${v2}`,
   EXPORT_DOCX: (id) => `${API_BASE_URL}/resumes/${id}/export/docx`,
   EXPORT_SHARED_DOCX: (shareId) => `${API_BASE_URL}/resumes/share/${shareId}/export/docx`,
 
   // Template endpoints
   TEMPLATES: `${API_BASE_URL}/templates`,
   TEMPLATE_BY_ID: (id) => `${API_BASE_URL}/templates/${id}`,
+
+  // Guide endpoints
+  GUIDES: `${API_BASE_URL}/guides`,
+  GUIDE_BY_SLUG: (slug) => `${API_BASE_URL}/guides/${slug}`,
+  GUIDES_BY_INDUSTRY: (industry) => `${API_BASE_URL}/guides/industry/${industry}`,
 
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/notifications`,

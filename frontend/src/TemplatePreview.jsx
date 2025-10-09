@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './TemplatePreview.css';
+import { API_ENDPOINTS, apiRequest } from './config/api';
 
 const TemplatePreview = () => {
   const [searchParams] = useSearchParams();
   const templateId = searchParams.get('template');
   const navigate = useNavigate();
+  const [template, setTemplate] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Sample CV data for preview
   const sampleData = {
@@ -80,28 +83,69 @@ const TemplatePreview = () => {
     ]
   };
 
-  // Template configurations
-  const templates = {
-    1: { name: 'Modern Blue', color: '#3B82F6', gradient: 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)' },
-    2: { name: 'Modern Green', color: '#10B981', gradient: 'linear-gradient(135deg, #10B981 0%, #3B82F6 70.71%)' },
-    3: { name: 'Modern Purple', color: '#A855F7', gradient: 'linear-gradient(135deg, #A855F7 0%, #DB2777 70.71%)' },
-    4: { name: 'Modern Orange', color: '#F97316', gradient: 'linear-gradient(135deg, #F97316 0%, #DC2626 70.71%)' },
-    5: { name: 'Corporate Elite', color: '#6B7280', gradient: '#F3F4F6' },
-    6: { name: 'Business Blue', color: '#3B82F6', gradient: '#EFF6FF' },
-    7: { name: 'Professional Green', color: '#10B981', gradient: '#F0FDF4' },
-    8: { name: 'Executive', color: '#4F46E5', gradient: '#EEF2FF' },
-    9: { name: 'Creative Burst', color: '#8B5CF6', gradient: 'linear-gradient(135deg, #8B5CF6 0%, #F59E0B 70.71%)' },
-    10: { name: 'Creative Red', color: '#EF4444', gradient: 'linear-gradient(135deg, #EF4444 0%, #F97316 70.71%)' },
-    11: { name: 'Creative Minimal', color: '#6B7280', gradient: 'linear-gradient(135deg, #6B7280 0%, #374151 70.71%)' },
-    12: { name: 'Minimal Clean', color: '#6B7280', gradient: '#F9FAFB' },
-    13: { name: 'Minimal Blue', color: '#3B82F6', gradient: '#F8FAFC' }
-  };
+  // Fetch template data from API
+  useEffect(() => {
+    const fetchTemplate = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching template with ID:', templateId);
+        const response = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(templateId));
+        console.log('Template response:', response);
+        if (response.success) {
+          setTemplate(response.data);
+        } else {
+          console.error('Failed to fetch template:', response);
+          setTemplate(null);
+        }
+      } catch (error) {
+        console.error('Error fetching template:', error);
+        console.error('Error details:', error.message);
+        setTemplate(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const currentTemplate = templates[templateId] || templates[1];
+    if (templateId) {
+      fetchTemplate();
+    } else {
+      console.error('No templateId provided');
+      setLoading(false);
+    }
+  }, [templateId]);
 
   const handleUseTemplate = () => {
     navigate(`/editor?template=${templateId}&action=use`);
   };
+
+  if (loading) {
+    return (
+      <div className="template-preview-page">
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Loading template preview...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!template) {
+    return (
+      <div className="template-preview-page">
+        <div className="error-state">
+          <p>Template not found</p>
+          <button onClick={() => navigate('/templates')} className="btn-primary">
+            Back to Templates
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Extract color from gradient for use as accent
+  const templateColor = template.gradient.includes('linear-gradient')
+    ? '#667eea'
+    : template.gradient;
 
   return (
     <div className="template-preview-page">
@@ -116,7 +160,7 @@ const TemplatePreview = () => {
           </button>
 
           <div className="preview-title">
-            <h1>{currentTemplate.name}</h1>
+            <h1>{template.name}</h1>
             <p>Preview with sample data</p>
           </div>
 
@@ -128,9 +172,9 @@ const TemplatePreview = () => {
 
       {/* Preview Content */}
       <div className="preview-content">
-        <div className="resume-preview-container" style={{ '--template-color': currentTemplate.color }}>
+        <div className="resume-preview-container" style={{ '--template-color': templateColor }}>
           {/* Resume Header */}
-          <div className="resume-header" style={{ background: currentTemplate.gradient }}>
+          <div className="resume-header" style={{ background: template.gradient }}>
             <h1 className="resume-name">{sampleData.personal.fullName}</h1>
             <div className="resume-contact">
               <span>{sampleData.personal.email}</span>
