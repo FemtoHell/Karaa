@@ -1,0 +1,14 @@
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"
+
+# Redirect all routes to index.html for client-side routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Environment variables
+# Set VITE_API_URL in Netlify Dashboard → Site settings → Environment variables
+# Example: VITE_API_URL = "https://your-backend-url.onrender.com/api/v1"
