@@ -1,6 +1,7 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  environment = { SECRETS_SCAN_OMIT_KEYS = "PORT,NODE_ENV,FROM_NAME,CACHE_TTL_LONG,REDIS_USERNAME" }
 
 # Redirect all routes to index.html for client-side routing
 [[redirects]]

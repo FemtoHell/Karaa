@@ -3,7 +3,7 @@
 ## ✅ Hoàn Thành
 
 ### 1. Production URLs (Netlify)
-- ✅ Frontend URL: `https://niceresume.netlify.app`
+- ✅ Frontend URL: `https://niceresumer.netlify.app`
 - ✅ Sửa hardcoded localhost → environment variables
 - ✅ OAuth callbacks sử dụng env vars
 
@@ -33,8 +33,8 @@
 
 1. **Environment Variables:**
    ```bash
-   FRONTEND_URL=https://niceresume.netlify.app
-   CLIENT_URL=https://niceresume.netlify.app
+   FRONTEND_URL=https://niceresumer.netlify.app
+   CLIENT_URL=https://niceresumer.netlify.app
    MONGODB_URI=mongodb+srv://...
    JWT_SECRET=...
    SMTP_EMAIL=miyamoth129@gmail.com
@@ -110,7 +110,7 @@ Headers: Authorization: Bearer <token>
 ## 🎯 Features Summary
 
 ### Production URLs:
-- ✅ Frontend: https://niceresume.netlify.app
+- ✅ Frontend: https://niceresumer.netlify.app
 - ✅ No more localhost hardcoding
 - ✅ OAuth works on production
 
@@ -142,7 +142,7 @@ Headers: Authorization: Bearer <token>
 ### Frontend:
 ```bash
 # Open production site
-https://niceresume.netlify.app
+https://niceresumer.netlify.app
 
 # Test flows:
 1. Register → Verify email
