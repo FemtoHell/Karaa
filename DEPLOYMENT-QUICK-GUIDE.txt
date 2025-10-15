@@ -1,0 +1,146 @@
+# ========================================
+# HƯỚNG DẪN DEPLOYMENT NHANH - RESUME BUILDER
+# ========================================
+
+📌 ĐỌC CÁI NÀY TRƯỚC!
+
+Bạn có 2 files env vars:
+1. backend-env-vars.txt  → Cho RENDER (Backend API)
+2. frontend-env-vars.txt → Cho NETLIFY (Frontend Website)
+
+# ========================================
+# BƯỚC 1: SETUP BACKEND (RENDER)
+# ========================================
+
+1. Đăng nhập Render: https://dashboard.render.com
+
+2. Chọn service "resume-builder-api" (hoặc tên backend của bạn)
+
+3. Vào tab "Environment"
+
+4. Click "Add from .env"
+
+5. Mở file: backend-env-vars.txt
+
+6. Copy TOÀN BỘ nội dung (kể cả comments)
+
+7. Paste vào Render
+
+8. QUAN TRỌNG - Thay thế các giá trị sau:
+
+   ✏️ MONGODB_URI:
+      - Vào https://cloud.mongodb.com
+      - Chọn cluster → Connect → Drivers
+      - Copy connection string
+      - Thay <username>, <password>, <cluster-url>
+
+   ✏️ JWT_SECRET (và các secret khác):
+      Cách 1: Dùng Render Generate button
+      Cách 2: Chạy lệnh này 4 lần để tạo 4 secrets khác nhau:
+
+      node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+      Rồi copy paste vào:
+      - JWT_SECRET
+      - JWT_REFRESH_SECRET
+      - SESSION_SECRET
+      - ENCRYPTION_SECRET
+
+   ✏️ SMTP (Optional - Nếu muốn email functionality):
+      - Dùng Gmail: https://myaccount.google.com/apppasswords
+      - Bỏ comment (#) trước các dòng SMTP_*
+      - Điền thông tin email
+
+9. Click "Save Changes"
+
+10. Render sẽ tự động redeploy backend
+
+# ========================================
+# BƯỚC 2: SETUP FRONTEND (NETLIFY)
+# ========================================
+
+1. Đăng nhập Netlify: https://app.netlify.com
+
+2. Chọn site "niceresumer" (hoặc tên site của bạn)
+
+3. Vào "Site settings" → "Environment variables"
+
+4. Click "Add a variable"
+
+5. Nhập:
+   Key:   VITE_API_URL
+   Value: https://resume-builder-api.onrender.com/api/v1
+
+   (Hoặc URL backend Render của bạn + /api/v1)
+
+6. Click "Create variable"
+
+7. Vào tab "Deploys"
+
+8. Click "Trigger deploy" → "Deploy site"
+
+9. Đợi build xong (khoảng 2-3 phút)
+
+# ========================================
+# BƯỚC 3: KIỂM TRA
+# ========================================
+
+1. Mở site: https://niceresumer.netlify.app
+
+2. Test các tính năng:
+   ✓ Register account
+   ✓ Login
+   ✓ Create resume
+   ✓ Check notifications
+   ✓ Share resume
+
+3. Nếu lỗi:
+   - Kiểm tra Render logs: Render → Logs tab
+   - Kiểm tra Netlify logs: Netlify → Deploys → Deploy log
+   - Kiểm tra browser console (F12)
+
+# ========================================
+# LỖI THƯỜNG GẶP
+# ========================================
+
+❌ "Network Error" / "Cannot connect to API"
+   → Kiểm tra VITE_API_URL đã đúng chưa
+   → Kiểm tra backend Render có đang chạy không
+
+❌ "JWT Error" / "Unauthorized"
+   → Kiểm tra JWT_SECRET đã set trên Render chưa
+   → Kiểm tra CLIENT_URL trên Render = URL Netlify
+
+❌ "MongoDB connection failed"
+   → Kiểm tra MONGODB_URI đúng format
+   → Kiểm tra IP whitelist trên MongoDB Atlas (0.0.0.0/0)
+
+❌ Netlify build fail "Secrets scanning"
+   → Đã fix rồi! Chỉ cần redeploy là được
+
+# ========================================
+# CHECKLIST TRƯỚC KHI DEPLOY
+# ========================================
+
+Backend (Render):
+[ ] MONGODB_URI đã điền
+[ ] JWT_SECRET đã generate
+[ ] JWT_REFRESH_SECRET đã generate
+[ ] SESSION_SECRET đã generate
+[ ] ENCRYPTION_SECRET đã generate
+[ ] FRONTEND_URL = https://niceresumer.netlify.app
+[ ] CLIENT_URL = https://niceresumer.netlify.app
+
+Frontend (Netlify):
+[ ] VITE_API_URL = https://resume-builder-api.onrender.com/api/v1
+[ ] Đã redeploy sau khi add env var
+
+# ========================================
+# DONE! 🎉
+# ========================================
+
+Nếu làm đúng các bước trên, website sẽ chạy ngon lành!
+
+Có lỗi gì cứ check logs và hỏi lại nhé.
+
+Good luck! 🚀

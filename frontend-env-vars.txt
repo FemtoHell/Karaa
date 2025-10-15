@@ -1,0 +1,33 @@
+# ========================================
+# FRONTEND ENVIRONMENT VARIABLES (NETLIFY)
+# ========================================
+# Copy toàn bộ nội dung này và paste vào Netlify Dashboard
+# Netlify Dashboard → Site Settings → Environment Variables → Add Multiple
+
+# ===== BẮT BUỘC - API URL =====
+VITE_API_URL=https://resume-builder-api.onrender.com/api/v1
+
+# ========================================
+# HƯỚNG DẪN IMPORT VÀO NETLIFY:
+# ========================================
+# Cách 1: Add từng biến
+# 1. Vào Netlify Dashboard: https://app.netlify.com
+# 2. Chọn site "niceresumer"
+# 3. Site settings → Environment variables → Add a variable
+# 4. Key: VITE_API_URL
+# 5. Value: https://resume-builder-api.onrender.com/api/v1
+# 6. Click "Create variable"
+# 7. Redeploy site: Deploys tab → Trigger deploy → Deploy site
+#
+# Cách 2: Import from file (Nếu Netlify hỗ trợ)
+# 1. Copy dòng dưới (không có dấu #):
+#    VITE_API_URL=https://resume-builder-api.onrender.com/api/v1
+# 2. Paste vào Netlify Environment Variables import tool
+
+# ========================================
+# LƯU Ý QUAN TRỌNG:
+# ========================================
+# - Netlify CHỈ CẦN 1 biến duy nhất: VITE_API_URL
+# - Các biến khác (MONGODB_URI, JWT_SECRET, etc.) thuộc về BACKEND (Render)
+# - Sau khi add biến, PHẢI REDEPLOY site để Netlify build lại với env mới
+# - Kiểm tra build log để đảm bảo VITE_API_URL được inject đúng

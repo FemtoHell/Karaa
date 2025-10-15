@@ -1,0 +1,15 @@
+services:
+  # Backend API Service
+  - type: web
+    name: resume-builder-api
+    env: node
+    region: singapore
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: API_VERSION
+        value: v1
