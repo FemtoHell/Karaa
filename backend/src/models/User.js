@@ -91,9 +91,8 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Indexes
-UserSchema.index({ email: 1 });
-UserSchema.index({ googleId: 1 });
-UserSchema.index({ linkedinId: 1 });
+// Note: email, googleId, linkedinId already have unique indexes via schema definition
+// Only add non-unique indexes here
 UserSchema.index({ deletedAt: 1 });
 
 // Hash password before saving

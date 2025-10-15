@@ -2,16 +2,24 @@ const redis = require('redis');
 require('dotenv').config();
 
 // Create Redis client
-const redisClient = redis.createClient({
-  username: process.env.REDIS_USERNAME || 'default',
-  password: process.env.REDIS_PASSWORD || undefined,
-  socket: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379,
-    reconnectStrategy: false // Disable auto-reconnect to prevent blocking
-  },
-  database: process.env.REDIS_DB || 0
-});
+// Support both REDIS_URL (from Render) and individual credentials
+const redisClient = process.env.REDIS_URL
+  ? redis.createClient({
+      url: process.env.REDIS_URL,
+      socket: {
+        reconnectStrategy: false // Disable auto-reconnect to prevent blocking
+      }
+    })
+  : redis.createClient({
+      username: process.env.REDIS_USERNAME || 'default',
+      password: process.env.REDIS_PASSWORD || undefined,
+      socket: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: process.env.REDIS_PORT || 6379,
+        reconnectStrategy: false
+      },
+      database: process.env.REDIS_DB || 0
+    });
 
 // Error handling
 redisClient.on('error', (err) => {

@@ -5,9 +5,11 @@ const morgan = require('morgan');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const RedisStore = require('connect-redis')(session);
 const rateLimit = require('express-rate-limit');
 const passport = require('./config/passport');
 const { errorHandler } = require('./middleware/errorHandler');
+const { redisClient } = require('./config/redis');
 
 // Import routes
 const authRoutes = require('./routes/authRoutes');
@@ -40,7 +42,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Session middleware (required for Passport)
-app.use(session({
+// Use Redis store for production to avoid memory leaks
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'your-secret-key',
   resave: false,
   saveUninitialized: false,
@@ -49,7 +52,17 @@ app.use(session({
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
-}));
+};
+
+// Use Redis store if client is connected (production)
+if (redisClient.isOpen) {
+  sessionConfig.store = new RedisStore({
+    client: redisClient,
+    prefix: 'sess:',
+  });
+}
+
+app.use(session(sessionConfig));
 
 // Passport middleware
 app.use(passport.initialize());

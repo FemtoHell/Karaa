@@ -115,8 +115,8 @@ const ResumeSchema = new mongoose.Schema({
   shareId: {
     type: String,
     unique: true,
-    sparse: true,
-    index: true
+    sparse: true
+    // Note: index: true removed to avoid duplicate with unique: true
   },
   isPublic: {
     type: Boolean,
