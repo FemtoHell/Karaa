@@ -3,6 +3,8 @@ const {
   getGuides,
   getGuide,
   getGuidesByIndustry,
+  getIndustryGuide,
+  getIndustries,
   createGuide,
   updateGuide,
   deleteGuide,
@@ -14,6 +16,8 @@ const router = express.Router();
 
 // Public routes
 router.get('/', getGuides);
+router.get('/industries', getIndustries); // FR-6.1: List all industries
+router.get('/industry-guide/:industry', getIndustryGuide); // FR-6.1: Get guide by industry
 router.get('/:slug', getGuide);
 router.get('/industry/:industry', getGuidesByIndustry);
 router.post('/:id/like', likeGuide);

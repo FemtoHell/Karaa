@@ -4,7 +4,6 @@ import { Link, useSearchParams, useParams, useNavigate } from 'react-router-dom'
 import EditableField from './components/EditableField';
 import SortableSection from './components/SortableSection';
 import SimpleSortableItem from './components/SimpleSortableItem';
-import CustomizationPanel from './components/CustomizationPanel';
 import { API_ENDPOINTS, apiRequest } from './config/api';
 import { useAuth } from './AuthContext';
 import { resumeService } from './services/api.service';
@@ -31,166 +30,6 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-// Sortable Education Item Component for Form Editor
-const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEducation }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: edu.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    position: 'relative',
-    padding: '16px 16px 16px 56px',
-    margin: '12px 0',
-    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
-    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
-    borderRadius: '12px',
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const handleStyle = {
-    position: 'absolute',
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '32px',
-    height: '80%',
-    minHeight: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#ffffff',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    cursor: 'grab',
-    touchAction: 'none',
-    userSelect: 'none',
-    zIndex: 999,
-    pointerEvents: 'auto',
-  };
-
-  const handleActiveStyle = {
-    ...handleStyle,
-    cursor: 'grabbing',
-    background: '#e0e7ff',
-    borderColor: '#4f46e5',
-  };
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      {/* DRAG HANDLE */}
-      <div
-        ref={setActivatorNodeRef}
-        style={isDragging ? handleActiveStyle : handleStyle}
-        {...attributes}
-        {...listeners}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
-        </svg>
-      </div>
-
-      {/* CONTENT */}
-      <div className="education-item">
-        <div className="item-header">
-          <h4>Education {index + 1}</h4>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {cvData.education.length > 1 && (
-              <button
-                className="btn-remove"
-                onClick={() => removeEducation(edu.id)}
-              >
-                ×
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Degree *</label>
-          <input
-            type="text"
-            placeholder="Bachelor of Science in Computer Science"
-            value={edu.degree}
-            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>School *</label>
-          <input
-            type="text"
-            placeholder="University of California, Berkeley"
-            value={edu.school}
-            onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Location</label>
-          <input
-            type="text"
-            placeholder="Berkeley, CA"
-            value={edu.location}
-            onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
-          />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Start Date *</label>
-            <input
-              type="month"
-              value={edu.startDate}
-              onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>End Date</label>
-            <input
-              type="month"
-              value={edu.endDate}
-              onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>GPA</label>
-          <input
-            type="text"
-            placeholder="3.8/4.0"
-            value={edu.gpa}
-            onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-          <textarea
-            rows="3"
-            placeholder="Relevant coursework, honors, achievements..."
-            value={edu.description}
-            onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const Editor = () => {
   const [searchParams] = useSearchParams();
@@ -590,7 +429,7 @@ const Editor = () => {
 
   const addExperience = () => {
     const newExp = {
-      id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Date.now(),
       jobTitle: '',
       company: '',
       location: '',
@@ -623,7 +462,7 @@ const Editor = () => {
 
   const addEducation = () => {
     const newEdu = {
-      id: `edu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Date.now(),
       degree: '',
       school: '',
       location: '',
@@ -678,7 +517,7 @@ const Editor = () => {
 
   const addProject = () => {
     const newProject = {
-      id: `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Date.now(),
       name: '',
       description: '',
       technologies: '',
@@ -710,7 +549,7 @@ const Editor = () => {
 
   const addCertificate = () => {
     const newCert = {
-      id: `cert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Date.now(),
       name: '',
       issuer: '',
       date: '',
@@ -741,7 +580,7 @@ const Editor = () => {
 
   const addActivity = () => {
     const newActivity = {
-      id: `act-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: Date.now(),
       title: '',
       organization: '',
       startDate: '',
@@ -1570,20 +1409,110 @@ const Editor = () => {
                   </button>
                 </div>
 
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEducationDragEnd}>
-                  <SortableContext items={cvData.education.map(e => e.id)} strategy={verticalListSortingStrategy}>
-                    {cvData.education.map((edu, index) => (
-                      <SortableEducationItem
-                        key={edu.id}
-                        edu={edu}
-                        index={index}
-                        cvData={cvData}
-                        updateEducation={updateEducation}
-                        removeEducation={removeEducation}
+                {cvData.education.map((edu, index) => (
+                  <div key={edu.id} className="education-item">
+                    <div className="item-header">
+                      <h4>Education {index + 1}</h4>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button
+                          className="btn-move"
+                          onClick={() => moveEducationUp(edu.id)}
+                          disabled={index === 0}
+                          title="Move Up"
+                          style={{ padding: '4px 8px', fontSize: '14px' }}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          className="btn-move"
+                          onClick={() => moveEducationDown(edu.id)}
+                          disabled={index === cvData.education.length - 1}
+                          title="Move Down"
+                          style={{ padding: '4px 8px', fontSize: '14px' }}
+                        >
+                          ↓
+                        </button>
+                        {cvData.education.length > 1 && (
+                          <button
+                            className="btn-remove"
+                            onClick={() => removeEducation(edu.id)}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Degree *</label>
+                      <input
+                        type="text"
+                        placeholder="Bachelor of Science in Computer Science"
+                        value={edu.degree}
+                        onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
                       />
-                    ))}
-                  </SortableContext>
-                </DndContext>
+                    </div>
+
+                    <div className="form-group">
+                      <label>School/University *</label>
+                      <input
+                        type="text"
+                        placeholder="Stanford University"
+                        value={edu.school}
+                        onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Location</label>
+                      <input
+                        type="text"
+                        placeholder="Stanford, CA"
+                        value={edu.location}
+                        onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Start Date</label>
+                        <input
+                          type="month"
+                          value={edu.startDate}
+                          onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>End Date</label>
+                        <input
+                          type="month"
+                          value={edu.endDate}
+                          onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label>GPA (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="3.8/4.0"
+                        value={edu.gpa}
+                        onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Description</label>
+                      <textarea
+                        rows="3"
+                        placeholder="Relevant coursework, honors, achievements..."
+                        value={edu.description}
+                        onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -2022,29 +1951,7 @@ const Editor = () => {
 
           <div className="preview-content">
             <div className="resume-preview-wrapper">
-              <div 
-                className={`resume-preview-page ${customization.layout}`} 
-                style={{ 
-                  '--template-color': currentTemplate.color,
-                  fontFamily: customization.font || 'Inter, sans-serif',
-                  fontSize: `${14 * (customization.fontSize === 'small' ? 0.9 : customization.fontSize === 'large' ? 1.1 : 1.0)}px`,
-                  '--primary-color': (() => {
-                    const colors = {
-                      blue: '#3B82F6', purple: '#8B5CF6', green: '#10B981', red: '#EF4444',
-                      orange: '#F59E0B', teal: '#14B8A6', pink: '#EC4899', gray: '#6B7280'
-                    };
-                    return colors[customization.colorScheme] || '#3B82F6';
-                  })(),
-                  '--secondary-color': (() => {
-                    const colors = {
-                      blue: '#1E40AF', purple: '#6D28D9', green: '#059669', red: '#DC2626',
-                      orange: '#D97706', teal: '#0D9488', pink: '#DB2777', gray: '#4B5563'
-                    };
-                    return colors[customization.colorScheme] || '#1E40AF';
-                  })(),
-                  '--spacing-scale': customization.spacing === 'compact' ? 0.8 : customization.spacing === 'relaxed' ? 1.2 : 1.0
-                }}
-              >
+              <div className="resume-preview-page" style={{ '--template-color': currentTemplate.color }}>
                 {/* Resume Header with Template Styling */}
                 <div className="resume-header-styled" style={{ background: currentTemplate.gradient }}>
                   <EditableField

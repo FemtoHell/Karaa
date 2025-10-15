@@ -233,18 +233,62 @@ export const userService = {
 export const authService = {
   // Login
   login: async (email, password) => {
-    return apiRequest(API_ENDPOINTS.LOGIN, {
-      method: 'POST',
-      body: JSON.stringify({ email, password })
-    });
+    try {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      // Don't throw error if verification is required
+      if (data.requiresVerification) {
+        return data;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Login Error:', error);
+      throw error;
+    }
   },
 
   // Register
   register: async (name, email, password) => {
-    return apiRequest(API_ENDPOINTS.REGISTER, {
-      method: 'POST',
-      body: JSON.stringify({ name, email, password })
-    });
+    try {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, email, password }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      // Don't throw error if verification is required
+      if (data.requiresVerification) {
+        return data;
+      }
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Register Error:', error);
+      throw error;
+    }
   },
 
   // Logout

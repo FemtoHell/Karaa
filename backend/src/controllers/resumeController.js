@@ -1,7 +1,26 @@
 const Resume = require('../models/Resume');
+const Notification = require('../models/Notification');
 const { cache } = require('../config/redis');
 const asyncHandler = require('../utils/asyncHandler');
 const { ErrorResponse } = require('../middleware/errorHandler');
+const { encryptResumePersonalData, decryptResumePersonalData } = require('../utils/encryption');
+
+// Helper: Create notification
+const createNotification = async (userId, type, title, message) => {
+  try {
+    await Notification.create({
+      user: userId,
+      type,
+      title,
+      message
+    });
+    // Clear notification cache
+    await cache.del(`notifications:user:${userId}:*`);
+    await cache.del(`notifications:unread:user:${userId}`);
+  } catch (error) {
+    console.error('Failed to create notification:', error);
+  }
+};
 
 // @desc    Get all resumes for logged in user
 // @route   GET /api/v1/resumes
@@ -109,9 +128,13 @@ exports.getResume = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('Resume not found', 404));
   }
 
+  // FR-7.1: Decrypt personal data before sending
+  const decryptedContent = decryptResumePersonalData(resume.content);
+
   // Transform to match original format
   const transformedResume = {
     ...resume,
+    content: decryptedContent,
     id: resume._id,
     user_id: resume.user,
     template_id: resume.template?._id || null,
@@ -160,23 +183,38 @@ exports.createResume = asyncHandler(async (req, res, next) => {
     }
   }
 
+  // FR-7.1: Encrypt personal data before saving
+  const encryptedContent = content ? encryptResumePersonalData(content) : {};
+
   // Create resume
   const resume = await Resume.create({
     user: req.user.id,
     template: template_id || null,
     title: title || 'Untitled Resume',
-    content: content || {},
+    content: encryptedContent,
     customization: customization || {}
   });
 
   console.log('Resume created successfully:', resume._id);
 
+  // Create notification
+  await createNotification(
+    req.user.id,
+    'success',
+    '🎉 CV mới đã được tạo!',
+    `CV "${title || 'Untitled Resume'}" đã được tạo thành công. Bạn có thể chỉnh sửa và tải xuống ngay bây giờ.`
+  );
+
   // Populate template
   await resume.populate('template', 'name gradient color category');
 
+  // FR-7.1: Decrypt personal data before sending
+  const resumeObj = resume.toObject();
+  resumeObj.content = decryptResumePersonalData(resumeObj.content);
+
   // Transform to match original format
   const transformedResume = {
-    ...resume.toObject(),
+    ...resumeObj,
     id: resume._id,
     user_id: resume.user,
     template_id: resume.template?._id || null,
@@ -223,7 +261,8 @@ exports.updateResume = asyncHandler(async (req, res, next) => {
     updates.template = template_id;
   }
   if (content !== undefined) {
-    updates.content = content;
+    // FR-7.1: Encrypt personal data before saving
+    updates.content = encryptResumePersonalData(content);
   }
   if (customization !== undefined) {
     updates.customization = customization;
@@ -240,9 +279,13 @@ exports.updateResume = asyncHandler(async (req, res, next) => {
     { new: true, runValidators: true }
   ).populate('template', 'name gradient color category');
 
+  // FR-7.1: Decrypt personal data before sending
+  const resumeObj = resume.toObject();
+  resumeObj.content = decryptResumePersonalData(resumeObj.content);
+
   // Transform to match original format
   const transformedResume = {
-    ...resume.toObject(),
+    ...resumeObj,
     id: resume._id,
     user_id: resume.user,
     template_id: resume.template?._id || null,
@@ -448,7 +491,7 @@ exports.generateShareLink = asyncHandler(async (req, res, next) => {
   // Clear cache
   await cache.del(`resume:${id}:user:${req.user.id}`);
 
-  const shareUrl = `${process.env.FRONTEND_URL}/share/${resume.shareId}`;
+  const shareUrl = `${process.env.CLIENT_URL}/share/${resume.shareId}`;
 
   res.status(200).json({
     success: true,

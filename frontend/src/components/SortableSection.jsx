@@ -7,6 +7,7 @@ const SortableSection = ({ id, children, title }) => {
     attributes,
     listeners,
     setNodeRef,
+    setActivatorNodeRef,
     transform,
     transition,
     isDragging,
@@ -18,10 +19,19 @@ const SortableSection = ({ id, children, title }) => {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const dragHandleStyle = {
+    cursor: 'grab',
+    touchAction: 'none',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    MozUserSelect: 'none',
+    msUserSelect: 'none',
+  };
+
   return (
     <div ref={setNodeRef} style={style} className={`sortable-section ${isDragging ? 'dragging' : ''}`}>
-      <div className="section-drag-handle" {...attributes} {...listeners}>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ cursor: 'grab' }}>
+      <div className="section-drag-handle" ref={setActivatorNodeRef} style={dragHandleStyle} {...attributes} {...listeners}>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <circle cx="4" cy="4" r="1.5" fill="#9CA3AF"/>
           <circle cx="12" cy="4" r="1.5" fill="#9CA3AF"/>
           <circle cx="4" cy="8" r="1.5" fill="#9CA3AF"/>
@@ -31,7 +41,9 @@ const SortableSection = ({ id, children, title }) => {
         </svg>
         <span className="section-title-drag">{title}</span>
       </div>
-      {children}
+      <div style={{ userSelect: 'text', touchAction: 'auto' }}>
+        {children}
+      </div>
     </div>
   );
 };

@@ -55,6 +55,20 @@ const UserSchema = new mongoose.Schema({
     default: 'local'
   },
 
+  // Email verification
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  emailVerificationCode: {
+    type: String,
+    select: false
+  },
+  emailVerificationExpire: {
+    type: Date,
+    select: false
+  },
+
   // Password reset
   resetPasswordToken: String,
   resetPasswordExpire: Date,

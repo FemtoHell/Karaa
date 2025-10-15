@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Profile.css';
 import { useAuth } from './AuthContext';
+import { API_ENDPOINTS } from './config/api';
 
 const Profile = () => {
-  const { user: authUser } = useAuth();
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [user, setUser] = useState({
     name: authUser?.name || 'John Doe',
     email: authUser?.email || 'john.doe@example.com',
@@ -16,6 +18,10 @@ const Profile = () => {
 
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState(user);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [dataEncryption, setDataEncryption] = useState(true);
 
   // Update user state when authUser changes
   useEffect(() => {
@@ -43,6 +49,49 @@ const Profile = () => {
   const handleCancel = () => {
     setFormData(user);
     setEditMode(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE MY ACCOUNT') {
+      alert('Please type "DELETE MY ACCOUNT" to confirm');
+      return;
+    }
+
+    if (!deletePassword && authUser?.provider === 'local') {
+      alert('Please enter your password');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/account/permanent`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          password: deletePassword,
+          confirmation: deleteConfirmation
+        }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to delete account');
+      }
+
+      alert(`Account deleted successfully! ${data.data.resumesDeleted} resumes and ${data.data.notificationsDeleted} notifications were removed.`);
+
+      // Logout and redirect
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Delete account error:', error);
+      alert('Error: ' + error.message);
+    }
   };
 
   return (
@@ -193,6 +242,69 @@ const Profile = () => {
               </div>
             </div>
 
+            {/* Privacy & Security Card - FR-7.1, FR-7.2, FR-7.3 */}
+            <div className="profile-card">
+              <div className="profile-card-header">
+                <h2>🔒 Privacy & Security</h2>
+              </div>
+
+              <div className="profile-card-body">
+                <div className="privacy-info">
+                  <div className="privacy-feature">
+                    <div className="feature-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <div className="feature-content">
+                      <h4>Data Encryption (FR-7.1)</h4>
+                      <p>Your personal data (email, phone, address) is encrypted using AES-256-GCM encryption</p>
+                      <div className="encryption-status">
+                        <span className="status-badge active">
+                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M13.5 4.5L6 12 2.5 8.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                          Encryption Active
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="privacy-feature">
+                    <div className="feature-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="#3B82F6" strokeWidth="2"/>
+                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="#3B82F6" strokeWidth="2"/>
+                      </svg>
+                    </div>
+                    <div className="feature-content">
+                      <h4>Privacy Consent (FR-7.3)</h4>
+                      <p>Your CV remains private by default. Sharing requires explicit consent each time.</p>
+                      <p className="privacy-note">✓ CVs are never publicly accessible without your permission</p>
+                    </div>
+                  </div>
+
+                  <div className="privacy-feature">
+                    <div className="feature-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <div className="feature-content">
+                      <h4>Data Deletion Rights (FR-7.2)</h4>
+                      <p>You have full control over your data. Delete your account and all associated data permanently.</p>
+                      <button
+                        className="btn-delete-data"
+                        onClick={() => setShowDeleteModal(true)}
+                      >
+                        Delete All My Data
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Account Settings Card */}
             <div className="profile-card">
               <div className="profile-card-header">
@@ -233,37 +345,87 @@ const Profile = () => {
                       <h4>Delete Account</h4>
                       <p>Permanently delete your account and all data</p>
                     </div>
-                    <button className="btn-setting danger">Delete</button>
+                    <button
+                      className="btn-setting danger"
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Subscription Card */}
-            <div className="profile-card">
-              <div className="profile-card-header">
-                <h2>Subscription</h2>
-              </div>
-
-              <div className="profile-card-body">
-                <div className="subscription-info">
-                  <div className="subscription-plan">
-                    <div className="plan-badge">Pro Plan</div>
-                    <h3>Professional</h3>
-                    <p className="plan-price">$9.99/month</p>
-                    <p className="plan-next-billing">Next billing date: Jan 15, 2025</p>
-                  </div>
-
-                  <div className="subscription-actions">
-                    <Link to="/pricing" className="btn-upgrade">Upgrade Plan</Link>
-                    <button className="btn-cancel-sub">Cancel Subscription</button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </main>
+
+      {/* Delete Account Modal - FR-7.2 */}
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-content delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>⚠️ Delete Account Permanently</h2>
+              <button onClick={() => setShowDeleteModal(false)} className="btn-close">×</button>
+            </div>
+            <div className="modal-body">
+              <div className="warning-box">
+                <p><strong>Warning:</strong> This action is irreversible!</p>
+                <p>All your data will be permanently deleted:</p>
+                <ul>
+                  <li>All resumes and CV data</li>
+                  <li>All notifications and activity</li>
+                  <li>Account information</li>
+                  <li>Encrypted personal data</li>
+                </ul>
+              </div>
+
+              <div className="form-group">
+                <label>Type "DELETE MY ACCOUNT" to confirm:</label>
+                <input
+                  type="text"
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder="DELETE MY ACCOUNT"
+                  className="delete-confirmation-input"
+                />
+              </div>
+
+              {authUser?.provider === 'local' && (
+                <div className="form-group">
+                  <label>Enter your password:</label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Your password"
+                    className="delete-password-input"
+                  />
+                </div>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn-cancel-modal"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmation('');
+                  setDeletePassword('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-delete-confirm"
+                onClick={handleDeleteAccount}
+                disabled={deleteConfirmation !== 'DELETE MY ACCOUNT'}
+              >
+                Delete My Account Forever
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -44,6 +44,16 @@ export const AuthProvider = ({ children }) => {
 
       const data = await authService.login(email, password);
 
+      // Check if verification is required
+      if (!data.success && data.requiresVerification) {
+        return { 
+          success: false, 
+          requiresVerification: true, 
+          email: data.email,
+          message: data.message 
+        };
+      }
+
       if (data.success && data.token) {
         localStorage.setItem('token', data.token);
         setIsAuthenticated(true);
@@ -67,6 +77,16 @@ export const AuthProvider = ({ children }) => {
       setError(null);
 
       const data = await authService.register(name, email, password);
+
+      // Check if verification is required
+      if (data.requiresVerification) {
+        return { 
+          success: false, 
+          requiresVerification: true, 
+          email: data.email,
+          message: data.message 
+        };
+      }
 
       if (data.success && data.token) {
         localStorage.setItem('token', data.token);

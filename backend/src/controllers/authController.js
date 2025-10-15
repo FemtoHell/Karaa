@@ -6,6 +6,7 @@ const { cache } = require('../config/redis');
 const { sendTokenResponse, generateToken } = require('../utils/jwtUtils');
 const asyncHandler = require('../utils/asyncHandler');
 const { ErrorResponse } = require('../middleware/errorHandler');
+const { sendVerificationEmail, generateVerificationCode, sendWelcomeEmail } = require('../utils/emailService');
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -17,15 +18,95 @@ exports.register = asyncHandler(async (req, res, next) => {
   const existingUser = await User.findOne({ email, deletedAt: null });
 
   if (existingUser) {
+    // If user exists but not verified, resend verification code
+    if (!existingUser.isEmailVerified) {
+      const verificationCode = generateVerificationCode();
+      const hashedCode = crypto.createHash('sha256').update(verificationCode).digest('hex');
+      
+      existingUser.emailVerificationCode = hashedCode;
+      existingUser.emailVerificationExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+      await existingUser.save();
+
+      // Send verification email
+      await sendVerificationEmail(email, name, verificationCode);
+
+      return res.status(200).json({
+        success: true,
+        message: 'A verification code has been sent to your email',
+        requiresVerification: true,
+        email: email
+      });
+    }
+
     return next(new ErrorResponse('Email already registered', 400));
   }
+
+  // Generate verification code
+  const verificationCode = generateVerificationCode();
+  const hashedCode = crypto.createHash('sha256').update(verificationCode).digest('hex');
 
   // Create user (password will be hashed by pre-save hook)
   const user = await User.create({
     name,
     email,
     password,
-    provider: 'local'
+    provider: 'local',
+    isEmailVerified: false,
+    emailVerificationCode: hashedCode,
+    emailVerificationExpire: Date.now() + 10 * 60 * 1000 // 10 minutes
+  });
+
+  // Send verification email
+  try {
+    await sendVerificationEmail(email, name, verificationCode);
+  } catch (error) {
+    console.error('Failed to send verification email:', error);
+    // Continue even if email fails
+  }
+
+  res.status(201).json({
+    success: true,
+    message: 'Registration successful! Please check your email for the verification code',
+    requiresVerification: true,
+    email: user.email
+  });
+});
+
+// @desc    Verify email with code
+// @route   POST /api/v1/auth/verify-email
+// @access  Public
+exports.verifyEmail = asyncHandler(async (req, res, next) => {
+  const { email, code } = req.body;
+
+  if (!email || !code) {
+    return next(new ErrorResponse('Please provide email and verification code', 400));
+  }
+
+  // Hash the code to compare
+  const hashedCode = crypto.createHash('sha256').update(code).digest('hex');
+
+  // Find user with matching code and not expired
+  const user = await User.findOne({
+    email,
+    emailVerificationCode: hashedCode,
+    emailVerificationExpire: { $gt: Date.now() },
+    deletedAt: null
+  }).select('+emailVerificationCode +emailVerificationExpire');
+
+  if (!user) {
+    return next(new ErrorResponse('Invalid or expired verification code', 400));
+  }
+
+  // Update user
+  user.isEmailVerified = true;
+  user.emailVerificationCode = undefined;
+  user.emailVerificationExpire = undefined;
+  user.lastLogin = Date.now();
+  await user.save();
+
+  // Send welcome email (non-blocking)
+  sendWelcomeEmail(user.email, user.name).catch(err => {
+    console.error('Failed to send welcome email:', err);
   });
 
   const userData = {
@@ -36,8 +117,60 @@ exports.register = asyncHandler(async (req, res, next) => {
     role: user.role
   };
 
+  // Create welcome notification
+  try {
+    await Notification.create({
+      user: user._id,
+      type: 'success',
+      title: 'Welcome to ResumeBuilder! 🎉',
+      message: 'Your email has been verified successfully. Start creating your professional resume now!'
+    });
+  } catch (err) {
+    console.error('Failed to create welcome notification:', err);
+  }
+
   // Send token response
-  sendTokenResponse(userData, 201, res);
+  sendTokenResponse(userData, 200, res);
+});
+
+// @desc    Resend verification code
+// @route   POST /api/v1/auth/resend-verification
+// @access  Public
+exports.resendVerification = asyncHandler(async (req, res, next) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return next(new ErrorResponse('Please provide email', 400));
+  }
+
+  const user = await User.findOne({ email, deletedAt: null });
+
+  if (!user) {
+    return next(new ErrorResponse('No user found with that email', 404));
+  }
+
+  if (user.isEmailVerified) {
+    return next(new ErrorResponse('Email already verified', 400));
+  }
+
+  // Generate new verification code
+  const verificationCode = generateVerificationCode();
+  const hashedCode = crypto.createHash('sha256').update(verificationCode).digest('hex');
+
+  user.emailVerificationCode = hashedCode;
+  user.emailVerificationExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+  await user.save();
+
+  // Send verification email
+  try {
+    await sendVerificationEmail(email, user.name, verificationCode);
+    res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your email'
+    });
+  } catch (error) {
+    return next(new ErrorResponse('Failed to send verification email', 500));
+  }
 });
 
 // @desc    Login user
@@ -51,6 +184,31 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   if (!user) {
     return next(new ErrorResponse('Invalid credentials', 401));
+  }
+
+  // Check if email is verified
+  if (!user.isEmailVerified && user.provider === 'local') {
+    // Generate new verification code
+    const verificationCode = generateVerificationCode();
+    const hashedCode = crypto.createHash('sha256').update(verificationCode).digest('hex');
+
+    user.emailVerificationCode = hashedCode;
+    user.emailVerificationExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
+    await user.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(email, user.name, verificationCode);
+    } catch (error) {
+      console.error('Failed to send verification email:', error);
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: 'Please verify your email first. A new verification code has been sent to your email.',
+      requiresVerification: true,
+      email: user.email
+    });
   }
 
   // Check password

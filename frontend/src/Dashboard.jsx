@@ -154,6 +154,7 @@ const Dashboard = () => {
             <nav className="nav-menu">
               <Link to="/dashboard" className="nav-link active">{t('dashboard')}</Link>
               <Link to="/templates" className="nav-link">{t('browseTemplates')}</Link>
+              <Link to="/guides" className="nav-link">Guides</Link>
               <Link to="/help" className="nav-link">{t('helpNotifications')}</Link>
             </nav>
 

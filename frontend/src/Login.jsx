@@ -7,19 +7,48 @@ import LanguageSwitcher from './LanguageSwitcher';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Clear form and errors when switching between login and register
+  const handleTabChange = (loginMode) => {
+    setIsLogin(loginMode);
+    setError('');
+    setPassword('');
+    setConfirmPassword('');
+    if (!loginMode) {
+      setRememberMe(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
 
     if (!isLogin && password !== confirmPassword) {
-      alert('Passwords do not match!');
+      setError('Passwords do not match!');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    if (!isLogin && !name.trim()) {
+      setError('Name is required for registration');
+      setLoading(false);
       return;
     }
 
@@ -28,34 +57,52 @@ const Login = () => {
       if (isLogin) {
         // Login
         result = await login(email, password);
+        
+        // Check if verification is required
+        if (result && !result.success && result.requiresVerification) {
+          // Redirect to verification page
+          navigate('/verify-email', { state: { email: email } });
+          return;
+        }
       } else {
         // Register
-        const name = email.split('@')[0]; // Extract name from email
-        result = await register(email, password, name);
+        const userName = name.trim() || email.split('@')[0];
+        result = await register(email, password, userName);
+        
+        // Check if verification is required
+        if (result && result.requiresVerification) {
+          // Redirect to verification page
+          navigate('/verify-email', { state: { email: email } });
+          return;
+        }
       }
 
       if (result.success) {
         // Redirect to dashboard after successful login/register
         navigate('/dashboard');
       } else {
-        alert(result.error || 'Authentication failed');
+        setError(result.error || 'Authentication failed');
       }
     } catch (err) {
       console.error('Authentication error:', err);
-      alert('An error occurred. Please try again.');
+      setError(err.message || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
     console.log('Google login clicked');
     // Redirect to Google OAuth
-    window.location.href = 'http://localhost:5000/api/v1/auth/google';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   const handleLinkedInLogin = () => {
     console.log('LinkedIn login clicked');
     // Redirect to LinkedIn OAuth
-    window.location.href = 'http://localhost:5000/api/v1/auth/linkedin';
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+    window.location.href = `${apiUrl}/auth/linkedin`;
   };
 
   const handleGuestMode = () => {
@@ -143,13 +190,15 @@ const Login = () => {
             <div className="login-tabs">
               <button
                 className={`tab-button ${isLogin ? 'active' : ''}`}
-                onClick={() => setIsLogin(true)}
+                onClick={() => handleTabChange(true)}
+                type="button"
               >
                 {t('login')}
               </button>
               <button
                 className={`tab-button ${!isLogin ? 'active' : ''}`}
-                onClick={() => setIsLogin(false)}
+                onClick={() => handleTabChange(false)}
+                type="button"
               >
                 {t('createAccount')}
               </button>
@@ -157,6 +206,39 @@ const Login = () => {
 
             {/* Form */}
             <form className="login-form" onSubmit={handleSubmit}>
+              {/* Error Message */}
+              {error && (
+                <div className="alert alert-error" style={{
+                  padding: '12px 16px',
+                  marginBottom: '16px',
+                  backgroundColor: '#fee',
+                  border: '1px solid #fcc',
+                  borderRadius: '8px',
+                  color: '#c33',
+                  fontSize: '14px'
+                }}>
+                  {error}
+                </div>
+              )}
+
+              {!isLogin && (
+                <div className="form-group">
+                  <label htmlFor="name" className="form-label">
+                    {t('fullName') || 'Full Name'}
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    className="form-input"
+                    placeholder="Your full name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={loading}
+                    required={!isLogin}
+                  />
+                </div>
+              )}
+
               <div className="form-group">
                 <label htmlFor="email" className="form-label">
                   {t('emailAddress')}
@@ -168,6 +250,7 @@ const Login = () => {
                   placeholder="your.email@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
                   required
                 />
               </div>
@@ -180,9 +263,11 @@ const Login = () => {
                   type="password"
                   id="password"
                   className="form-input"
-                  placeholder="Enter your password"
+                  placeholder="Enter your password (min. 6 characters)"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                  minLength={6}
                   required
                 />
               </div>
@@ -199,6 +284,8 @@ const Login = () => {
                     placeholder="Re-enter your password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={loading}
+                    minLength={6}
                     required
                   />
                 </div>
@@ -211,6 +298,7 @@ const Login = () => {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
+                      disabled={loading}
                     />
                     <span>{t('rememberMe')}</span>
                   </label>
@@ -220,8 +308,8 @@ const Login = () => {
                 </div>
               )}
 
-              <button type="submit" className="btn-submit">
-                {isLogin ? t('signIn') : t('createAccount')}
+              <button type="submit" className="btn-submit" disabled={loading}>
+                {loading ? (isLogin ? 'Signing in...' : 'Creating account...') : (isLogin ? t('signIn') : t('createAccount'))}
               </button>
             </form>
 

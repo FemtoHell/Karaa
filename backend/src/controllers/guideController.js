@@ -2,6 +2,46 @@ const Guide = require('../models/Guide');
 const { cache } = require('../config/redis');
 const asyncHandler = require('../utils/asyncHandler');
 const { ErrorResponse } = require('../middleware/errorHandler');
+const { industryGuides, generalTips, actionVerbs } = require('../utils/guideContent');
+
+// @desc    Get industry-specific guide content (FR-6.1)
+// @route   GET /api/v1/guides/industry/:industry
+// @access  Public
+exports.getIndustryGuide = asyncHandler(async (req, res, next) => {
+  const { industry } = req.params;
+
+  const guide = industryGuides[industry];
+  if (!guide) {
+    return next(new ErrorResponse('Guide not found for this industry', 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      industry,
+      ...guide,
+      generalTips,
+      actionVerbs
+    }
+  });
+});
+
+// @desc    Get all available industries
+// @route   GET /api/v1/guides/industries
+// @access  Public
+exports.getIndustries = asyncHandler(async (req, res, next) => {
+  const industries = Object.keys(industryGuides).map(key => ({
+    id: key,
+    title: industryGuides[key].title,
+    icon: industryGuides[key].icon,
+    keywords: industryGuides[key].keywords
+  }));
+
+  res.status(200).json({
+    success: true,
+    data: industries
+  });
+});
 
 // @desc    Get all guides
 // @route   GET /api/v1/guides

@@ -7,7 +7,9 @@ const {
   getMe,
   forgotPassword,
   resetPassword,
-  updatePassword
+  updatePassword,
+  verifyEmail,
+  resendVerification
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const { authValidation } = require('../middleware/validation');
@@ -19,6 +21,8 @@ router.post('/register', authValidation.register, register);
 router.post('/login', authValidation.login, login);
 router.post('/logout', logout);
 router.get('/me', protect, getMe);
+router.post('/verify-email', verifyEmail);
+router.post('/resend-verification', resendVerification);
 router.post('/forgotpassword', authValidation.forgotPassword, forgotPassword);
 router.put('/resetpassword/:resettoken', authValidation.resetPassword, resetPassword);
 router.put('/updatepassword', protect, updatePassword);
