@@ -19,13 +19,14 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// Google OAuth Strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: process.env.GOOGLE_CALLBACK_URL
-  },
-  async (accessToken, refreshToken, profile, done) => {
+// Google OAuth Strategy (Only if credentials are provided)
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: process.env.GOOGLE_CALLBACK_URL
+    },
+    async (accessToken, refreshToken, profile, done) => {
     try {
       // Check if user already exists
       let user = await User.findOne({ googleId: profile.id });
@@ -106,10 +107,14 @@ passport.use(new GoogleStrategy({
       done(error, null);
     }
   }
-));
+  ));
+} else {
+  console.log('⚠️  Google OAuth is disabled. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET to enable.');
+}
 
-// LinkedIn OAuth Strategy
-passport.use(new LinkedInStrategy({
+// LinkedIn OAuth Strategy (Only if credentials are provided)
+if (process.env.LINKEDIN_CLIENT_ID && process.env.LINKEDIN_CLIENT_SECRET) {
+  passport.use(new LinkedInStrategy({
     clientID: process.env.LINKEDIN_CLIENT_ID,
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
     callbackURL: process.env.LINKEDIN_CALLBACK_URL,
@@ -200,6 +205,9 @@ passport.use(new LinkedInStrategy({
       done(error, null);
     }
   }
-));
+  ));
+} else {
+  console.log('⚠️  LinkedIn OAuth is disabled. Set LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET to enable.');
+}
 
 module.exports = passport;

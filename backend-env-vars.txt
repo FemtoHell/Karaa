@@ -4,6 +4,12 @@
 # Copy toàn bộ nội dung này và paste vào Render Dashboard
 # Render Dashboard → Your Service → Environment → Add from .env
 
+# ⚠️ LƯU Ý QUAN TRỌNG:
+# - Chỉ cần add các biến BẮT BUỘC là app đã chạy được
+# - Các biến OPTIONAL (Email, Google OAuth, LinkedIn OAuth) có thể BỎ QUA
+# - App vẫn hoạt động bình thường mà không cần OAuth
+# - Người dùng vẫn có thể đăng ký/đăng nhập bằng email/password
+
 # ===== BẮT BUỘC - Server Configuration =====
 NODE_ENV=production
 PORT=10000
