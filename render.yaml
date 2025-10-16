@@ -31,21 +31,21 @@ services:
       - key: ENCRYPTION_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: https://resume-builder-frontend.onrender.com
+        value: https://resume-builder-frontend-behg.onrender.com
       - key: CLIENT_URL
-        value: https://resume-builder-frontend.onrender.com
+        value: https://resume-builder-frontend-behg.onrender.com
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_CALLBACK_URL
-        value: https://karaa.onrender.com/api/v1/auth/google/callback
+        value: https://resume-builder-api-t701.onrender.com/api/v1/auth/google/callback
       - key: LINKEDIN_CLIENT_ID
         sync: false
       - key: LINKEDIN_CLIENT_SECRET
         sync: false
       - key: LINKEDIN_CALLBACK_URL
-        value: https://karaa.onrender.com/api/v1/auth/linkedin/callback
+        value: https://resume-builder-api-t701.onrender.com/api/v1/auth/linkedin/callback
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -91,7 +91,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://karaa.onrender.com/api/v1
+        value: https://resume-builder-api-t701.onrender.com/api/v1
 
   # Redis Service
   - type: redis
