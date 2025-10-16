@@ -128,9 +128,12 @@ const Templates = () => {
             </Link>
 
             <nav className="nav-menu">
+              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
               <Link to="/features" className="nav-link">{t('features')}</Link>
+              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
               <Link to="/templates" className="nav-link active">{t('templates')}</Link>
-              <Link to="/pricing" className="nav-link">{t('pricing')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              {isAuthenticated && <Link to="/help" className="nav-link">{t('help') || 'Help'}</Link>}
             </nav>
 
             <div className="header-actions">

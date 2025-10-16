@@ -89,15 +89,12 @@ const Testimonials = () => {
             </Link>
 
             <nav className="nav-menu">
+              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
               <Link to="/features" className="nav-link">{t('features')}</Link>
-              <Link to="/pricing" className="nav-link">{t('pricing')}</Link>
-              <Link to="/templates" className="nav-link">{t('templates')}</Link>
               <Link to="/testimonials" className="nav-link active">{t('testimonials')}</Link>
-              {isAuthenticated ? (
-                <Link to="/dashboard" className="nav-link">{t('dashboard')}</Link>
-              ) : (
-                <Link to="/login" className="nav-link">{t('login')}</Link>
-              )}
+              <Link to="/templates" className="nav-link">{t('templates')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              {isAuthenticated && <Link to="/help" className="nav-link">{t('help') || 'Help'}</Link>}
             </nav>
 
             <div className="header-actions">
@@ -241,7 +238,7 @@ const Testimonials = () => {
           <p className="cta-subtitle">{t('joinProfessionals')}</p>
           <div className="cta-actions">
             <Link to="/templates" className="btn-cta-primary">{t('createResumeNow')}</Link>
-            <Link to="/pricing" className="btn-cta-secondary">{t('viewPricing')}</Link>
+            <Link to="/features" className="btn-cta-secondary">{t('features') || 'View Features'}</Link>
           </div>
         </div>
       </section>
@@ -255,7 +252,7 @@ const Testimonials = () => {
               <ul className="footer-list">
                 <li><Link to="/templates">{t('templates')}</Link></li>
                 <li><Link to="/features">{t('features')}</Link></li>
-                <li><Link to="/pricing">{t('pricing')}</Link></li>
+                <li><Link to="/testimonials">{t('testimonials')}</Link></li>
               </ul>
             </div>
 

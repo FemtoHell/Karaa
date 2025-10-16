@@ -87,15 +87,12 @@ const Features = () => {
             </Link>
 
             <nav className="nav-menu">
-              <Link to="/features" className="nav-link active">Features</Link>
-              <Link to="/pricing" className="nav-link">Pricing</Link>
-              <Link to="/templates" className="nav-link">Templates</Link>
-              <Link to="/testimonials" className="nav-link">Testimonials</Link>
-              {isAuthenticated ? (
-                <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              ) : (
-                <Link to="/login" className="nav-link">Login</Link>
-              )}
+              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
+              <Link to="/features" className="nav-link active">{t('features')}</Link>
+              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
+              <Link to="/templates" className="nav-link">{t('templates')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              {isAuthenticated && <Link to="/help" className="nav-link">{t('help') || 'Help'}</Link>}
             </nav>
 
             <div className="header-actions">
@@ -193,7 +190,7 @@ const Features = () => {
           <p className="cta-subtitle">Join thousands of job seekers who landed their dream jobs</p>
           <div className="cta-actions">
             <Link to="/templates" className="btn-cta-primary">Start Building Now</Link>
-            <Link to="/pricing" className="btn-cta-secondary">View Pricing</Link>
+            <Link to="/testimonials" className="btn-cta-secondary">See Testimonials</Link>
           </div>
         </div>
       </section>
@@ -207,7 +204,7 @@ const Features = () => {
               <ul className="footer-list">
                 <li><Link to="/templates">{t('templates')}</Link></li>
                 <li><Link to="/features">{t('features')}</Link></li>
-                <li><Link to="/pricing">{t('pricing')}</Link></li>
+                <li><Link to="/testimonials">{t('testimonials')}</Link></li>
               </ul>
             </div>
 

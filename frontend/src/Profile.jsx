@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Profile.css';
 import { useAuth } from './AuthContext';
+import { useLanguage } from './LanguageContext';
 import { API_ENDPOINTS } from './config/api';
 
 const Profile = () => {
   const { user: authUser, logout } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [user, setUser] = useState({
     name: authUser?.name || 'John Doe',
@@ -110,9 +112,12 @@ const Profile = () => {
             </Link>
 
             <nav className="nav-menu">
+              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
+              <Link to="/features" className="nav-link">{t('features')}</Link>
+              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
+              <Link to="/templates" className="nav-link">{t('templates')}</Link>
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/templates" className="nav-link">Browse Templates</Link>
-              <Link to="/help" className="nav-link">Help & Notifications</Link>
+              <Link to="/help" className="nav-link">{t('help') || 'Help'}</Link>
             </nav>
 
             <div className="header-user">

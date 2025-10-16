@@ -122,9 +122,12 @@ const HelpPage = () => {
             </Link>
 
             <nav className="nav-menu">
-              <Link to="/dashboard" className="nav-link">{t('dashboard')}</Link>
-              <Link to="/templates" className="nav-link">{t('browseTemplates')}</Link>
-              <Link to="/help" className="nav-link active">{t('helpNotifications')}</Link>
+              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
+              <Link to="/features" className="nav-link">{t('features')}</Link>
+              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
+              <Link to="/templates" className="nav-link">{t('templates')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+              <Link to="/help" className="nav-link active">{t('help') || 'Help'}</Link>
             </nav>
 
             <div className="header-user">
@@ -315,7 +318,7 @@ const HelpPage = () => {
               <ul className="footer-list">
                 <li><Link to="/templates">{t('templates')}</Link></li>
                 <li><Link to="/features">{t('features')}</Link></li>
-                <li><Link to="/pricing">{t('pricing')}</Link></li>
+                <li><Link to="/testimonials">{t('testimonials')}</Link></li>
               </ul>
             </div>
 

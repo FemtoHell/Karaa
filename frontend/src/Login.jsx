@@ -143,10 +143,11 @@ const Login = () => {
             </Link>
 
             <nav className="nav-menu">
+              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
               <Link to="/features" className="nav-link">{t('features')}</Link>
-              <Link to="/pricing" className="nav-link">{t('pricing')}</Link>
               <Link to="/templates" className="nav-link">{t('templates')}</Link>
               <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
             </nav>
 
             <div className="header-actions">
@@ -393,7 +394,7 @@ const Login = () => {
               <ul className="footer-list">
                 <li><Link to="/templates">{t('templates')}</Link></li>
                 <li><Link to="/features">{t('features')}</Link></li>
-                <li><Link to="/pricing">{t('pricing')}</Link></li>
+                <li><Link to="/testimonials">{t('testimonials')}</Link></li>
               </ul>
             </div>
 
