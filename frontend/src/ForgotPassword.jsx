@@ -1,20 +1,63 @@
 import React, { useState } from 'react';
 import './Login.css';
 import { Link } from 'react-router-dom';
+import { useLanguage } from './LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const ForgotPassword = () => {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Password reset requested for:', email);
-    setIsSubmitted(true);
+    setLoading(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Password reset requested for:', email);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="login-page">
-      <div className="login-container forgot-password-container">
+      {/* Header - Đồng bộ với Login */}
+      <header className="header">
+        <div className="header-container">
+          <div className="header-content">
+            <Link to="/" className="logo-wrapper">
+              <div className="logo-icon">
+                <svg width="11" height="14" viewBox="0 0 11 14" fill="none">
+                  <path d="M0 0H11V14L5.5 11L0 14V0Z" fill="#FFFFFF"/>
+                </svg>
+              </div>
+              <span className="logo-text">ResumeBuilder</span>
+            </Link>
+
+            <nav className="nav-menu">
+              <Link to="/" className="nav-link">{t('Home') || 'Home'}</Link>
+              <Link to="/features" className="nav-link">{t('features')}</Link>
+              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
+              <Link to="/templates" className="nav-link">{t('templates')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            </nav>
+
+            <div className="header-actions">
+              <LanguageSwitcher />
+              <Link to="/login" className="btn-primary">{t('signIn') || 'Sign In'}</Link>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="login-container">
         <div className="login-left">
           <div className="login-illustration">
             <div className="illustration-content">
@@ -26,6 +69,26 @@ const ForgotPassword = () => {
               </div>
               <h2 className="illustration-title">Forgot Password?</h2>
               <p className="illustration-subtitle">No worries! Enter your email and we'll send you instructions to reset your password.</p>
+              <div className="illustration-features">
+                <div className="illustration-feature">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Secure & Fast</span>
+                </div>
+                <div className="illustration-feature">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Email Verification</span>
+                </div>
+                <div className="illustration-feature">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Get Back Quickly</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -35,7 +98,12 @@ const ForgotPassword = () => {
             {!isSubmitted ? (
               <>
                 <div className="login-header">
-                  <Link to="/login" className="back-link">← Back to Login</Link>
+                  <Link to="/login" className="back-link">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginRight: '8px' }}>
+                      <path d="M12 5l-7 7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Back to Login
+                  </Link>
                   <h1>Reset Password</h1>
                   <p>Enter your email address and we'll send you a link to reset your password</p>
                 </div>
@@ -53,11 +121,20 @@ const ForgotPassword = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
 
-                  <button type="submit" className="btn-submit">
-                    Send Reset Link
+                  <button 
+                    type="submit" 
+                    className="btn-submit"
+                    disabled={loading}
+                    style={{
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    {loading ? 'Sending...' : 'Send Reset Link'}
                   </button>
                 </form>
 

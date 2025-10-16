@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { useLanguage } from './LanguageContext';
+import LanguageSwitcher from './LanguageSwitcher';
 import './Login.css';
 
 const VerifyEmail = () => {
@@ -177,6 +178,7 @@ const VerifyEmail = () => {
 
   return (
     <div className="login-page">
+      {/* Header - Đồng bộ với Login */}
       <header className="header">
         <div className="header-container">
           <div className="header-content">
@@ -188,19 +190,69 @@ const VerifyEmail = () => {
               </div>
               <span className="logo-text">ResumeBuilder</span>
             </Link>
+
+            <nav className="nav-menu">
+              <Link to="/" className="nav-link">{t('Home') || 'Home'}</Link>
+              <Link to="/features" className="nav-link">{t('features')}</Link>
+              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
+              <Link to="/templates" className="nav-link">{t('templates')}</Link>
+              <Link to="/dashboard" className="nav-link">Dashboard</Link>
+            </nav>
+
+            <div className="header-actions">
+              <LanguageSwitcher />
+              <Link to="/login" className="btn-primary">{t('signIn') || 'Sign In'}</Link>
+            </div>
           </div>
         </div>
       </header>
 
       <div className="login-container">
-        <div className="login-right" style={{ margin: '0 auto', maxWidth: '500px' }}>
+        {/* Left Side - Illustration */}
+        <div className="login-left">
+          <div className="login-illustration">
+            <div className="illustration-content">
+              <div className="illustration-icon">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                  <circle cx="40" cy="40" r="40" fill="#4F46E5" opacity="0.1"/>
+                  <path d="M40 24C31.163 24 24 31.163 24 40v0c0 8.837 7.163 16 16 16h0c8.837 0 16-7.163 16-16v0c0-8.837-7.163-16-16-16zm0 6l12 8-12 8-12-8 12-8z" fill="#4F46E5"/>
+                  <path d="M28 46l12 8 12-8" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 className="illustration-title">Check Your Email</h2>
+              <p className="illustration-subtitle">We've sent a 6-digit verification code to your email address. Please enter it to verify your account.</p>
+              <div className="illustration-features">
+                <div className="illustration-feature">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Secure Verification</span>
+                </div>
+                <div className="illustration-feature">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Quick & Easy</span>
+                </div>
+                <div className="illustration-feature">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#10B981" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  <span>Protected Account</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Form */}
+        <div className="login-right">
           <div className="login-form-container">
             {/* Header */}
             <div className="login-header" style={{ textAlign: 'center' }}>
               <div style={{ 
-                fontSize: '64px', 
-                marginBottom: '20px',
-                animation: 'pulse 2s ease-in-out infinite'
+                fontSize: '48px', 
+                marginBottom: '16px'
               }}>
                 📧
               </div>
@@ -215,7 +267,7 @@ const VerifyEmail = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} style={{ marginTop: '40px' }}>
+            <form onSubmit={handleSubmit} style={{ marginTop: '32px' }}>
               {/* Messages */}
               {error && (
                 <div style={{
@@ -250,9 +302,9 @@ const VerifyEmail = () => {
               {/* Code Input */}
               <div style={{
                 display: 'flex',
-                gap: '12px',
+                gap: '10px',
                 justifyContent: 'center',
-                marginBottom: '30px'
+                marginBottom: '24px'
               }}>
                 {code.map((digit, index) => (
                   <input
@@ -266,25 +318,14 @@ const VerifyEmail = () => {
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={handlePaste}
                     disabled={loading}
+                    className="form-input"
                     style={{
-                      width: '56px',
-                      height: '64px',
-                      fontSize: '32px',
+                      width: '50px',
+                      height: '56px',
+                      fontSize: '24px',
                       fontWeight: 'bold',
                       textAlign: 'center',
-                      border: '2px solid #e5e7eb',
-                      borderRadius: '12px',
-                      outline: 'none',
-                      transition: 'all 0.2s',
-                      backgroundColor: loading ? '#f9fafb' : '#fff'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = '#4F46E5';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(79, 70, 229, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = '#e5e7eb';
-                      e.target.style.boxShadow = 'none';
+                      padding: '0'
                     }}
                   />
                 ))}
@@ -293,7 +334,7 @@ const VerifyEmail = () => {
               {/* Timer Info */}
               <div style={{
                 textAlign: 'center',
-                fontSize: '14px',
+                fontSize: '13px',
                 color: '#666',
                 marginBottom: '20px'
               }}>
@@ -315,12 +356,11 @@ const VerifyEmail = () => {
             </form>
 
             {/* Resend Code */}
-            <div style={{
-              textAlign: 'center',
-              marginTop: '30px',
-              paddingTop: '30px',
-              borderTop: '1px solid #e5e7eb'
-            }}>
+            <div className="divider" style={{ margin: '24px 0' }}>
+              <span className="divider-text">Need help?</span>
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>
                 Didn't receive the code?
               </p>
@@ -335,42 +375,38 @@ const VerifyEmail = () => {
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: resendTimer > 0 ? 'not-allowed' : 'pointer',
-                  textDecoration: 'underline'
+                  textDecoration: 'underline',
+                  marginBottom: '16px'
                 }}
               >
                 {resendLoading ? 'Sending...' : 
                  resendTimer > 0 ? `Resend code in ${resendTimer}s` : 
                  'Resend code'}
               </button>
-            </div>
 
-            {/* Back to Login */}
-            <div style={{ textAlign: 'center', marginTop: '20px' }}>
-              <Link 
-                to="/login" 
-                style={{
-                  fontSize: '14px',
-                  color: '#666',
-                  textDecoration: 'none'
-                }}
-              >
-                ← Back to login
-              </Link>
+              {/* Back to Login */}
+              <div>
+                <Link 
+                  to="/login" 
+                  style={{
+                    fontSize: '14px',
+                    color: '#666',
+                    textDecoration: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M10 4L6 8l4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  Back to login
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-        }
-      `}</style>
     </div>
   );
 };

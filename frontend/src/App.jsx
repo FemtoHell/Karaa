@@ -16,6 +16,7 @@ import Profile from './Profile';
 import HelpPage from './HelpPage';
 import Guides from './Guides';
 import OAuthCallback from './OAuthCallback';
+import SharedResume from './SharedResume';
 import DragTest from './DragTest';
 import DragTestSimple from './DragTestSimple';
 import './App.css';
@@ -42,6 +43,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/guides" element={<Guides />} />
+              <Route path="/share/:shareId" element={<SharedResume />} />
               <Route path="/drag-test" element={<DragTest />} />
               <Route path="/drag-test-simple" element={<DragTestSimple />} />
               {/* Redirect missing routes to main pages */}
