@@ -555,7 +555,11 @@ const Editor = () => {
   // Detect authentication change and migrate guest data
   useEffect(() => {
     const handleAuthChange = async () => {
-      if (isAuthenticated && isGuestMode()) {
+      // Only migrate if:
+      // 1. User is authenticated (logged in)
+      // 2. User is NOT in guest mode (real account, not guest)
+      // 3. There is guest data in localStorage to migrate
+      if (isAuthenticated && !isGuest && isGuestMode()) {
         try {
           setLoading(true);
           const result = await migrateGuestData();
@@ -576,7 +580,7 @@ const Editor = () => {
     };
 
     handleAuthChange();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isGuest]);
 
   const updatePersonalInfo = (field, value) => {
     setCvData(prev => ({
