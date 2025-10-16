@@ -203,7 +203,7 @@ const Editor = () => {
   const [currentResumeId, setCurrentResumeId] = useState(resumeId || null);
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
-  const [guestMode, setGuestMode] = useState(!isAuthenticated);
+  const [guestMode, setGuestMode] = useState(isGuest); // Use isGuest to detect guest mode correctly
 
   const [activeTab, setActiveTab] = useState('personal');
   const [showCustomization, setShowCustomization] = useState(false);

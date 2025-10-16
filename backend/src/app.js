@@ -23,6 +23,9 @@ const guideRoutes = require('./routes/guideRoutes');
 // Create Express app
 const app = express();
 
+// Trust proxy for Render.com and other reverse proxies
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 
