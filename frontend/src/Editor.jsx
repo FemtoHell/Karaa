@@ -196,7 +196,7 @@ const Editor = () => {
   const [searchParams] = useSearchParams();
   const { id: resumeId } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isGuest } = useAuth();
   const templateId = searchParams.get('template');
   const action = searchParams.get('action');
 
