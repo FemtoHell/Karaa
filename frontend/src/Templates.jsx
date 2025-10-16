@@ -53,13 +53,9 @@ const Templates = () => {
       return;
     }
 
-    // Guest users can't use full features
-    if (isGuest) {
-      setShowGuestLimitModal(true);
-      return;
-    }
-
-    // Navigate to editor for authenticated users
+    // Guest users CAN use templates, but with limited features
+    // They just can't access some advanced features (like saving multiple resumes)
+    // Navigate to editor for all authenticated users (including guests)
     navigate(`/editor?template=${templateId}&action=${action}`);
   };
 
