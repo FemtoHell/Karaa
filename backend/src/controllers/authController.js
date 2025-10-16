@@ -56,12 +56,14 @@ exports.register = asyncHandler(async (req, res, next) => {
     emailVerificationExpire: Date.now() + 10 * 60 * 1000 // 10 minutes
   });
 
-  // Send verification email
+  // Send verification email - MUST succeed
   try {
     await sendVerificationEmail(email, name, verificationCode);
   } catch (error) {
     console.error('Failed to send verification email:', error);
-    // Continue even if email fails
+    // Delete the created user since email failed
+    await User.findByIdAndDelete(user._id);
+    return next(new ErrorResponse('Failed to send verification email. Please try again or check your email configuration.', 500));
   }
 
   res.status(201).json({

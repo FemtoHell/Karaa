@@ -281,11 +281,22 @@ export const authService = {
 
       const data = await response.json();
 
-      // Don't throw error if verification is required
+      // If verification is required (email sent)
       if (data.requiresVerification) {
+        return {
+          success: false,
+          requiresVerification: true,
+          email: data.email || email,
+          message: data.message || 'Please verify your email'
+        };
+      }
+
+      // If registration succeeded without verification (email disabled or auto-verified)
+      if (response.ok && data.success) {
         return data;
       }
 
+      // If there's an error
       if (!response.ok) {
         throw new Error(data.message || 'Registration failed');
       }

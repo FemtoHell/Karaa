@@ -1,6 +1,7 @@
 import { API_ENDPOINTS, apiRequest } from '../config/api';
 
-const GUEST_SESSION_KEY = 'guest_session_id';
+// Consistent keys - đồng bộ với AuthContext
+const GUEST_SESSION_KEY = 'guestSessionId'; // Changed from 'guest_session_id'
 const GUEST_RESUME_KEY = 'guest_resume_id';
 
 // Get or create guest session
@@ -19,6 +20,10 @@ export const getGuestSession = async () => {
       if (data.success) {
         sessionId = data.data.sessionId;
         localStorage.setItem(GUEST_SESSION_KEY, sessionId);
+        // Also set expiry time
+        if (data.data.expiresIn) {
+          localStorage.setItem('guestExpiresIn', data.data.expiresIn);
+        }
       }
     } catch (error) {
       console.error('Failed to create guest session:', error);
