@@ -55,7 +55,7 @@ const LandingPage = () => {
               <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
               <Link to="/templates" className="nav-link">{t('templates')}</Link>
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              {isAuthenticated && <Link to="/help" className="nav-link">{t('help') || 'Help'}</Link>}
+              {isAuthenticated && <Link to="/help" className="nav-link">{t('Help') || 'Help'}</Link>}
             </nav>
 
             <div className="header-actions">

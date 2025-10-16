@@ -127,7 +127,7 @@ const HelpPage = () => {
               <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
               <Link to="/templates" className="nav-link">{t('templates')}</Link>
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              <Link to="/help" className="nav-link active">{t('help') || 'Help'}</Link>
+              <Link to="/help" className="nav-link active">{t('Help') || 'Help'}</Link>
             </nav>
 
             <div className="header-user">
