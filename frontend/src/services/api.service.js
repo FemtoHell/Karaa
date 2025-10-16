@@ -6,6 +6,7 @@ const getToken = () => localStorage.getItem('token');
 // API request wrapper
 const apiRequest = async (url, options = {}) => {
   const token = getToken();
+  const guestSessionId = localStorage.getItem('guestSessionId');
 
   const defaultOptions = {
     headers: {
@@ -21,10 +22,15 @@ const apiRequest = async (url, options = {}) => {
 
     // Handle 401 Unauthorized
     if (response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      throw new Error('Session expired');
+      // Only redirect to login if not a guest user
+      if (!guestSessionId) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        throw new Error('Session expired');
+      }
+      // For guest users, just throw error without redirect
+      throw new Error('Authentication required');
     }
 
     const data = await response.json();

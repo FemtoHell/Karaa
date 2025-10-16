@@ -8,13 +8,14 @@ import { API_ENDPOINTS, apiRequest } from './config/api';
 
 const Templates = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isGuest } = useAuth();
   const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedColor, setSelectedColor] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('popular');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [allTemplates, setAllTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,16 +41,26 @@ const Templates = () => {
   }, []);
 
   const handleTemplateClick = (templateId, action) => {
+    // Allow preview for everyone
+    if (action === 'preview') {
+      navigate(`/preview?template=${templateId}`);
+      return;
+    }
+
+    // Check authentication for using templates
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
 
-    if (action === 'preview') {
-      navigate(`/preview?template=${templateId}`);
-    } else {
-      navigate(`/editor?template=${templateId}&action=${action}`);
+    // Guest users can't use full features
+    if (isGuest) {
+      setShowGuestLimitModal(true);
+      return;
     }
+
+    // Navigate to editor for authenticated users
+    navigate(`/editor?template=${templateId}&action=${action}`);
   };
 
   // Filter and sort templates
@@ -124,7 +135,12 @@ const Templates = () => {
 
             <div className="header-actions">
               <LanguageSwitcher />
-              {isAuthenticated ? (
+              {isGuest ? (
+                <>
+                  <span style={{ color: '#F59E0B', marginRight: '12px', fontSize: '14px' }}>Guest Mode</span>
+                  <Link to="/login" className="btn-primary">{t('signIn')}</Link>
+                </>
+              ) : isAuthenticated ? (
                 <Link to="/dashboard" className="btn-primary">{t('dashboard')}</Link>
               ) : (
                 <Link to="/login" className="btn-primary">{t('signIn')}</Link>
@@ -292,6 +308,31 @@ const Templates = () => {
             </div>
             <h3>{t('loginRequired')}</h3>
             <p>{t('loginRequiredMessage')}</p>
+            <div className="auth-modal-actions">
+              <Link to="/login" className="btn-modal-login">{t('signIn')}</Link>
+              <Link to="/login" className="btn-modal-register">{t('createAccount')}</Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Guest Limitation Modal */}
+      {showGuestLimitModal && (
+        <div className="auth-modal-overlay" onClick={() => setShowGuestLimitModal(false)}>
+          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowGuestLimitModal(false)}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <div className="auth-modal-icon">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="24" fill="#FEF3C7"/>
+                <path d="M24 16v8m0 4h.01M24 40c8.837 0 16-7.163 16-16S32.837 8 24 8 8 15.163 8 24s7.163 16 16 16z" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <h3>Guest Mode Limitation</h3>
+            <p>You are currently in guest mode. To use templates and create resumes, please create a free account or sign in.</p>
             <div className="auth-modal-actions">
               <Link to="/login" className="btn-modal-login">{t('signIn')}</Link>
               <Link to="/login" className="btn-modal-register">{t('createAccount')}</Link>

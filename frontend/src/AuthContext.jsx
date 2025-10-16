@@ -179,6 +179,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       localStorage.removeItem('guestSessionId');
       localStorage.removeItem('guestExpiresIn');
+      // Redirect to login page
+      window.location.href = '/login';
     }
   };
 

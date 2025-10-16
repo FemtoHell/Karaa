@@ -8,7 +8,7 @@ import { API_ENDPOINTS, apiRequest } from './config/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated, isGuest } = useAuth();
   const { t } = useLanguage();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -18,6 +18,13 @@ const Dashboard = () => {
   const [resumes, setResumes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Redirect to login if not authenticated or if guest
+  useEffect(() => {
+    if (!isAuthenticated || isGuest) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, isGuest, navigate]);
 
   // Fetch resumes and notifications
   useEffect(() => {
