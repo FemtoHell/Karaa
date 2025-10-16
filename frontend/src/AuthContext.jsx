@@ -26,8 +26,11 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [isGuest, setIsGuest] = useState(() => {
-    // Check if user is in guest mode
-    return !!localStorage.getItem('guestSessionId');
+    // Check if user is in guest mode - ONLY if no real token exists
+    const token = localStorage.getItem('token');
+    const guestSessionId = localStorage.getItem('guestSessionId');
+    // If there's a real token, user is NOT a guest even if guestSessionId exists
+    return !token && !!guestSessionId;
   });
 
   const [loading, setLoading] = useState(false);
@@ -61,8 +64,13 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (data.success && data.token) {
+        // Clear any existing guest session when logging in
+        localStorage.removeItem('guestSessionId');
+        localStorage.removeItem('guestExpiresIn');
+        
         localStorage.setItem('token', data.token);
         setIsAuthenticated(true);
+        setIsGuest(false); // Explicitly set to false for email login
         setUser(data.user);
         return { success: true };
       }
@@ -95,8 +103,13 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (data.success && data.token) {
+        // Clear any existing guest session when registering
+        localStorage.removeItem('guestSessionId');
+        localStorage.removeItem('guestExpiresIn');
+        
         localStorage.setItem('token', data.token);
         setIsAuthenticated(true);
+        setIsGuest(false); // Explicitly set to false for registration
         setUser(data.user);
         return { success: true };
       }
@@ -120,11 +133,16 @@ export const AuthProvider = ({ children }) => {
   // Handle OAuth callback
   const handleOAuthCallback = async (token, refreshToken, userData) => {
     try {
+      // Clear any existing guest session when logging in with OAuth
+      localStorage.removeItem('guestSessionId');
+      localStorage.removeItem('guestExpiresIn');
+      
       localStorage.setItem('token', token);
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
       }
       setIsAuthenticated(true);
+      setIsGuest(false); // Explicitly set to false for OAuth login
       setUser(userData);
       return { success: true };
     } catch (err) {

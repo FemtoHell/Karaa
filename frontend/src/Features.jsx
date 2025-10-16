@@ -87,7 +87,7 @@ const Features = () => {
             </Link>
 
             <nav className="nav-menu">
-              <Link to="/" className="nav-link">{t('home') || 'Home'}</Link>
+              <Link to="/" className="nav-link">{t('Home') || 'Home'}</Link>
               <Link to="/features" className="nav-link active">{t('features')}</Link>
               <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
               <Link to="/templates" className="nav-link">{t('templates')}</Link>
