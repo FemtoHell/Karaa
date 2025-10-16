@@ -10,8 +10,8 @@ const GuideSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    lowercase: true,
-    index: true
+    lowercase: true
+    // Note: unique already creates an index, no need for index: true
   },
   industry: {
     type: String,
@@ -107,7 +107,7 @@ const GuideSchema = new mongoose.Schema({
 
 // Indexes
 GuideSchema.index({ industry: 1, category: 1 });
-GuideSchema.index({ slug: 1 });
+// Note: slug already has unique index from schema definition
 GuideSchema.index({ tags: 1 });
 GuideSchema.index({ title: 'text', description: 'text', content: 'text' });
 
