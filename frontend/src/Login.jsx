@@ -7,7 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, register } = useAuth();
+  const { login, register, createGuestSession } = useAuth();
   const { t } = useLanguage();
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState('');
@@ -105,10 +105,26 @@ const Login = () => {
     window.location.href = `${apiUrl}/auth/linkedin`;
   };
 
-  const handleGuestMode = () => {
+  const handleGuestMode = async () => {
     console.log('Guest mode selected');
-    // Don't login for guest mode, just redirect to templates
-    navigate('/templates');
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await createGuestSession();
+
+      if (result.success) {
+        // Redirect to templates after creating guest session
+        navigate('/templates');
+      } else {
+        setError(result.error || 'Failed to create guest session');
+      }
+    } catch (err) {
+      console.error('Guest mode error:', err);
+      setError('Failed to create guest session. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

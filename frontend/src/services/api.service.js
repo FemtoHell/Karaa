@@ -299,10 +299,108 @@ export const authService = {
   }
 };
 
+// Guest Services
+export const guestService = {
+  // Create guest session
+  createSession: async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.GUEST_SESSION, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create guest session');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Create Guest Session Error:', error);
+      throw error;
+    }
+  },
+
+  // Save guest resume
+  saveResume: async (sessionId, resumeData) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.GUEST_RESUME, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sessionId, ...resumeData })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save guest resume');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Save Guest Resume Error:', error);
+      throw error;
+    }
+  },
+
+  // Get guest resumes
+  getResumes: async (sessionId) => {
+    try {
+      const response = await fetch(`${API_ENDPOINTS.GUEST_RESUMES}?sessionId=${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to get guest resumes');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Get Guest Resumes Error:', error);
+      throw error;
+    }
+  },
+
+  // Update guest resume
+  updateResume: async (id, sessionId, resumeData) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.GUEST_RESUME_BY_ID(id), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ sessionId, ...resumeData })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update guest resume');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Update Guest Resume Error:', error);
+      throw error;
+    }
+  }
+};
+
 // Export all services
 export default {
   resume: resumeService,
   template: templateService,
   user: userService,
-  auth: authService
+  auth: authService,
+  guest: guestService
 };

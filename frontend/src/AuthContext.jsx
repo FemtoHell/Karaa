@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authService, userService } from './services/api.service';
+import { authService, userService, guestService } from './services/api.service';
 
 const AuthContext = createContext();
 
@@ -15,13 +15,19 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check localStorage for authentication state on initial load
     const token = localStorage.getItem('token');
-    return !!token;
+    const guestSessionId = localStorage.getItem('guestSessionId');
+    return !!(token || guestSessionId);
   });
 
   const [user, setUser] = useState(() => {
     // Load user data from localStorage if available
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
+  });
+
+  const [isGuest, setIsGuest] = useState(() => {
+    // Check if user is in guest mode
+    return !!localStorage.getItem('guestSessionId');
   });
 
   const [loading, setLoading] = useState(false);
@@ -127,17 +133,52 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Create guest session
+  const createGuestSession = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await guestService.createSession();
+
+      if (data.success && data.data.sessionId) {
+        localStorage.setItem('guestSessionId', data.data.sessionId);
+        localStorage.setItem('guestExpiresIn', data.data.expiresIn);
+        setIsAuthenticated(true);
+        setIsGuest(true);
+        setUser({
+          name: 'Guest User',
+          email: 'guest@temporary.com',
+          isGuest: true
+        });
+        return { success: true };
+      }
+
+      throw new Error(data.message || 'Failed to create guest session');
+    } catch (err) {
+      setError(err.message);
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Logout
   const logout = async () => {
     try {
-      await authService.logout();
+      if (!isGuest) {
+        await authService.logout();
+      }
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
       setIsAuthenticated(false);
+      setIsGuest(false);
       setUser(null);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('guestSessionId');
+      localStorage.removeItem('guestExpiresIn');
     }
   };
 
@@ -173,12 +214,14 @@ export const AuthProvider = ({ children }) => {
   const value = {
     isAuthenticated,
     user,
+    isGuest,
     loading,
     error,
     login,
     register,
     oAuthLogin,
     handleOAuthCallback,
+    createGuestSession,
     logout,
     fetchUserProfile
   };
