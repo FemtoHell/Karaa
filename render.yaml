@@ -83,7 +83,6 @@ services:
   - type: web
     name: resume-builder-frontend
     env: static
-    region: singapore
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     routes:
@@ -100,3 +99,4 @@ services:
     region: singapore
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []  # Allow all IPs (empty list = no restrictions)
