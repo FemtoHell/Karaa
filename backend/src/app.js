@@ -91,7 +91,10 @@ app.use('/api/', limiter);
 // Serve static files (uploads)
 app.use('/uploads', express.static('uploads'));
 
-// Health check endpoint
+// API version
+const API_VERSION = process.env.API_VERSION || 'v1';
+
+// Health check endpoints (both root and versioned)
 app.get('/health', (req, res) => {
   res.status(200).json({
     success: true,
@@ -100,8 +103,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API version
-const API_VERSION = process.env.API_VERSION || 'v1';
+app.get(`/api/${API_VERSION}/health`, (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is running',
+    timestamp: new Date().toISOString()
+  });
+});
 
 // Mount routes
 app.use(`/api/${API_VERSION}/auth`, authRoutes);
