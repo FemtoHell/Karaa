@@ -4,6 +4,7 @@ const Resume = require('../models/Resume');
 const { cache } = require('../config/redis');
 const asyncHandler = require('../utils/asyncHandler');
 const { ErrorResponse } = require('../middleware/errorHandler');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 // @desc    Get user profile
 // @route   GET /api/v1/users/profile
@@ -23,18 +24,22 @@ exports.getProfile = asyncHandler(async (req, res, next) => {
 
   const user = await User.findById(req.user.id)
     .where('deletedAt').equals(null)
-    .select('name email avatar role createdAt updatedAt lastLogin');
+    .select('name email avatar role phone location bio createdAt updatedAt lastLogin');
 
   if (!user) {
     return next(new ErrorResponse('User not found', 404));
   }
 
+  // Decrypt sensitive fields (FR-7.1)
   const userData = {
     id: user._id,
     name: user.name,
     email: user.email,
     avatar: user.avatar,
     role: user.role,
+    phone: user.phone ? decrypt(user.phone) : null,
+    location: user.location ? decrypt(user.location) : null,
+    bio: user.bio ? decrypt(user.bio) : null,
     created_at: user.createdAt,
     updated_at: user.updatedAt,
     last_login: user.lastLogin
@@ -53,7 +58,7 @@ exports.getProfile = asyncHandler(async (req, res, next) => {
 // @route   PUT /api/v1/users/profile
 // @access  Private
 exports.updateProfile = asyncHandler(async (req, res, next) => {
-  const { name, email, avatar } = req.body;
+  const { name, email, avatar, phone, location, bio } = req.body;
 
   // Check if email is already taken by another user
   if (email) {
@@ -68,12 +73,23 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
     }
   }
 
-  // Build update object
+  // Build update object with encryption for sensitive data (FR-7.1)
   const updates = {};
 
   if (name !== undefined) updates.name = name;
   if (email !== undefined) updates.email = email;
   if (avatar !== undefined) updates.avatar = avatar;
+  
+  // Encrypt sensitive personal information
+  if (phone !== undefined) {
+    updates.phone = phone ? encrypt(phone) : null;
+  }
+  if (location !== undefined) {
+    updates.location = location ? encrypt(location) : null;
+  }
+  if (bio !== undefined) {
+    updates.bio = bio ? encrypt(bio) : null;
+  }
 
   if (Object.keys(updates).length === 0) {
     return next(new ErrorResponse('No fields to update', 400));
@@ -84,18 +100,22 @@ exports.updateProfile = asyncHandler(async (req, res, next) => {
     req.user.id,
     updates,
     { new: true, runValidators: true }
-  ).select('name email avatar role createdAt updatedAt');
+  ).select('name email avatar role phone location bio createdAt updatedAt');
 
   if (!user) {
     return next(new ErrorResponse('User not found', 404));
   }
 
+  // Decrypt sensitive fields for response
   const userData = {
     id: user._id,
     name: user.name,
     email: user.email,
     avatar: user.avatar,
     role: user.role,
+    phone: user.phone ? decrypt(user.phone) : null,
+    location: user.location ? decrypt(user.location) : null,
+    bio: user.bio ? decrypt(user.bio) : null,
     created_at: user.createdAt,
     updated_at: user.updatedAt
   };

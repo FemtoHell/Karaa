@@ -22,7 +22,7 @@ router.route('/profile')
 
 router.put('/change-password', userValidation.changePassword, changePassword);
 router.delete('/account', deleteAccount);
-router.delete('/account/permanent', permanentDeleteAccount); // FR-7.2: Permanent account deletion
+router.delete('/account/permanent', userValidation.permanentDelete, permanentDeleteAccount); // FR-7.2: Permanent account deletion
 router.post('/avatar', uploadAvatar); // Add multer middleware in app.js
 router.get('/activity', getUserActivity);
 

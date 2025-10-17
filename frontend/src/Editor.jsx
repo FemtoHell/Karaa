@@ -620,6 +620,7 @@ const Editor = () => {
   const [loading, setLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
   const [guestMode, setGuestMode] = useState(isGuest); // Use isGuest to detect guest mode correctly
+  const [userDataPrefilled, setUserDataPrefilled] = useState(false); // Track if user data has been prefilled
 
   const [activeTab, setActiveTab] = useState('personal');
   const [showCustomization, setShowCustomization] = useState(false);
@@ -730,15 +731,68 @@ const Editor = () => {
   // Use ref to prevent duplicate creation
   const isCreatingRef = useRef(false);
 
+  // Pre-fill personal info from user profile (only for new resumes)
+  useEffect(() => {
+    const prefillUserData = async () => {
+      // Only prefill when creating new resume (no resumeId) and user is authenticated
+      if (!currentResumeId && isAuthenticated && !isGuest && user && !userDataPrefilled) {
+        try {
+          // Fetch full user profile to get phone, location, bio
+          const token = localStorage.getItem('token');
+          const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            credentials: 'include'
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            setCvData(prev => ({
+              ...prev,
+              personal: {
+                ...prev.personal,
+                fullName: user.name || '',
+                email: user.email || '',
+                phone: data.data.phone || '',
+                location: data.data.location || ''
+              }
+            }));
+            setUserDataPrefilled(true);
+          }
+        } catch (error) {
+          console.warn('Could not prefill user data:', error);
+          // Fallback to basic user data from AuthContext
+          setCvData(prev => ({
+            ...prev,
+            personal: {
+              ...prev.personal,
+              fullName: user.name || '',
+              email: user.email || ''
+            }
+          }));
+          setUserDataPrefilled(true);
+        }
+      } else if (!isAuthenticated || isGuest) {
+        // For guests, mark as prefilled immediately (no data to prefill)
+        setUserDataPrefilled(true);
+      }
+    };
+
+    prefillUserData();
+  }, [currentResumeId, isAuthenticated, isGuest, user, userDataPrefilled]);
+
   // Create resume when using template
   useEffect(() => {
     const initializeResume = async () => {
-      if (action === 'use' && templateId && !currentResumeId && !isCreatingRef.current) {
+      // Wait for user data to be prefilled before creating resume
+      if (action === 'use' && templateId && !currentResumeId && !isCreatingRef.current && userDataPrefilled) {
         isCreatingRef.current = true;
         try {
           setLoading(true);
 
-          // Use default empty content for all templates (templates don't have pre-filled content)
+          // Use current cvData (which may have been pre-filled with user data)
           let initialContent = cvData;
           let initialCustomization = { ...customization, templateId: templateId };
 
@@ -847,7 +901,7 @@ const Editor = () => {
     };
 
     initializeResume();
-  }, [action, templateId]);
+  }, [action, templateId, userDataPrefilled, cvData]);
 
   // Load existing resume if editing
   useEffect(() => {

@@ -85,6 +85,9 @@ const userValidation = {
   updateProfile: [
     body('name').optional().trim().notEmpty().withMessage('Name cannot be empty'),
     body('email').optional().isEmail().withMessage('Please provide a valid email'),
+    body('phone').optional().trim(),
+    body('location').optional().trim(),
+    body('bio').optional().trim(),
     validate
   ],
 
@@ -93,6 +96,14 @@ const userValidation = {
     body('newPassword')
       .isLength({ min: 6 })
       .withMessage('New password must be at least 6 characters long'),
+    validate
+  ],
+
+  permanentDelete: [
+    body('password').optional().notEmpty().withMessage('Password is required'),
+    body('confirmation')
+      .equals('DELETE MY ACCOUNT')
+      .withMessage('Please type "DELETE MY ACCOUNT" to confirm'),
     validate
   ]
 };

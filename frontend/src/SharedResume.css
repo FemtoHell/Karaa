@@ -1,7 +1,10 @@
+/* Shared Resume Page - Professional Preview Style */
 .shared-resume-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  font-family: 'Poppins', sans-serif;
+  background: #F3F4F6;
+  font-family: 'Inter', 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
 }
 
 .shared-resume-loading,
@@ -12,15 +15,14 @@
   justify-content: center;
   min-height: 100vh;
   text-align: center;
-  color: white;
   padding: 20px;
 }
 
 .loading-spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 4px solid #E5E7EB;
+  border-top-color: #4F46E5;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -33,6 +35,7 @@
 .shared-resume-loading p {
   font-size: 18px;
   margin: 0;
+  color: #6B7280;
 }
 
 .error-icon {
@@ -43,18 +46,19 @@
 .shared-resume-error h1 {
   font-size: 32px;
   margin-bottom: 10px;
+  color: #111827;
 }
 
 .shared-resume-error p {
   font-size: 18px;
   margin-bottom: 30px;
-  opacity: 0.9;
+  color: #6B7280;
 }
 
 .btn-home {
   padding: 12px 32px;
-  background: white;
-  color: #667eea;
+  background: #4F46E5;
+  color: white;
   border: none;
   border-radius: 8px;
   font-size: 16px;
@@ -64,47 +68,91 @@
 }
 
 .btn-home:hover {
+  background: #4338CA;
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2);
 }
 
-/* Header */
+/* Header - Professional Style */
 .shared-header {
-  background: white;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: #FFFFFF;
+  border-bottom: 1px solid #E5E7EB;
   padding: 20px 0;
   position: sticky;
   top: 0;
   z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .shared-header-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 16px;
 }
 
-.header-left h1 {
-  margin: 0 0 5px 0;
-  font-size: 24px;
-  color: #1f2937;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
 }
 
-.header-left p {
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  font-family: 'Poppins', sans-serif;
+}
+
+.resume-title-section {
+  border-left: 2px solid #E5E7EB;
+  padding-left: 24px;
+}
+
+.viewing-label {
   margin: 0;
-  color: #6B7280;
-  font-size: 14px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9CA3AF;
+  font-weight: 600;
+}
+
+.resume-title-section h1 {
+  margin: 4px 0 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  font-family: 'Poppins', sans-serif;
 }
 
 .header-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .btn-download,
@@ -114,118 +162,190 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
   border: none;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .btn-download {
   background: #4F46E5;
   color: white;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
 }
 
 .btn-download:hover:not(:disabled) {
   background: #4338CA;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 .btn-download:disabled {
   background: #9CA3AF;
   cursor: not-allowed;
-}
-
-.btn-download.btn-secondary {
-  background: #10B981;
-}
-
-.btn-download.btn-secondary:hover:not(:disabled) {
-  background: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  opacity: 0.6;
 }
 
 .btn-home-link {
-  background: white;
+  background: transparent;
   color: #4F46E5;
-  border: 2px solid #4F46E5;
+  border: 1.5px solid #4F46E5;
 }
 
 .btn-home-link:hover {
-  background: #4F46E5;
-  color: white;
-  transform: translateY(-2px);
+  background: #EEF2FF;
+  transform: translateY(-1px);
 }
 
-/* Content */
+/* Content - Premium Preview Style */
 .shared-content {
-  padding: 40px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex: 1;
+  padding: 40px 24px;
+  display: flex;
+  justify-content: center;
 }
 
-.resume-container {
-  background: white;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+.preview-wrapper {
+  width: 100%;
+  max-width: 850px;
+  background: #FFFFFF;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 10px 30px rgba(0, 0, 0, 0.05);
   border-radius: 8px;
   overflow: hidden;
 }
 
+.resume-preview-paper {
+  background: white;
+  padding: 60px 80px;
+  min-height: auto;
+  line-height: 1.6;
+}
+
+/* Resume Sections - Modern Professional Style */
 .resume-header {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
 .resume-section {
-  margin-bottom: 30px;
+  margin-bottom: 32px;
 }
 
-/* Footer */
+/* Section Title - Consistent with TemplatePreview */
+.resume-section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid;
+}
+
+/* Footer - Professional */
 .shared-footer {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(10px);
-  padding: 20px;
+  background: #FFFFFF;
+  border-top: 1px solid #E5E7EB;
+  padding: 24px;
   text-align: center;
-  color: white;
-  margin-top: 40px;
+  color: #6B7280;
+  margin-top: auto;
 }
 
 .shared-footer p {
   margin: 0;
   font-size: 14px;
+  font-family: 'Poppins', sans-serif;
 }
 
-.shared-footer a {
-  color: white;
-  text-decoration: underline;
+.shared-footer strong {
+  color: #4F46E5;
   font-weight: 600;
 }
 
-.shared-footer a:hover {
-  opacity: 0.8;
+.shared-footer a {
+  color: #4F46E5;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
-/* Responsive */
+.shared-footer a:hover {
+  color: #4338CA;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .shared-header-content {
     flex-direction: column;
     align-items: flex-start;
   }
 
+  .header-left {
+    width: 100%;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .resume-title-section {
+    border-left: none;
+    border-top: 2px solid #E5E7EB;
+    padding-left: 0;
+    padding-top: 12px;
+    width: 100%;
+  }
+
   .header-actions {
     width: 100%;
-    justify-content: stretch;
+    flex-direction: column;
   }
 
   .btn-download,
   .btn-home-link {
-    flex: 1;
-    text-align: center;
+    width: 100%;
+    justify-content: center;
   }
 
-  .resume-container {
-    padding: 30px 20px !important;
+  .shared-content {
+    padding: 24px 16px;
   }
 
-  .header-left h1 {
-    font-size: 20px;
+  .resume-preview-paper {
+    padding: 40px 24px !important;
+  }
+
+  .resume-title-section h1 {
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 18px;
+  }
+}
+
+@media print {
+  .shared-header,
+  .shared-footer,
+  .header-actions {
+    display: none !important;
+  }
+
+  .shared-content {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .preview-wrapper {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .resume-preview-paper {
+    padding: 0 !important;
+  }
+
+  .shared-resume-page {
+    background: white;
   }
 }

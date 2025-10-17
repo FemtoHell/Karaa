@@ -6,16 +6,16 @@ import { useLanguage } from './LanguageContext';
 import { API_ENDPOINTS } from './config/api';
 
 const Profile = () => {
-  const { user: authUser, logout } = useAuth();
+  const { user: authUser, logout, updateUser } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [user, setUser] = useState({
-    name: authUser?.name || 'John Doe',
-    email: authUser?.email || 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    location: 'New York, NY',
-    bio: 'Passionate software engineer with 5+ years of experience',
-    avatar: authUser?.avatar || 'https://ui-avatars.com/api/?name=John+Doe&background=4F46E5&color=fff&size=200'
+    name: authUser?.name || '',
+    email: authUser?.email || '',
+    phone: '',
+    location: '',
+    bio: '',
+    avatar: authUser?.avatar || 'https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&size=200'
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -23,34 +23,125 @@ const Profile = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deletePassword, setDeletePassword] = useState('');
-  const [dataEncryption, setDataEncryption] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Update user state when authUser changes
+  // Fetch user profile from backend
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!authUser) return;
+      
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const response = await fetch(API_ENDPOINTS.USER_PROFILE, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          const profileData = {
+            name: data.data.name || authUser.name,
+            email: data.data.email || authUser.email,
+            phone: data.data.phone || '',
+            location: data.data.location || '',
+            bio: data.data.bio || '',
+            avatar: data.data.avatar || authUser.avatar || 'https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&size=200'
+          };
+          setUser(profileData);
+          setFormData(profileData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [authUser]);
+
+  // Update when authUser changes
   useEffect(() => {
     if (authUser) {
       setUser(prev => ({
         ...prev,
         name: authUser.name,
         email: authUser.email,
-        avatar: authUser.avatar
+        avatar: authUser.avatar || prev.avatar
       }));
       setFormData(prev => ({
         ...prev,
         name: authUser.name,
         email: authUser.email,
-        avatar: authUser.avatar
+        avatar: authUser.avatar || prev.avatar
       }));
     }
   }, [authUser]);
 
-  const handleSave = () => {
-    setUser(formData);
-    setEditMode(false);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      const response = await fetch(API_ENDPOINTS.UPDATE_PROFILE, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          location: formData.location,
+          bio: formData.bio,
+          avatar: formData.avatar
+        }),
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update profile');
+      }
+
+      if (data.success) {
+        setUser(formData);
+        setEditMode(false);
+        
+        // Update auth context
+        if (updateUser) {
+          updateUser({
+            ...authUser,
+            name: formData.name,
+            email: formData.email,
+            avatar: formData.avatar
+          });
+        }
+
+        alert('Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update profile error:', error);
+      setError(error.message);
+      alert('Error: ' + error.message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setFormData(user);
     setEditMode(false);
+    setError(null);
   };
 
   const handleDeleteAccount = async () => {
@@ -143,7 +234,7 @@ const Profile = () => {
               <div className="profile-card-header">
                 <h2>Personal Information</h2>
                 {!editMode ? (
-                  <button className="btn-edit" onClick={() => setEditMode(true)}>
+                  <button className="btn-edit" onClick={() => setEditMode(true)} disabled={loading}>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                       <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" fill="#4F46E5"/>
                     </svg>
@@ -151,8 +242,10 @@ const Profile = () => {
                   </button>
                 ) : (
                   <div className="edit-actions">
-                    <button className="btn-cancel" onClick={handleCancel}>Cancel</button>
-                    <button className="btn-save" onClick={handleSave}>Save Changes</button>
+                    <button className="btn-cancel" onClick={handleCancel} disabled={saving}>Cancel</button>
+                    <button className="btn-save" onClick={handleSave} disabled={saving}>
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
                   </div>
                 )}
               </div>

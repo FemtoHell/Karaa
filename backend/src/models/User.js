@@ -30,6 +30,21 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  
+  // Personal information (encrypted) - FR-7.1
+  phone: {
+    type: String,
+    default: null
+  },
+  location: {
+    type: String,
+    default: null
+  },
+  bio: {
+    type: String,
+    default: null
+  },
+  
   role: {
     type: String,
     enum: ['user', 'admin'],
