@@ -26,10 +26,16 @@ exports.generateVerificationCode = () => {
 
 // Send verification email
 exports.sendVerificationEmail = async (email, name, code) => {
-  try {
-    const transporter = createTransporter();
+  // Add timeout wrapper to prevent hanging
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Email service timeout after 15 seconds')), 15000)
+  );
 
-    const mailOptions = {
+  const sendEmailPromise = (async () => {
+    try {
+      const transporter = createTransporter();
+
+      const mailOptions = {
       from: `${process.env.FROM_NAME || 'ResumeBuilder'} <${process.env.SMTP_EMAIL}>`,
       to: email,
       subject: 'Verify Your Email - ResumeBuilder',
@@ -179,12 +185,20 @@ exports.sendVerificationEmail = async (email, name, code) => {
       `
     };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Verification email sent:', info.messageId);
-    return { success: true, messageId: info.messageId };
+      const info = await transporter.sendMail(mailOptions);
+      console.log('✅ Verification email sent:', info.messageId);
+      return { success: true, messageId: info.messageId };
+    } catch (error) {
+      console.error('❌ Error sending verification email:', error);
+      throw new Error('Failed to send verification email');
+    }
+  })();
+
+  try {
+    return await Promise.race([sendEmailPromise, timeoutPromise]);
   } catch (error) {
-    console.error('❌ Error sending verification email:', error);
-    throw new Error('Failed to send verification email');
+    console.error('❌ Email send failed or timed out:', error.message);
+    throw error;
   }
 };
 

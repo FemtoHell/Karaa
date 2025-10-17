@@ -27,8 +27,13 @@ exports.register = asyncHandler(async (req, res, next) => {
       existingUser.emailVerificationExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
       await existingUser.save();
 
-      // Send verification email
-      await sendVerificationEmail(email, name, verificationCode);
+      // Send verification email - with timeout and error handling
+      try {
+        await sendVerificationEmail(email, name, verificationCode);
+      } catch (error) {
+        console.error('Failed to send verification email:', error);
+        return next(new ErrorResponse('Failed to send verification email. Please check your email configuration.', 500));
+      }
 
       return res.status(200).json({
         success: true,
