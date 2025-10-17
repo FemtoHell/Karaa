@@ -157,7 +157,7 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_ENDPOINTS.USER_PROFILE}/account/permanent`, {
+      const response = await fetch(API_ENDPOINTS.DELETE_ACCOUNT_PERMANENT, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

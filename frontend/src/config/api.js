@@ -13,6 +13,8 @@ export const API_ENDPOINTS = {
   // User endpoints
   USER_PROFILE: `${API_BASE_URL}/users/profile`,
   UPDATE_PROFILE: `${API_BASE_URL}/users/profile`,
+  DELETE_ACCOUNT: `${API_BASE_URL}/users/account`,
+  DELETE_ACCOUNT_PERMANENT: `${API_BASE_URL}/users/account/permanent`,
 
   // Resume endpoints
   RESUMES: `${API_BASE_URL}/resumes`,

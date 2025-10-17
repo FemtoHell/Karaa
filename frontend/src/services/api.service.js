@@ -227,10 +227,18 @@ export const userService = {
     return apiRequest(`${API_ENDPOINTS.USER_PROFILE}/activity?limit=${limit}`);
   },
 
-  // Delete account
+  // Delete account (soft delete)
   deleteAccount: async () => {
-    return apiRequest(`${API_ENDPOINTS.USER_PROFILE}/account`, {
+    return apiRequest(API_ENDPOINTS.DELETE_ACCOUNT, {
       method: 'DELETE'
+    });
+  },
+
+  // Permanent delete account
+  permanentDeleteAccount: async (password, confirmation) => {
+    return apiRequest(API_ENDPOINTS.DELETE_ACCOUNT_PERMANENT, {
+      method: 'DELETE',
+      body: JSON.stringify({ password, confirmation })
     });
   }
 };
