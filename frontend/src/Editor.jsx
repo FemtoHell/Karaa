@@ -108,14 +108,12 @@ const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEduc
         <div className="item-header">
           <h4>Education {index + 1}</h4>
           <div style={{ display: 'flex', gap: '4px' }}>
-            {cvData.education.length > 1 && (
-              <button
-                className="btn-remove"
-                onClick={() => removeEducation(edu.id)}
-              >
-                ×
-              </button>
-            )}
+            <button
+              className="btn-remove"
+              onClick={() => removeEducation(edu.id)}
+            >
+              ×
+            </button>
           </div>
         </div>
 
@@ -192,6 +190,424 @@ const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEduc
   );
 };
 
+// Sortable Project Item Component for Form Editor
+const SortableProjectItem = ({ project, index, updateProject, removeProject }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    position: 'relative',
+    padding: '16px 16px 16px 56px',
+    margin: '12px 0',
+    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
+    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
+    borderRadius: '12px',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleStyle = {
+    position: 'absolute',
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '32px',
+    height: '80%',
+    minHeight: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#ffffff',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    cursor: 'grab',
+    touchAction: 'none',
+    userSelect: 'none',
+    zIndex: 999,
+    pointerEvents: 'auto',
+  };
+
+  const handleActiveStyle = {
+    ...handleStyle,
+    cursor: 'grabbing',
+    background: '#e0e7ff',
+    borderColor: '#4f46e5',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        ref={setActivatorNodeRef}
+        style={isDragging ? handleActiveStyle : handleStyle}
+        {...attributes}
+        {...listeners}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
+        </svg>
+      </div>
+
+      <div className="project-item">
+        <div className="item-header">
+          <h4>Project {index + 1}</h4>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              className="btn-remove"
+              onClick={() => removeProject(project.id)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Project Name *</label>
+          <input
+            type="text"
+            placeholder="E-commerce Platform"
+            value={project.name}
+            onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Description *</label>
+          <textarea
+            rows="3"
+            placeholder="Describe what the project does and your role..."
+            value={project.description}
+            onChange={(e) => updateProject(project.id, 'description', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Technologies Used</label>
+          <input
+            type="text"
+            placeholder="React, Node.js, MongoDB, AWS"
+            value={project.technologies}
+            onChange={(e) => updateProject(project.id, 'technologies', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Project Link</label>
+          <input
+            type="url"
+            placeholder="https://github.com/username/project"
+            value={project.link}
+            onChange={(e) => updateProject(project.id, 'link', e.target.value)}
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>Start Date</label>
+            <input
+              type="month"
+              value={project.startDate}
+              onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>End Date</label>
+            <input
+              type="month"
+              value={project.endDate}
+              onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sortable Certificate Item Component for Form Editor
+const SortableCertificateItem = ({ cert, index, updateCertificate, removeCertificate }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: cert.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    position: 'relative',
+    padding: '16px 16px 16px 56px',
+    margin: '12px 0',
+    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
+    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
+    borderRadius: '12px',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleStyle = {
+    position: 'absolute',
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '32px',
+    height: '80%',
+    minHeight: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#ffffff',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    cursor: 'grab',
+    touchAction: 'none',
+    userSelect: 'none',
+    zIndex: 999,
+    pointerEvents: 'auto',
+  };
+
+  const handleActiveStyle = {
+    ...handleStyle,
+    cursor: 'grabbing',
+    background: '#e0e7ff',
+    borderColor: '#4f46e5',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        ref={setActivatorNodeRef}
+        style={isDragging ? handleActiveStyle : handleStyle}
+        {...attributes}
+        {...listeners}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
+        </svg>
+      </div>
+
+      <div className="certificate-item">
+        <div className="item-header">
+          <h4>Certificate {index + 1}</h4>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              className="btn-remove"
+              onClick={() => removeCertificate(cert.id)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Certificate Name *</label>
+          <input
+            type="text"
+            placeholder="AWS Certified Solutions Architect"
+            value={cert.name}
+            onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Issuing Organization *</label>
+          <input
+            type="text"
+            placeholder="Amazon Web Services"
+            value={cert.issuer}
+            onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Date Issued</label>
+          <input
+            type="month"
+            value={cert.date}
+            onChange={(e) => updateCertificate(cert.id, 'date', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Certificate Link</label>
+          <input
+            type="url"
+            placeholder="https://www.credly.com/badges/..."
+            value={cert.link}
+            onChange={(e) => updateCertificate(cert.id, 'link', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Description</label>
+          <textarea
+            rows="3"
+            placeholder="Brief description of what this certification covers..."
+            value={cert.description}
+            onChange={(e) => updateCertificate(cert.id, 'description', e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Sortable Activity Item Component for Form Editor
+const SortableActivityItem = ({ activity, index, updateActivity, removeActivity }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: activity.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    position: 'relative',
+    padding: '16px 16px 16px 56px',
+    margin: '12px 0',
+    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
+    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
+    borderRadius: '12px',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  const handleStyle = {
+    position: 'absolute',
+    left: '12px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    width: '32px',
+    height: '80%',
+    minHeight: '40px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#ffffff',
+    border: '2px solid #e5e7eb',
+    borderRadius: '8px',
+    cursor: 'grab',
+    touchAction: 'none',
+    userSelect: 'none',
+    zIndex: 999,
+    pointerEvents: 'auto',
+  };
+
+  const handleActiveStyle = {
+    ...handleStyle,
+    cursor: 'grabbing',
+    background: '#e0e7ff',
+    borderColor: '#4f46e5',
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <div
+        ref={setActivatorNodeRef}
+        style={isDragging ? handleActiveStyle : handleStyle}
+        {...attributes}
+        {...listeners}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
+          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
+        </svg>
+      </div>
+
+      <div className="activity-item">
+        <div className="item-header">
+          <h4>Activity {index + 1}</h4>
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              className="btn-remove"
+              onClick={() => removeActivity(activity.id)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Title/Role *</label>
+          <input
+            type="text"
+            placeholder="Volunteer Coordinator"
+            value={activity.title}
+            onChange={(e) => updateActivity(activity.id, 'title', e.target.value)}
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Organization *</label>
+          <input
+            type="text"
+            placeholder="Red Cross"
+            value={activity.organization}
+            onChange={(e) => updateActivity(activity.id, 'organization', e.target.value)}
+          />
+        </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label>Start Date</label>
+            <input
+              type="month"
+              value={activity.startDate}
+              onChange={(e) => updateActivity(activity.id, 'startDate', e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>End Date</label>
+            <input
+              type="month"
+              value={activity.endDate}
+              onChange={(e) => updateActivity(activity.id, 'endDate', e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Description</label>
+          <textarea
+            rows="3"
+            placeholder="Describe your role and contributions..."
+            value={activity.description}
+            onChange={(e) => updateActivity(activity.id, 'description', e.target.value)}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Editor = () => {
   const [searchParams] = useSearchParams();
   const { id: resumeId } = useParams();
@@ -251,7 +667,7 @@ const Editor = () => {
     },
     experience: [
       {
-        id: 1,
+        id: `exp-${Date.now()}`,
         jobTitle: '',
         company: '',
         location: '',
@@ -263,7 +679,7 @@ const Editor = () => {
     ],
     education: [
       {
-        id: 1,
+        id: `edu-${Date.now()}`,
         degree: '',
         school: '',
         location: '',
@@ -280,7 +696,7 @@ const Editor = () => {
     },
     projects: [
       {
-        id: 1,
+        id: `proj-${Date.now()}`,
         name: '',
         description: '',
         technologies: '',
@@ -291,7 +707,7 @@ const Editor = () => {
     ],
     certificates: [
       {
-        id: 1,
+        id: `cert-${Date.now()}`,
         name: '',
         issuer: '',
         date: '',
@@ -301,7 +717,7 @@ const Editor = () => {
     ],
     activities: [
       {
-        id: 1,
+        id: `act-${Date.now()}`,
         title: '',
         organization: '',
         startDate: '',
@@ -1705,100 +2121,19 @@ const Editor = () => {
                   </button>
                 </div>
 
-                {cvData.projects.map((project, index) => (
-                  <div key={project.id} className="project-item">
-                    <div className="item-header">
-                      <h4>Project {index + 1}</h4>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveProjectUp(project.id)}
-                          disabled={index === 0}
-                          title="Move Up"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveProjectDown(project.id)}
-                          disabled={index === cvData.projects.length - 1}
-                          title="Move Down"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↓
-                        </button>
-                        {cvData.projects.length > 1 && (
-                          <button
-                            className="btn-remove"
-                            onClick={() => removeProject(project.id)}
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Project Name *</label>
-                      <input
-                        type="text"
-                        placeholder="E-commerce Platform"
-                        value={project.name}
-                        onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
+                  <SortableContext items={cvData.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                    {cvData.projects.map((project, index) => (
+                      <SortableProjectItem
+                        key={project.id}
+                        project={project}
+                        index={index}
+                        updateProject={updateProject}
+                        removeProject={removeProject}
                       />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Description *</label>
-                      <textarea
-                        rows="3"
-                        placeholder="Describe what the project does and your role..."
-                        value={project.description}
-                        onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Technologies Used</label>
-                      <input
-                        type="text"
-                        placeholder="React, Node.js, MongoDB, AWS"
-                        value={project.technologies}
-                        onChange={(e) => updateProject(project.id, 'technologies', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Project Link</label>
-                      <input
-                        type="url"
-                        placeholder="https://github.com/username/project"
-                        value={project.link}
-                        onChange={(e) => updateProject(project.id, 'link', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Start Date</label>
-                        <input
-                          type="month"
-                          value={project.startDate}
-                          onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>End Date</label>
-                        <input
-                          type="month"
-                          value={project.endDate}
-                          onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
 
@@ -1815,90 +2150,19 @@ const Editor = () => {
                   </button>
                 </div>
 
-                {cvData.certificates.map((cert, index) => (
-                  <div key={cert.id} className="certificate-item">
-                    <div className="item-header">
-                      <h4>Certificate {index + 1}</h4>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveCertificateUp(cert.id)}
-                          disabled={index === 0}
-                          title="Move Up"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveCertificateDown(cert.id)}
-                          disabled={index === cvData.certificates.length - 1}
-                          title="Move Down"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↓
-                        </button>
-                        {cvData.certificates.length > 1 && (
-                          <button
-                            className="btn-remove"
-                            onClick={() => removeCertificate(cert.id)}
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Certificate Name *</label>
-                      <input
-                        type="text"
-                        placeholder="AWS Certified Solutions Architect"
-                        value={cert.name}
-                        onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCertificateDragEnd}>
+                  <SortableContext items={cvData.certificates.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                    {cvData.certificates.map((cert, index) => (
+                      <SortableCertificateItem
+                        key={cert.id}
+                        cert={cert}
+                        index={index}
+                        updateCertificate={updateCertificate}
+                        removeCertificate={removeCertificate}
                       />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Issuing Organization *</label>
-                      <input
-                        type="text"
-                        placeholder="Amazon Web Services"
-                        value={cert.issuer}
-                        onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Date Issued</label>
-                      <input
-                        type="month"
-                        value={cert.date}
-                        onChange={(e) => updateCertificate(cert.id, 'date', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Certificate Link</label>
-                      <input
-                        type="url"
-                        placeholder="https://www.credly.com/badges/..."
-                        value={cert.link}
-                        onChange={(e) => updateCertificate(cert.id, 'link', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        rows="3"
-                        placeholder="Brief description of what this certification covers..."
-                        value={cert.description}
-                        onChange={(e) => updateCertificate(cert.id, 'description', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
 
@@ -1915,90 +2179,19 @@ const Editor = () => {
                   </button>
                 </div>
 
-                {cvData.activities.map((activity, index) => (
-                  <div key={activity.id} className="activity-item">
-                    <div className="item-header">
-                      <h4>Activity {index + 1}</h4>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveActivityUp(activity.id)}
-                          disabled={index === 0}
-                          title="Move Up"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveActivityDown(activity.id)}
-                          disabled={index === cvData.activities.length - 1}
-                          title="Move Down"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↓
-                        </button>
-                        {cvData.activities.length > 1 && (
-                          <button
-                            className="btn-remove"
-                            onClick={() => removeActivity(activity.id)}
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Title/Role *</label>
-                      <input
-                        type="text"
-                        placeholder="Volunteer Coordinator"
-                        value={activity.title}
-                        onChange={(e) => updateActivity(activity.id, 'title', e.target.value)}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActivityDragEnd}>
+                  <SortableContext items={cvData.activities.map(a => a.id)} strategy={verticalListSortingStrategy}>
+                    {cvData.activities.map((activity, index) => (
+                      <SortableActivityItem
+                        key={activity.id}
+                        activity={activity}
+                        index={index}
+                        updateActivity={updateActivity}
+                        removeActivity={removeActivity}
                       />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Organization *</label>
-                      <input
-                        type="text"
-                        placeholder="Red Cross"
-                        value={activity.organization}
-                        onChange={(e) => updateActivity(activity.id, 'organization', e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Start Date</label>
-                        <input
-                          type="month"
-                          value={activity.startDate}
-                          onChange={(e) => updateActivity(activity.id, 'startDate', e.target.value)}
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>End Date</label>
-                        <input
-                          type="month"
-                          value={activity.endDate}
-                          onChange={(e) => updateActivity(activity.id, 'endDate', e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        rows="3"
-                        placeholder="Describe your role and contributions..."
-                        value={activity.description}
-                        onChange={(e) => updateActivity(activity.id, 'description', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                ))}
+                    ))}
+                  </SortableContext>
+                </DndContext>
               </div>
             )}
           </div>
@@ -2102,22 +2295,6 @@ const Editor = () => {
                   <div className="resume-section-styled">
                     <div className="section-controls">
                       <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('personal'))}
-                        disabled={sectionOrder.indexOf('personal') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('personal'))}
-                        disabled={sectionOrder.indexOf('personal') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
-                      <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('personal')}
                         title="Hide Section"
@@ -2141,22 +2318,6 @@ const Editor = () => {
                 {sectionVisibility.experience && (
                   <div className="resume-section-styled">
                     <div className="section-controls">
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('experience'))}
-                        disabled={sectionOrder.indexOf('experience') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('experience'))}
-                        disabled={sectionOrder.indexOf('experience') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
                       <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('experience')}
@@ -2229,22 +2390,6 @@ const Editor = () => {
                 {sectionVisibility.education && (
                   <div className="resume-section-styled">
                     <div className="section-controls">
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('education'))}
-                        disabled={sectionOrder.indexOf('education') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('education'))}
-                        disabled={sectionOrder.indexOf('education') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
                       <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('education')}
@@ -2327,22 +2472,6 @@ const Editor = () => {
                   <div className="resume-section-styled">
                     <div className="section-controls">
                       <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('skills'))}
-                        disabled={sectionOrder.indexOf('skills') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('skills'))}
-                        disabled={sectionOrder.indexOf('skills') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
-                      <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('skills')}
                         title="Hide Section"
@@ -2390,22 +2519,6 @@ const Editor = () => {
                 {sectionVisibility.projects && (
                   <div className="resume-section-styled">
                     <div className="section-controls">
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('projects'))}
-                        disabled={sectionOrder.indexOf('projects') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('projects'))}
-                        disabled={sectionOrder.indexOf('projects') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
                       <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('projects')}
@@ -2470,22 +2583,6 @@ const Editor = () => {
                   <div className="resume-section-styled">
                     <div className="section-controls">
                       <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('certificates'))}
-                        disabled={sectionOrder.indexOf('certificates') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('certificates'))}
-                        disabled={sectionOrder.indexOf('certificates') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
-                      <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('certificates')}
                         title="Hide Section"
@@ -2548,22 +2645,6 @@ const Editor = () => {
                   <div className="resume-section-styled">
                     <div className="section-controls">
                       <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionUp(sectionOrder.indexOf('activities'))}
-                        disabled={sectionOrder.indexOf('activities') === 0}
-                        title="Move Up"
-                      >
-                        ↑
-                      </button>
-                      <button
-                        className="section-control-btn"
-                        onClick={() => moveSectionDown(sectionOrder.indexOf('activities'))}
-                        disabled={sectionOrder.indexOf('activities') === sectionOrder.length - 1}
-                        title="Move Down"
-                      >
-                        ↓
-                      </button>
-                      <button
                         className="section-control-btn visibility"
                         onClick={() => toggleSectionVisibility('activities')}
                         title="Hide Section"
@@ -2620,6 +2701,56 @@ const Editor = () => {
                         ))}
                       </SortableContext>
                     </DndContext>
+                  </div>
+                )}
+
+                {/* Hidden Sections */}
+                {Object.entries(sectionVisibility).some(([key, value]) => !value) && (
+                  <div className="hidden-sections-panel" style={{
+                    marginTop: '24px',
+                    padding: '16px',
+                    background: '#F3F4F6',
+                    borderRadius: '8px',
+                    border: '2px dashed #9CA3AF'
+                  }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6B7280', marginBottom: '12px' }}>
+                      Hidden Sections
+                    </h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {Object.entries(sectionVisibility).map(([sectionName, isVisible]) => (
+                        !isVisible && (
+                          <button
+                            key={sectionName}
+                            onClick={() => toggleSectionVisibility(sectionName)}
+                            style={{
+                              padding: '6px 12px',
+                              background: '#FFFFFF',
+                              border: '1px solid #D1D5DB',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              color: '#374151',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.background = '#4F46E5';
+                              e.target.style.color = '#FFFFFF';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.background = '#FFFFFF';
+                              e.target.style.color = '#374151';
+                            }}
+                            title="Click to show section"
+                          >
+                            <span>👁️</span>
+                            <span>{sectionName.charAt(0).toUpperCase() + sectionName.slice(1)}</span>
+                          </button>
+                        )
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
