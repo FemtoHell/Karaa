@@ -78,6 +78,9 @@ const SimpleSortableItem = ({ id, children }) => {
         style={isDragging ? handleActiveStyle : isHovering ? { ...handleStyle, ...handleHoverStyle } : handleStyle}
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
+        title="Drag to reorder"
+        aria-label="Drag handle"
+        role="button"
         {...attributes}
         {...listeners}
       >
