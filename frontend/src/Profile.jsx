@@ -15,7 +15,8 @@ const Profile = () => {
     phone: '',
     location: '',
     bio: '',
-    avatar: authUser?.avatar || 'https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&size=200'
+    avatar: authUser?.avatar || 'https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&size=200',
+    provider: 'local' // default to local
   });
 
   const [editMode, setEditMode] = useState(false);
@@ -51,10 +52,13 @@ const Profile = () => {
             phone: data.data.phone || '',
             location: data.data.location || '',
             bio: data.data.bio || '',
-            avatar: data.data.avatar || authUser.avatar || 'https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&size=200'
+            avatar: data.data.avatar || authUser.avatar || 'https://ui-avatars.com/api/?name=User&background=4F46E5&color=fff&size=200',
+            provider: data.data.provider || authUser.provider || 'local' // Get provider from backend
           };
           setUser(profileData);
           setFormData(profileData);
+          
+          console.log('User profile loaded:', { provider: profileData.provider });
         }
       } catch (error) {
         console.error('Failed to fetch user profile:', error);
@@ -150,30 +154,53 @@ const Profile = () => {
       return;
     }
 
-    if (!deletePassword && authUser?.provider === 'local') {
+    // Check if password is required (for local users)
+    if (!deletePassword && user.provider === 'local') {
       alert('Please enter your password');
       return;
     }
 
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
+      
+      console.log('Deleting account...');
+      console.log('User provider:', user.provider);
+      console.log('Has password:', !!deletePassword);
+      console.log('Endpoint:', API_ENDPOINTS.DELETE_ACCOUNT_PERMANENT);
+      
+      const requestBody = {
+        confirmation: deleteConfirmation
+      };
+      
+      // Only include password if user entered one
+      if (deletePassword) {
+        requestBody.password = deletePassword;
+      }
+      
+      console.log('Request body:', { ...requestBody, password: requestBody.password ? '***' : undefined });
+      
       const response = await fetch(API_ENDPOINTS.DELETE_ACCOUNT_PERMANENT, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          password: deletePassword,
-          confirmation: deleteConfirmation
-        }),
+        body: JSON.stringify(requestBody),
         credentials: 'include'
       });
 
+      console.log('Response status:', response.status);
+      
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to delete account');
+        // Show detailed error message
+        const errorMsg = data.errors 
+          ? data.errors.map(e => e.message).join(', ')
+          : (data.message || 'Failed to delete account');
+        throw new Error(errorMsg);
       }
 
       alert(`Account deleted successfully! ${data.data.resumesDeleted} resumes and ${data.data.notificationsDeleted} notifications were removed.`);
@@ -184,6 +211,11 @@ const Profile = () => {
     } catch (error) {
       console.error('Delete account error:', error);
       alert('Error: ' + error.message);
+    } finally {
+      setLoading(false);
+      setShowDeleteModal(false);
+      setDeleteConfirmation('');
+      setDeletePassword('');
     }
   };
 
@@ -489,7 +521,7 @@ const Profile = () => {
                 />
               </div>
 
-              {authUser?.provider === 'local' && (
+              {user.provider === 'local' && (
                 <div className="form-group">
                   <label>Enter your password:</label>
                   <input
@@ -498,7 +530,19 @@ const Profile = () => {
                     onChange={(e) => setDeletePassword(e.target.value)}
                     placeholder="Your password"
                     className="delete-password-input"
+                    required
                   />
+                  <small style={{color: '#999', fontSize: '12px'}}>
+                    Password is required for local accounts
+                  </small>
+                </div>
+              )}
+              
+              {user.provider !== 'local' && (
+                <div className="form-group">
+                  <small style={{color: '#999', fontSize: '12px'}}>
+                    ℹ️ You are using {user.provider} authentication. No password required.
+                  </small>
                 </div>
               )}
             </div>

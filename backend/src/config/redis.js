@@ -49,6 +49,10 @@ const connectRedis = async () => {
 const cacheHelpers = {
   // Get cached data
   get: async (key) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping GET');
+      return null;
+    }
     try {
       const data = await redisClient.get(key);
       return data ? JSON.parse(data) : null;
@@ -60,6 +64,10 @@ const cacheHelpers = {
 
   // Set cache with TTL
   set: async (key, value, ttl = 3600) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping SET');
+      return false;
+    }
     try {
       await redisClient.setEx(key, ttl, JSON.stringify(value));
       return true;
@@ -71,6 +79,10 @@ const cacheHelpers = {
 
   // Delete cache
   del: async (key) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping DEL');
+      return false;
+    }
     try {
       await redisClient.del(key);
       return true;
@@ -82,6 +94,10 @@ const cacheHelpers = {
 
   // Delete multiple keys by pattern
   delPattern: async (pattern) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping DEL PATTERN');
+      return false;
+    }
     try {
       const keys = await redisClient.keys(pattern);
       if (keys.length > 0) {
@@ -96,6 +112,10 @@ const cacheHelpers = {
 
   // Check if key exists
   exists: async (key) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping EXISTS');
+      return false;
+    }
     try {
       const exists = await redisClient.exists(key);
       return exists === 1;
@@ -107,6 +127,10 @@ const cacheHelpers = {
 
   // Increment counter
   incr: async (key) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping INCR');
+      return null;
+    }
     try {
       return await redisClient.incr(key);
     } catch (error) {
@@ -117,6 +141,10 @@ const cacheHelpers = {
 
   // Set expiration time
   expire: async (key, seconds) => {
+    if (!redisClient.isOpen) {
+      console.warn('Redis not connected, skipping EXPIRE');
+      return false;
+    }
     try {
       await redisClient.expire(key, seconds);
       return true;

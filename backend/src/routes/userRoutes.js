@@ -16,6 +16,19 @@ const router = express.Router();
 // All routes require authentication
 router.use(protect);
 
+// Health check for authenticated user routes
+router.get('/test-auth', (req, res) => {
+  res.json({
+    success: true,
+    message: 'User routes are working',
+    user: {
+      id: req.user.id,
+      email: req.user.email,
+      provider: req.user.provider
+    }
+  });
+});
+
 router.route('/profile')
   .get(getProfile)
   .put(userValidation.updateProfile, updateProfile);

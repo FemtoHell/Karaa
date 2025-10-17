@@ -24,7 +24,7 @@ exports.getProfile = asyncHandler(async (req, res, next) => {
 
   const user = await User.findById(req.user.id)
     .where('deletedAt').equals(null)
-    .select('name email avatar role phone location bio createdAt updatedAt lastLogin');
+    .select('name email avatar role phone location bio provider createdAt updatedAt lastLogin');
 
   if (!user) {
     return next(new ErrorResponse('User not found', 404));
@@ -37,6 +37,7 @@ exports.getProfile = asyncHandler(async (req, res, next) => {
     email: user.email,
     avatar: user.avatar,
     role: user.role,
+    provider: user.provider || 'local', // Include provider
     phone: user.phone ? decrypt(user.phone) : null,
     location: user.location ? decrypt(user.location) : null,
     bio: user.bio ? decrypt(user.bio) : null,
@@ -202,60 +203,93 @@ exports.deleteAccount = asyncHandler(async (req, res, next) => {
 exports.permanentDeleteAccount = asyncHandler(async (req, res, next) => {
   const { password, confirmation } = req.body;
 
-  // Require password confirmation and explicit consent
-  if (!password || confirmation !== 'DELETE MY ACCOUNT') {
-    return next(new ErrorResponse('Password and confirmation required. Type "DELETE MY ACCOUNT" to confirm.', 400));
+  // Check confirmation text
+  if (confirmation !== 'DELETE MY ACCOUNT') {
+    return next(new ErrorResponse('Confirmation text must be "DELETE MY ACCOUNT"', 400));
   }
 
   // Get user with password
-  const user = await User.findById(req.user.id).select('+password');
+  const user = await User.findById(req.user.id).select('+password +provider');
 
   if (!user) {
     return next(new ErrorResponse('User not found', 404));
   }
 
-  // Verify password (skip for OAuth users)
-  if (user.password) {
+  console.log(`Delete account request for user ${req.user.id}, provider: ${user.provider}`);
+
+  // Verify password for local users only
+  if (user.provider === 'local' || user.password) {
+    if (!password) {
+      return next(new ErrorResponse('Password is required for local accounts', 400));
+    }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return next(new ErrorResponse('Incorrect password', 401));
     }
+    console.log('Password verified for local user');
+  } else {
+    // OAuth users don't need password
+    console.log('OAuth user - skipping password verification');
   }
 
-  const Notification = require('../models/Notification');
+  try {
+    const Notification = require('../models/Notification');
 
-  // Delete all user's resumes (permanent)
-  const deletedResumes = await Resume.deleteMany({ user: req.user.id });
-  console.log(`Permanently deleted ${deletedResumes.deletedCount} resumes for user ${req.user.id}`);
+    // Delete all user's resumes (permanent)
+    console.log(`Deleting resumes for user ${req.user.id}...`);
+    const deletedResumes = await Resume.deleteMany({ user: req.user.id });
+    console.log(`Permanently deleted ${deletedResumes.deletedCount} resumes`);
 
-  // Delete all user's notifications
-  const deletedNotifications = await Notification.deleteMany({ user: req.user.id });
-  console.log(`Permanently deleted ${deletedNotifications.deletedCount} notifications for user ${req.user.id}`);
+    // Delete all user's notifications
+    console.log(`Deleting notifications for user ${req.user.id}...`);
+    const deletedNotifications = await Notification.deleteMany({ user: req.user.id });
+    console.log(`Permanently deleted ${deletedNotifications.deletedCount} notifications`);
 
-  // Clear all cache entries for this user
-  await cache.del(`user:profile:${req.user.id}`);
-  await cache.delPattern(`resumes:user:${req.user.id}:*`);
-  await cache.delPattern(`resume:*:user:${req.user.id}`);
-  await cache.delPattern(`notifications:user:${req.user.id}:*`);
-
-  // Permanently delete user account
-  await User.findByIdAndDelete(req.user.id);
-  console.log(`Permanently deleted user account ${req.user.id}`);
-
-  // Clear authentication cookie
-  res.cookie('token', 'none', {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true
-  });
-
-  res.status(200).json({
-    success: true,
-    message: 'Account and all associated data permanently deleted',
-    data: {
-      resumesDeleted: deletedResumes.deletedCount,
-      notificationsDeleted: deletedNotifications.deletedCount
+    // Clear all cache entries for this user (ignore errors if Redis not connected)
+    try {
+      console.log(`Clearing cache for user ${req.user.id}...`);
+      await cache.del(`user:profile:${req.user.id}`);
+      await cache.delPattern(`resumes:user:${req.user.id}:*`);
+      await cache.delPattern(`resume:*:user:${req.user.id}`);
+      await cache.delPattern(`notifications:user:${req.user.id}:*`);
+      console.log('Cache cleared successfully');
+    } catch (cacheError) {
+      console.warn('Cache clearing failed (Redis may not be connected):', cacheError.message);
+      // Continue anyway - cache errors should not prevent account deletion
     }
-  });
+
+    // Permanently delete user account from MongoDB
+    console.log(`Permanently deleting user account ${req.user.id} from MongoDB...`);
+    const deletedUser = await User.findByIdAndDelete(req.user.id);
+    
+    if (!deletedUser) {
+      console.error(`Failed to delete user ${req.user.id} from MongoDB`);
+      return next(new ErrorResponse('Failed to delete user account', 500));
+    }
+    
+    console.log(`Successfully deleted user account ${req.user.id} from MongoDB`);
+
+    // Clear authentication cookie
+    res.cookie('token', 'none', {
+      expires: new Date(Date.now() + 10 * 1000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Account and all associated data permanently deleted',
+      data: {
+        resumesDeleted: deletedResumes.deletedCount,
+        notificationsDeleted: deletedNotifications.deletedCount
+      }
+    });
+  } catch (error) {
+    console.error('Error during permanent account deletion:', error);
+    console.error('Error stack:', error.stack);
+    return next(new ErrorResponse(`Failed to delete account: ${error.message}`, 500));
+  }
 });
 
 // @desc    Upload avatar

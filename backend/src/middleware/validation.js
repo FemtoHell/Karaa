@@ -100,10 +100,13 @@ const userValidation = {
   ],
 
   permanentDelete: [
-    body('password').optional().notEmpty().withMessage('Password is required'),
     body('confirmation')
+      .notEmpty()
+      .withMessage('Confirmation is required')
       .equals('DELETE MY ACCOUNT')
       .withMessage('Please type "DELETE MY ACCOUNT" to confirm'),
+    // Password is optional - will be validated in controller based on user provider
+    body('password').optional({ nullable: true, checkFalsy: true }),
     validate
   ]
 };
