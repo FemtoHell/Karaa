@@ -38,7 +38,10 @@ export const API_ENDPOINTS = {
 
   // Notification endpoints
   NOTIFICATIONS: `${API_BASE_URL}/notifications`,
+  NOTIFICATIONS_UNREAD_COUNT: `${API_BASE_URL}/notifications/unread-count`,
   MARK_NOTIFICATION_READ: (id) => `${API_BASE_URL}/notifications/${id}/read`,
+  MARK_ALL_NOTIFICATIONS_READ: `${API_BASE_URL}/notifications/read-all`,
+  DELETE_NOTIFICATION: (id) => `${API_BASE_URL}/notifications/${id}`,
 
   // Guest endpoints
   GUEST_SESSION: `${API_BASE_URL}/guest/session`,

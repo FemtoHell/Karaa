@@ -14,10 +14,9 @@ import Editor from './Editor';
 import Profile from './Profile';
 import HelpPage from './HelpPage';
 import Guides from './Guides';
+import NotificationsPage from './NotificationsPage';
 import OAuthCallback from './OAuthCallback';
 import SharedResume from './SharedResume';
-import DragTest from './DragTest';
-import DragTestSimple from './DragTestSimple';
 import './App.css';
 
 function App() {
@@ -41,9 +40,8 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/help" element={<HelpPage />} />
               <Route path="/guides" element={<Guides />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/share/:shareId" element={<SharedResume />} />
-              <Route path="/drag-test" element={<DragTest />} />
-              <Route path="/drag-test-simple" element={<DragTestSimple />} />
               {/* Redirect routes - features and testimonials now in home */}
               <Route path="/features" element={<LandingPage />} />
               <Route path="/testimonials" element={<LandingPage />} />

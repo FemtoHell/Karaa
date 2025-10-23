@@ -126,6 +126,42 @@ const Dashboard = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    try {
+      const response = await apiRequest(API_ENDPOINTS.MARK_ALL_NOTIFICATIONS_READ, {
+        method: 'PUT'
+      });
+
+      if (response.success) {
+        // Update local state
+        setNotifications(notifications.map(n => ({
+          ...n,
+          isRead: true,
+          readAt: new Date()
+        })));
+      }
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+    }
+  };
+
+  const markAsRead = async (notificationId) => {
+    try {
+      const response = await apiRequest(API_ENDPOINTS.MARK_NOTIFICATION_READ(notificationId), {
+        method: 'PUT'
+      });
+
+      if (response.success) {
+        // Update local state
+        setNotifications(notifications.map(n =>
+          n._id === notificationId ? { ...n, isRead: true, readAt: new Date() } : n
+        ));
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+    }
+  };
+
   const toggleResumeSelection = (resumeId) => {
     setSelectedResumes(prev => {
       if (prev.includes(resumeId)) {
@@ -203,7 +239,7 @@ const Dashboard = () => {
                 <div className="notification-panel">
                   <div className="notification-header">
                     <h3>Notifications</h3>
-                    <button className="btn-clear">Mark all as read</button>
+                    <button className="btn-clear" onClick={markAllAsRead}>Mark all as read</button>
                   </div>
                   <div className="notification-list">
                     {notifications.length === 0 ? (
@@ -212,7 +248,12 @@ const Dashboard = () => {
                       </div>
                     ) : (
                       notifications.map(notif => (
-                        <div key={notif._id} className={`notification-item ${notif.isRead ? 'read' : 'unread'}`}>
+                        <div
+                          key={notif._id}
+                          className={`notification-item ${notif.isRead ? 'read' : 'unread'}`}
+                          onClick={() => !notif.isRead && markAsRead(notif._id)}
+                          style={{ cursor: notif.isRead ? 'default' : 'pointer' }}
+                        >
                           <div className={`notification-icon ${notif.type}`}>
                             {notif.type === 'success' && (
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -240,7 +281,7 @@ const Dashboard = () => {
                     )}
                   </div>
                   <div className="notification-footer">
-                    <Link to="/help">View All Notifications</Link>
+                    <Link to="/notifications">View All Notifications</Link>
                   </div>
                 </div>
               )}
