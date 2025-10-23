@@ -125,11 +125,8 @@ const Templates = () => {
 
             <nav className="nav-menu">
               <Link to="/" className="nav-link">{t('Home') || 'Home'}</Link>
-              <Link to="/features" className="nav-link">{t('features')}</Link>
-              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
               <Link to="/templates" className="nav-link active">{t('templates')}</Link>
               <Link to="/dashboard" className="nav-link">Dashboard</Link>
-              {isAuthenticated && <Link to="/help" className="nav-link">{t('Help') || 'Help'}</Link>}
             </nav>
 
             <div className="header-actions">
@@ -175,6 +172,18 @@ const Templates = () => {
               <button onClick={() => setSearchQuery('')} className="search-clear">×</button>
             )}
           </div>
+
+          <button
+            onClick={() => navigate('/compare-templates')}
+            className="btn-compare-templates"
+            title="Compare two templates side-by-side"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <rect x="1" y="3" width="7" height="14" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+              <rect x="12" y="3" width="7" height="14" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            </svg>
+            Compare
+          </button>
 
           <select
             value={selectedCategory}

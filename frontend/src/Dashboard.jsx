@@ -19,12 +19,12 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Redirect to login if not authenticated or if guest
+  // Redirect to login if not authenticated (but allow guests)
   useEffect(() => {
-    if (!isAuthenticated || isGuest) {
+    if (!isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated, isGuest, navigate]);
+  }, [isAuthenticated, navigate]);
 
   // Fetch resumes and notifications
   useEffect(() => {
@@ -32,22 +32,38 @@ const Dashboard = () => {
       try {
         setLoading(true);
 
-        // Fetch resumes
-        const resumesResponse = await apiRequest(API_ENDPOINTS.RESUMES);
-        if (resumesResponse.success) {
-          setResumes(resumesResponse.data || []);
-        }
-
-        // Fetch notifications
-        try {
-          const notifResponse = await apiRequest(API_ENDPOINTS.NOTIFICATIONS);
-          if (notifResponse.success) {
-            setNotifications(notifResponse.data || []);
+        // Fetch resumes based on user type
+        if (isGuest) {
+          // For guest users, fetch from guest endpoint
+          const guestSessionId = localStorage.getItem('guestSessionId');
+          if (guestSessionId) {
+            const resumesResponse = await apiRequest(
+              `${API_ENDPOINTS.GUEST_RESUMES}?sessionId=${guestSessionId}`
+            );
+            if (resumesResponse.success) {
+              setResumes(resumesResponse.data || []);
+            }
           }
-        } catch (err) {
-          // Notifications might fail, but don't break the page
-          console.warn('Could not fetch notifications:', err);
+          // Guests don't have notifications
           setNotifications([]);
+        } else {
+          // For regular users
+          const resumesResponse = await apiRequest(API_ENDPOINTS.RESUMES);
+          if (resumesResponse.success) {
+            setResumes(resumesResponse.data || []);
+          }
+
+          // Fetch notifications
+          try {
+            const notifResponse = await apiRequest(API_ENDPOINTS.NOTIFICATIONS);
+            if (notifResponse.success) {
+              setNotifications(notifResponse.data || []);
+            }
+          } catch (err) {
+            // Notifications might fail, but don't break the page
+            console.warn('Could not fetch notifications:', err);
+            setNotifications([]);
+          }
         }
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -59,8 +75,10 @@ const Dashboard = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isGuest, isAuthenticated]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -160,11 +178,8 @@ const Dashboard = () => {
 
             <nav className="nav-menu">
               <Link to="/" className="nav-link">{t('Home') || 'Home'}</Link>
-              <Link to="/features" className="nav-link">{t('features')}</Link>
-              <Link to="/testimonials" className="nav-link">{t('testimonials')}</Link>
               <Link to="/templates" className="nav-link">{t('templates')}</Link>
               <Link to="/dashboard" className="nav-link active">Dashboard</Link>
-              <Link to="/help" className="nav-link">{t('Help') || 'Help'}</Link>
             </nav>
 
             <div className="header-user">

@@ -626,6 +626,7 @@ const Editor = () => {
   const [showCustomization, setShowCustomization] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
+  const [isPrivate, setIsPrivate] = useState(true); // Default to private
   const [showPreview, setShowPreview] = useState(action === 'preview');
   const [customization, setCustomization] = useState({
     font: 'Inter',
@@ -951,6 +952,10 @@ const Editor = () => {
               }
               if (resume.customization) {
                 setCustomization(prev => ({ ...prev, ...resume.customization }));
+              }
+              // Set privacy status
+              if (resume.isPublic !== undefined) {
+                setIsPrivate(!resume.isPublic); // isPrivate is opposite of isPublic
               }
 
               // Fetch template if exists
@@ -1523,6 +1528,34 @@ const Editor = () => {
   const copyShareLink = () => {
     navigator.clipboard.writeText(shareLink);
     alert('Link copied to clipboard!');
+  };
+
+  const togglePrivateStatus = async () => {
+    if (!currentResumeId) {
+      alert('Please save your resume first.');
+      return;
+    }
+
+    try {
+      const newPrivateStatus = !isPrivate;
+      setIsPrivate(newPrivateStatus);
+
+      // Call API to update share settings
+      await resumeService.updateShareSettings(currentResumeId, {
+        isPublic: !newPrivateStatus, // isPublic is opposite of isPrivate
+        consent: !newPrivateStatus // Require consent when making public
+      });
+
+      const statusMessage = newPrivateStatus
+        ? 'Resume is now private. The share link will no longer be accessible.'
+        : 'Resume is now public. Anyone with the link can view it.';
+
+      alert(statusMessage);
+    } catch (error) {
+      console.error('Error updating privacy status:', error);
+      setIsPrivate(!isPrivate); // Revert on error
+      alert(error.message || 'Failed to update privacy status. Please try again.');
+    }
   };
 
   const updateCustomization = (key, value) => {
@@ -2972,6 +3005,16 @@ const Editor = () => {
                 </div>
               </div>
               <div className="share-settings">
+                <label className="share-setting-item">
+                  <input
+                    type="checkbox"
+                    checked={isPrivate}
+                    onChange={togglePrivateStatus}
+                  />
+                  <span style={{ fontWeight: isPrivate ? '600' : '400', color: isPrivate ? '#EF4444' : 'inherit' }}>
+                    🔒 Make Private {isPrivate && '(Link is currently inaccessible)'}
+                  </span>
+                </label>
                 <label className="share-setting-item">
                   <input type="checkbox" defaultChecked />
                   <span>Allow viewers to download CV</span>

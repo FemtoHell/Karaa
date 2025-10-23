@@ -119,11 +119,19 @@ const SharedResume = () => {
   }
 
   if (error || !resume) {
+    // Check if the error is because the resume is private
+    const isPrivateError = error && (error.includes('not public') || error.includes('not found'));
+
     return (
       <div className="shared-resume-error">
-        <div className="error-icon">⚠️</div>
-        <h1>Resume Not Found</h1>
-        <p>{error || 'This resume link is invalid or has expired.'}</p>
+        <div className="error-icon">{isPrivateError ? '🔒' : '⚠️'}</div>
+        <h1>{isPrivateError ? 'This Resume is Private' : 'Resume Not Found'}</h1>
+        <p>
+          {isPrivateError
+            ? 'This resume has been set to private by the owner and is no longer publicly accessible.'
+            : (error || 'This resume link is invalid or has expired.')
+          }
+        </p>
         <button onClick={() => navigate('/')} className="btn-home">
           Go to Home
         </button>

@@ -35,7 +35,7 @@ export const getGuestSession = async () => {
 
 // Save guest resume
 export const saveGuestResume = async (data) => {
-  const sessionId = await getGuestSession();
+  let sessionId = await getGuestSession();
 
   if (!sessionId) {
     throw new Error('Failed to create guest session');
@@ -52,6 +52,41 @@ export const saveGuestResume = async (data) => {
     });
 
     const result = await response.json();
+
+    // If session expired/invalid (401), clear it and retry with new session
+    if (response.status === 401 || (result.message && result.message.includes('expired'))) {
+      console.warn('⚠️ Guest session expired or invalid, creating new session...');
+
+      // Clear old session
+      localStorage.removeItem(GUEST_SESSION_KEY);
+      localStorage.removeItem('guestExpiresIn');
+
+      // Create new session
+      sessionId = await getGuestSession();
+
+      if (!sessionId) {
+        throw new Error('Failed to create new guest session');
+      }
+
+      // Retry save with new session
+      const retryResponse = await fetch(API_ENDPOINTS.GUEST_RESUME, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...data,
+          sessionId
+        })
+      });
+
+      const retryResult = await retryResponse.json();
+
+      if (retryResult.success) {
+        localStorage.setItem(GUEST_RESUME_KEY, retryResult.data.id);
+        return retryResult.data;
+      }
+
+      throw new Error(retryResult.message || 'Failed to save resume after retry');
+    }
 
     if (result.success) {
       // Store resume ID for later retrieval
@@ -91,7 +126,7 @@ export const getGuestResume = async (resumeId) => {
 
 // Update guest resume
 export const updateGuestResume = async (resumeId, data) => {
-  const sessionId = await getGuestSession();
+  let sessionId = await getGuestSession();
 
   if (!sessionId || !resumeId) {
     throw new Error('Invalid session or resume ID');
@@ -108,6 +143,18 @@ export const updateGuestResume = async (resumeId, data) => {
     });
 
     const result = await response.json();
+
+    // If session expired/invalid (401), clear it and save as new resume
+    if (response.status === 401 || (result.message && result.message.includes('expired'))) {
+      console.warn('⚠️ Guest session expired, saving as new resume...');
+
+      // Clear old session
+      localStorage.removeItem(GUEST_SESSION_KEY);
+      localStorage.removeItem('guestExpiresIn');
+
+      // Save as new resume instead of update
+      return await saveGuestResume(data);
+    }
 
     if (result.success) {
       return result.data;

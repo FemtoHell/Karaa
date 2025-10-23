@@ -6,10 +6,9 @@ import LandingPage from './LandingPage';
 import Login from './Login';
 import VerifyEmail from './VerifyEmail';
 import ForgotPassword from './ForgotPassword';
-import Features from './Features';
-import Testimonials from './Testimonials';
 import Templates from './Templates';
 import TemplatePreview from './TemplatePreview';
+import CompareTemplates from './CompareTemplates';
 import Dashboard from './Dashboard';
 import Editor from './Editor';
 import Profile from './Profile';
@@ -33,10 +32,9 @@ function App() {
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/callback" element={<OAuthCallback />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/features" element={<Features />} />
-              <Route path="/testimonials" element={<Testimonials />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/preview" element={<TemplatePreview />} />
+              <Route path="/compare-templates" element={<CompareTemplates />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/editor" element={<Editor />} />
               <Route path="/editor/:id" element={<Editor />} />
@@ -46,7 +44,9 @@ function App() {
               <Route path="/share/:shareId" element={<SharedResume />} />
               <Route path="/drag-test" element={<DragTest />} />
               <Route path="/drag-test-simple" element={<DragTestSimple />} />
-              {/* Redirect missing routes to main pages */}
+              {/* Redirect routes - features and testimonials now in home */}
+              <Route path="/features" element={<LandingPage />} />
+              <Route path="/testimonials" element={<LandingPage />} />
               <Route path="/create" element={<Templates />} />
               <Route path="/settings" element={<Profile />} />
               <Route path="/terms" element={<LandingPage />} />

@@ -7,7 +7,16 @@ const redisClient = process.env.REDIS_URL
   ? redis.createClient({
       url: process.env.REDIS_URL,
       socket: {
-        reconnectStrategy: false // Disable auto-reconnect to prevent blocking
+        reconnectStrategy: (retries) => {
+          if (retries > 10) {
+            console.log('❌ Redis max retries reached, stopping reconnection');
+            return new Error('Max retries reached');
+          }
+          const delay = Math.min(retries * 100, 3000);
+          console.log(`⏳ Redis reconnecting in ${delay}ms... (attempt ${retries})`);
+          return delay;
+        },
+        connectTimeout: 10000
       }
     })
   : redis.createClient({
@@ -15,10 +24,19 @@ const redisClient = process.env.REDIS_URL
       password: process.env.REDIS_PASSWORD || undefined,
       socket: {
         host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379,
-        reconnectStrategy: false
+        port: parseInt(process.env.REDIS_PORT) || 6379,
+        reconnectStrategy: (retries) => {
+          if (retries > 10) {
+            console.log('❌ Redis max retries reached, stopping reconnection');
+            return new Error('Max retries reached');
+          }
+          const delay = Math.min(retries * 100, 3000);
+          console.log(`⏳ Redis reconnecting in ${delay}ms... (attempt ${retries})`);
+          return delay;
+        },
+        connectTimeout: 10000
       },
-      database: process.env.REDIS_DB || 0
+      database: parseInt(process.env.REDIS_DB) || 0
     });
 
 // Error handling
