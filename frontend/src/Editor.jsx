@@ -628,6 +628,7 @@ const Editor = () => {
   const [shareLink, setShareLink] = useState('');
   const [isPrivate, setIsPrivate] = useState(true); // Default to private
   const [showPreview, setShowPreview] = useState(action === 'preview');
+  const [showRealtimePreview, setShowRealtimePreview] = useState(false); // Realtime preview modal
   const [customization, setCustomization] = useState({
     font: 'Inter',
     fontSize: 'medium',
@@ -1765,6 +1766,13 @@ const Editor = () => {
           </div>
 
           <div className="editor-actions">
+            <button className="btn-action btn-realtime" onClick={() => setShowRealtimePreview(true)}>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V3z" stroke="#4F46E5" strokeWidth="1.5"/>
+                <path d="M8 6.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5S6.5 8.83 6.5 8 7.17 6.5 8 6.5z" fill="#4F46E5"/>
+              </svg>
+              <span>View Realtime</span>
+            </button>
             <button className="btn-action" onClick={() => setShowCustomization(!showCustomization)}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <path d="M8 10a2 2 0 100-4 2 2 0 000 4z" stroke="#374151" strokeWidth="1.5"/>
@@ -2948,6 +2956,309 @@ const Editor = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Realtime Preview Modal */}
+      {showRealtimePreview && (
+        <div className="realtime-preview-overlay" onClick={() => setShowRealtimePreview(false)}>
+          <div className="realtime-preview-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="realtime-preview-header">
+              <h3>Realtime Preview - {currentTemplate.name}</h3>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div className="progress-indicator">
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${calculateProgress()}%` }}
+                    />
+                  </div>
+                  <span className="progress-text">{calculateProgress()}% Complete</span>
+                </div>
+                <button className="btn-close-preview" onClick={() => setShowRealtimePreview(false)}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="realtime-preview-content">
+              <div className="resume-preview-wrapper">
+                <div
+                  className={`resume-preview-page ${customization.layout}`}
+                  style={{
+                    '--template-color': currentTemplate.color,
+                    fontFamily: customization.font || 'Inter, sans-serif',
+                    fontSize: `${14 * (customization.fontSize === 'small' ? 0.9 : customization.fontSize === 'large' ? 1.1 : 1.0)}px`,
+                    '--primary-color': (() => {
+                      const colors = {
+                        blue: '#3B82F6', purple: '#8B5CF6', green: '#10B981', red: '#EF4444',
+                        orange: '#F59E0B', teal: '#14B8A6', pink: '#EC4899', gray: '#6B7280'
+                      };
+                      return colors[customization.colorScheme] || '#3B82F6';
+                    })(),
+                    '--secondary-color': (() => {
+                      const colors = {
+                        blue: '#1E40AF', purple: '#6D28D9', green: '#059669', red: '#DC2626',
+                        orange: '#D97706', teal: '#0D9488', pink: '#DB2777', gray: '#4B5563'
+                      };
+                      return colors[customization.colorScheme] || '#1E40AF';
+                    })(),
+                    '--spacing-scale': customization.spacing === 'compact' ? 0.8 : customization.spacing === 'relaxed' ? 1.2 : 1.0
+                  }}
+                >
+                  {/* Resume Header */}
+                  <div className="resume-header-styled" style={{ background: currentTemplate.gradient }}>
+                    <div className="resume-name-styled" style={{ fontWeight: 700, fontSize: '32px', marginBottom: '8px', textAlign: 'center', color: '#FFFFFF' }}>
+                      {cvData.personal.fullName || 'Your Name'}
+                    </div>
+                    <div className="resume-contact-styled">
+                      {cvData.personal.email && <span>{cvData.personal.email}</span>}
+                      {cvData.personal.email && cvData.personal.phone && <span>•</span>}
+                      {cvData.personal.phone && <span>{cvData.personal.phone}</span>}
+                      {(cvData.personal.email || cvData.personal.phone) && cvData.personal.location && <span>•</span>}
+                      {cvData.personal.location && <span>{cvData.personal.location}</span>}
+                    </div>
+                    <div className="resume-links-styled">
+                      {cvData.personal.linkedin && <span style={{ textDecoration: 'underline' }}>{cvData.personal.linkedin}</span>}
+                      {cvData.personal.linkedin && cvData.personal.website && <span>•</span>}
+                      {cvData.personal.website && <span style={{ textDecoration: 'underline' }}>{cvData.personal.website}</span>}
+                    </div>
+                  </div>
+
+                  {/* Professional Summary */}
+                  {sectionVisibility.personal && cvData.personal.summary && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Professional Summary</h2>
+                      <p className="summary-text-styled" style={{ lineHeight: 1.6, color: '#374151' }}>
+                        {cvData.personal.summary}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Experience */}
+                  {sectionVisibility.experience && cvData.experience.some(exp => exp.jobTitle || exp.company) && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Work Experience</h2>
+                      {cvData.experience.map(exp => (
+                        (exp.jobTitle || exp.company) && (
+                          <div key={exp.id} style={{ marginBottom: '16px' }}>
+                            <div className="experience-header-styled">
+                              <div>
+                                <div className="job-title-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
+                                  {exp.jobTitle || 'Job Title'}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span className="company-name-styled" style={{ color: '#6B7280' }}>
+                                    {exp.company || 'Company Name'}
+                                  </span>
+                                  {exp.location && <span>•</span>}
+                                  {exp.location && <span style={{ color: '#6B7280' }}>{exp.location}</span>}
+                                </div>
+                              </div>
+                              <div className="date-range-styled">
+                                {exp.startDate && new Date(exp.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                  exp.current ? 'Present' :
+                                  exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'End Date'
+                                }
+                              </div>
+                            </div>
+                            {exp.description && (
+                              <p className="experience-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
+                                {exp.description}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Education */}
+                  {sectionVisibility.education && cvData.education.some(edu => edu.degree || edu.school) && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Education</h2>
+                      {cvData.education.map(edu => (
+                        (edu.degree || edu.school) && (
+                          <div key={edu.id} style={{ marginBottom: '16px' }}>
+                            <div className="education-header-styled">
+                              <div>
+                                <div className="degree-name-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
+                                  {edu.degree || 'Degree'}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span className="school-name-styled" style={{ color: '#6B7280' }}>
+                                    {edu.school || 'School Name'}
+                                  </span>
+                                  {edu.location && <span>•</span>}
+                                  {edu.location && <span style={{ color: '#6B7280' }}>{edu.location}</span>}
+                                </div>
+                              </div>
+                              <div className="date-range-styled">
+                                {edu.startDate && new Date(edu.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                  edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
+                                }
+                              </div>
+                            </div>
+                            {edu.gpa && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                                <span style={{ fontWeight: 600, color: '#374151' }}>GPA:</span>
+                                <span className="gpa-styled" style={{ color: '#6B7280' }}>{edu.gpa}</span>
+                              </div>
+                            )}
+                            {edu.description && (
+                              <p className="education-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
+                                {edu.description}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Skills */}
+                  {sectionVisibility.skills && (cvData.skills.technical.length > 0 || cvData.skills.soft.length > 0 || cvData.skills.languages.length > 0) && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Skills</h2>
+                      <div className="skills-container-styled">
+                        {cvData.skills.technical.length > 0 && (
+                          <div className="skill-category-styled">
+                            <h4>Technical Skills</h4>
+                            <div className="skill-tags-styled">
+                              {cvData.skills.technical.map((skill, index) => (
+                                <span key={index} className="skill-tag-styled">{skill}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {cvData.skills.soft.length > 0 && (
+                          <div className="skill-category-styled">
+                            <h4>Soft Skills</h4>
+                            <div className="skill-tags-styled">
+                              {cvData.skills.soft.map((skill, index) => (
+                                <span key={index} className="skill-tag-styled">{skill}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {cvData.skills.languages.length > 0 && (
+                          <div className="skill-category-styled">
+                            <h4>Languages</h4>
+                            <div className="skill-tags-styled">
+                              {cvData.skills.languages.map((skill, index) => (
+                                <span key={index} className="skill-tag-styled">{skill}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Projects */}
+                  {sectionVisibility.projects && cvData.projects.some(p => p.name) && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Projects</h2>
+                      {cvData.projects.map(project => (
+                        project.name && (
+                          <div key={project.id} style={{ marginBottom: '12px' }}>
+                            <div className="project-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                              {project.name}
+                            </div>
+                            {project.description && (
+                              <p className="project-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                                {project.description}
+                              </p>
+                            )}
+                            {project.technologies && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                                <strong>Technologies:</strong>
+                                <span className="project-tech-styled" style={{ color: '#6B7280' }}>{project.technologies}</span>
+                              </div>
+                            )}
+                            {project.link && (
+                              <div className="project-link-styled" style={{ marginTop: '4px', color: '#3B82F6', textDecoration: 'underline' }}>
+                                {project.link}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Certificates */}
+                  {sectionVisibility.certificates && cvData.certificates.some(c => c.name) && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Certifications</h2>
+                      {cvData.certificates.map(cert => (
+                        cert.name && (
+                          <div key={cert.id} className="certificate-item-styled" style={{ marginBottom: '12px' }}>
+                            <div className="certificate-header-styled">
+                              <div className="certificate-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                                {cert.name}
+                              </div>
+                              {cert.date && (
+                                <span className="certificate-date-styled">
+                                  {new Date(cert.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}
+                                </span>
+                              )}
+                            </div>
+                            {cert.issuer && (
+                              <div className="certificate-issuer-styled" style={{ color: '#6B7280' }}>
+                                {cert.issuer}
+                              </div>
+                            )}
+                            {cert.description && (
+                              <p className="certificate-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                                {cert.description}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Activities */}
+                  {sectionVisibility.activities && cvData.activities.some(a => a.title) && (
+                    <div className="resume-section-styled">
+                      <h2 className="section-title-styled">Activities & Volunteering</h2>
+                      {cvData.activities.map(activity => (
+                        activity.title && (
+                          <div key={activity.id} className="activity-item-styled" style={{ marginBottom: '12px' }}>
+                            <div className="activity-header-styled">
+                              <div className="activity-title-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                                {activity.title}
+                              </div>
+                              {activity.startDate && (
+                                <span className="date-range-styled">
+                                  {new Date(activity.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                    activity.endDate ? new Date(activity.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
+                                  }
+                                </span>
+                              )}
+                            </div>
+                            {activity.organization && (
+                              <div className="activity-organization-styled" style={{ color: '#6B7280' }}>
+                                {activity.organization}
+                              </div>
+                            )}
+                            {activity.description && (
+                              <p className="activity-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                                {activity.description}
+                              </p>
+                            )}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
