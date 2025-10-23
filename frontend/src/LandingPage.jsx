@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from './LanguageContext';
 import { useAuth } from './AuthContext';
 import LanguageSwitcher from './LanguageSwitcher';
+import NotificationBell from './components/NotificationBell';
 
 const LandingPage = () => {
   const { t } = useLanguage();
@@ -193,6 +194,7 @@ const LandingPage = () => {
 
             <div className="header-actions">
               <LanguageSwitcher />
+              <NotificationBell />
               {isAuthenticated ? (
                 <Link to="/dashboard" className="btn-primary">Dashboard</Link>
               ) : (

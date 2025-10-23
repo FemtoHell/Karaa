@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import './Templates.css';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
+import NotificationBell from './components/NotificationBell';
 import { useAuth } from './AuthContext';
 import { useLanguage } from './LanguageContext';
 import { API_ENDPOINTS, apiRequest } from './config/api';
@@ -131,6 +132,7 @@ const Templates = () => {
 
             <div className="header-actions">
               <LanguageSwitcher />
+              <NotificationBell />
               {isGuest ? (
                 <>
                   <span style={{ color: '#F59E0B', marginRight: '12px', fontSize: '14px' }}>Guest Mode</span>
