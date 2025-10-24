@@ -48,6 +48,14 @@
   justify-content: center;
 }
 
+.logo-image {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #E5E7EB;
+}
+
 .logo-text {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
@@ -349,6 +357,26 @@
 
 .template-card:hover .template-image-wrapper img {
   transform: scale(1.05);
+}
+
+/* Preview Container - Mini template render */
+.template-preview-wrapper {
+  position: relative;
+  width: 100%;
+  height: 650px; /* Taller for A4 ratio with scale 0.55 */
+  min-height: 650px;
+  overflow: hidden;
+  background: #F9FAFB;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.template-preview-wrapper .mini-template-wrapper {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 /* Match Percentage Badge */
@@ -654,6 +682,11 @@
     min-height: 280px;
   }
 
+  .template-preview-wrapper {
+    height: 600px;
+    min-height: 600px;
+  }
+
   .footer-content {
     grid-template-columns: 1fr 1fr;
     gap: 32px;
@@ -691,6 +724,11 @@
     min-height: 320px;
   }
 
+  .template-preview-wrapper {
+    height: 560px;
+    min-height: 560px;
+  }
+
   .footer-content {
     grid-template-columns: 1fr;
     gap: 32px;
@@ -719,6 +757,11 @@
   .template-image-wrapper {
     height: 280px;
     min-height: 280px;
+  }
+
+  .template-preview-wrapper {
+    height: 520px;
+    min-height: 520px;
   }
 
   .template-info {

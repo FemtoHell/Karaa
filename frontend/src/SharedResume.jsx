@@ -149,11 +149,7 @@ const SharedResume = () => {
         <div className="shared-header-content">
           <div className="header-left">
             <div className="logo-section">
-              <div className="logo-icon">
-                <svg width="11" height="14" viewBox="0 0 11 14" fill="none">
-                  <path d="M0 0H11V14L5.5 11L0 14V0Z" fill="#FFFFFF"/>
-                </svg>
-              </div>
+              <img src="/images/resumebuilder-logo.webp" alt="ResumeBuilder Logo" className="logo-image" />
               <span className="logo-text">ResumeBuilder</span>
             </div>
             <div className="resume-title-section">

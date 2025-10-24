@@ -3,6 +3,7 @@ import './Templates.css';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from './LanguageSwitcher';
 import NotificationBell from './components/NotificationBell';
+import MiniTemplatePreview from './components/MiniTemplatePreview';
 import { useAuth } from './AuthContext';
 import { useLanguage } from './LanguageContext';
 import { API_ENDPOINTS, apiRequest } from './config/api';
@@ -116,11 +117,7 @@ const Templates = () => {
         <div className="header-container">
           <div className="header-content">
             <Link to="/" className="logo-wrapper">
-              <div className="logo-icon">
-                <svg width="11" height="14" viewBox="0 0 11 14" fill="none">
-                  <path d="M0 0H11V14L5.5 11L0 14V0Z" fill="#FFFFFF"/>
-                </svg>
-              </div>
+              <img src="/images/resumebuilder-logo.webp" alt="ResumeBuilder Logo" className="logo-image" />
               <span className="logo-text">ResumeBuilder</span>
             </Link>
 
@@ -185,6 +182,17 @@ const Templates = () => {
               <rect x="12" y="3" width="7" height="14" rx="1" stroke="currentColor" strokeWidth="1.5"/>
             </svg>
             Compare
+          </button>
+
+          <button
+            onClick={() => navigate('/guides')}
+            className="btn-compare-templates"
+            title="View CV writing guides by industry"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M10 3C6.13 3 3 6.13 3 10C3 13.87 6.13 17 10 17C13.87 17 17 13.87 17 10C17 6.13 13.87 3 10 3ZM11 15H9V13H11V15ZM11 11H9V5H11V11Z" fill="currentColor"/>
+            </svg>
+            Guide
           </button>
 
           <select
@@ -265,8 +273,8 @@ const Templates = () => {
             <div className="templates-grid">
               {filteredTemplates.map(template => (
                 <div key={template._id} className="template-card">
-                  <div className="template-image-wrapper" style={{ background: template.gradient }}>
-                    <img src={template.image} alt={template.name} />
+                  <div className="template-preview-wrapper">
+                    <MiniTemplatePreview template={template} />
                     <div className="template-overlay">
                       <button
                         onClick={() => handleTemplateClick(template._id, 'preview')}

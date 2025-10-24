@@ -1,0 +1,165 @@
+.mini-template-wrapper {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.mini-resume-container {
+  width: 210mm;
+  height: 297mm;
+  background: white;
+  transform: scale(0.55);
+  transform-origin: top center;
+  padding: 20mm;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* Header */
+.mini-resume-header {
+  padding: 30px;
+  margin: -20mm -20mm 20px -20mm;
+  color: white;
+  border-radius: 0;
+}
+
+.mini-resume-name {
+  font-size: 48px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: white;
+}
+
+.mini-resume-contact {
+  font-size: 16px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  opacity: 0.95;
+}
+
+.mini-resume-contact span {
+  white-space: nowrap;
+}
+
+/* Sections */
+.mini-resume-section {
+  margin-bottom: 25px;
+}
+
+.mini-section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--template-color, #667eea);
+  margin: 0 0 12px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--template-color, #667eea);
+}
+
+.mini-summary-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #555;
+  margin: 0;
+}
+
+/* Experience */
+.mini-experience-item {
+  margin-bottom: 20px;
+}
+
+.mini-experience-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.mini-job-title {
+  font-size: 19px;
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 4px 0;
+}
+
+.mini-company-name {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.mini-date-range {
+  font-size: 14px;
+  color: #777;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.mini-experience-description {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.mini-experience-description p {
+  margin: 4px 0;
+}
+
+/* Education */
+.mini-education-item {
+  margin-bottom: 15px;
+}
+
+.mini-degree-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  margin: 0 0 4px 0;
+}
+
+.mini-school-name {
+  font-size: 15px;
+  color: #666;
+  margin: 0;
+}
+
+/* Skills */
+.mini-skills-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mini-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mini-skill-tag {
+  display: inline-block;
+  padding: 6px 14px;
+  background: rgba(102, 126, 234, 0.1);
+  color: var(--template-color, #667eea);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .mini-resume-container {
+    transform: scale(0.45);
+  }
+}
+
+@media (max-width: 640px) {
+  .mini-resume-container {
+    transform: scale(0.35);
+  }
+}

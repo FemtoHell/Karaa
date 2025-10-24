@@ -37,7 +37,7 @@ const Guides = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_ENDPOINTS.GUIDES}/industry/${industry}`);
+      const response = await fetch(`${API_ENDPOINTS.GUIDES}/industry-guide/${industry}`);
       const data = await response.json();
 
       if (data.success) {

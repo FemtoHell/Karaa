@@ -183,7 +183,8 @@ const LandingPage = () => {
         <div className="header-container">
           <div className="header-content">
             <Link to="/" className="logo-wrapper">
-              <img src="/images/Thanh-logo.png" alt="ResumeBuilder Logo" style={{ height: '40px', width: '40px', objectFit: 'cover', borderRadius: '50%' }} />
+              <img src="/images/resumebuilder-logo.webp" alt="ResumeBuilder Logo" className="logo-image" />
+              <span className="logo-text">ResumeBuilder</span>
             </Link>
 
             <nav className="nav-menu">
