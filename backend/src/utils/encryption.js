@@ -161,18 +161,33 @@ const decryptResumePersonalData = (content) => {
   result.personal = { ...content.personal };
 
   // Decrypt sensitive personal information
-  try {
-    if (result.personal.email && result.personal.email.includes(':')) {
+  // Each field is decrypted separately to prevent one failure from affecting others
+  if (result.personal.email && result.personal.email.includes(':')) {
+    try {
       result.personal.email = decrypt(result.personal.email);
+    } catch (error) {
+      console.error('Failed to decrypt email:', error.message);
+      // Keep encrypted value or set to null based on preference
+      result.personal.email = null;
     }
-    if (result.personal.phone && result.personal.phone.includes(':')) {
+  }
+
+  if (result.personal.phone && result.personal.phone.includes(':')) {
+    try {
       result.personal.phone = decrypt(result.personal.phone);
+    } catch (error) {
+      console.error('Failed to decrypt phone:', error.message);
+      result.personal.phone = null;
     }
-    if (result.personal.address && result.personal.address.includes(':')) {
+  }
+
+  if (result.personal.address && result.personal.address.includes(':')) {
+    try {
       result.personal.address = decrypt(result.personal.address);
+    } catch (error) {
+      console.error('Failed to decrypt address:', error.message);
+      result.personal.address = null;
     }
-  } catch (error) {
-    console.warn('Failed to decrypt resume personal data:', error.message);
   }
 
   return result;

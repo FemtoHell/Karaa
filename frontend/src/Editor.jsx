@@ -31,6 +31,8 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 // Sortable Education Item Component for Form Editor
 const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEducation }) => {
@@ -1374,10 +1376,6 @@ const Editor = () => {
   const exportToPDF = async () => {
     try {
       setSaveStatus('saving');
-
-      // Dynamically import libraries to reduce initial bundle size
-      const html2canvas = (await import('html2canvas')).default;
-      const jsPDF = (await import('jspdf')).default;
 
       // Get the resume preview element
       const resumeElement = document.querySelector('.resume-preview-page');
