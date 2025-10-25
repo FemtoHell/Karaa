@@ -176,7 +176,7 @@ const TemplatePreview = () => {
 
           <div className="preview-title">
             <h1>{template.name}</h1>
-            <p>Preview with sample data • Layout: {layoutType}</p>
+            <p>Preview with sample data • Layout: {template.layout?.type || 'single-column'}</p>
           </div>
 
           <button onClick={handleUseTemplate} className="btn-use-template-primary">
