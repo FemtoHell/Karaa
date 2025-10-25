@@ -2670,20 +2670,6 @@ const Editor = () => {
 
     {/* Share Modal */}
     {showShareModal && (
-                        </div>
-                      )
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* Share Modal */}
-    {showShareModal && (
       <div className="share-modal-overlay" onClick={() => setShowShareModal(false)}>
         <div className="share-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">

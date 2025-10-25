@@ -809,14 +809,17 @@ exports.exportDocx = asyncHandler(async (req, res, next) => {
   }
 
   try {
+    // Decrypt personal data before exporting
+    const decryptedContent = decryptResumePersonalData(resume.content);
+
     // Generate DOCX buffer
     const buffer = await generateDocx({
-      content: resume.content,
+      content: decryptedContent,
       customization: resume.customization
     });
 
     // Set response headers
-    const fileName = `${resume.content.personal?.fullName || 'Resume'}_${resume.title}.docx`.replace(/\s+/g, '_');
+    const fileName = `${decryptedContent.personal?.fullName || 'Resume'}_${resume.title}.docx`.replace(/\s+/g, '_');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', buffer.length);
@@ -863,14 +866,17 @@ exports.exportSharedDocx = asyncHandler(async (req, res, next) => {
   }
 
   try {
+    // Decrypt personal data before exporting
+    const decryptedContent = decryptResumePersonalData(resume.content);
+
     // Generate DOCX buffer
     const buffer = await generateDocx({
-      content: resume.content,
+      content: decryptedContent,
       customization: resume.customization
     });
 
     // Set response headers
-    const fileName = `${resume.content.personal?.fullName || 'Resume'}_${resume.title}.docx`.replace(/\s+/g, '_');
+    const fileName = `${decryptedContent.personal?.fullName || 'Resume'}_${resume.title}.docx`.replace(/\s+/g, '_');
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', buffer.length);

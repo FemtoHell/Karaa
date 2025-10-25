@@ -6,13 +6,16 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .mini-resume-container {
   width: 210mm;
   height: 297mm;
   background: white;
-  transform: scale(0.55);
+  transform: scale(0.38);
   transform-origin: top center;
   padding: 20mm;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -319,12 +322,12 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .mini-resume-container {
-    transform: scale(0.45);
+    transform: scale(0.32);
   }
 }
 
 @media (max-width: 640px) {
   .mini-resume-container {
-    transform: scale(0.35);
+    transform: scale(0.25);
   }
 }

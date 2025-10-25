@@ -14,73 +14,73 @@ const TemplatePreview = () => {
   // Sample CV data for preview
   const sampleData = {
     personal: {
-      fullName: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+1 (555) 123-4567',
-      location: 'New York, NY',
-      linkedin: 'linkedin.com/in/johndoe',
-      website: 'johndoe.com',
+      fullName: 'Nguyễn Văn Minh',
+      email: 'nguyenvanminh@example.com',
+      phone: '+84 (0) 912 345 678',
+      location: 'Hà Nội, Việt Nam',
+      linkedin: 'linkedin.com/in/nguyenvanminh',
+      website: 'nguyenvanminh.dev',
       photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&q=80',
-      summary: 'Experienced software engineer with 5+ years of expertise in full-stack development, specializing in React, Node.js, and cloud technologies. Passionate about building scalable applications and leading engineering teams.'
+      summary: 'Full-stack Developer với hơn 5 năm kinh nghiệm phát triển ứng dụng web và mobile. Chuyên sâu về React, Node.js, và các công nghệ cloud hiện đại. Đam mê xây dựng sản phẩm có tác động thực sự và dẫn dắt đội ngũ kỹ thuật.'
     },
     experience: [
       {
         id: 1,
-        jobTitle: 'Senior Software Engineer',
-        company: 'Tech Corp Inc.',
-        location: 'New York, NY',
-        startDate: '2021-01',
+        jobTitle: 'Senior Full-Stack Developer',
+        company: 'VNG Corporation',
+        location: 'TP. Hồ Chí Minh',
+        startDate: '2022-03',
         endDate: 'Present',
         current: true,
-        description: '• Led a team of 5 engineers in developing a microservices-based platform\n• Improved application performance by 40% through optimization\n• Mentored junior developers and conducted code reviews'
+        description: '• Dẫn dắt nhóm 6 kỹ sư phát triển nền tảng microservices phục vụ 10M+ người dùng\n• Tối ưu hiệu năng hệ thống, giảm 50% thời gian phản hồi API\n• Triển khai CI/CD pipeline và infrastructure as code với Docker & Kubernetes'
       },
       {
         id: 2,
-        jobTitle: 'Software Engineer',
-        company: 'StartUp Labs',
-        location: 'San Francisco, CA',
-        startDate: '2019-06',
-        endDate: '2021-01',
+        jobTitle: 'Full-Stack Developer',
+        company: 'FPT Software',
+        location: 'Hà Nội',
+        startDate: '2020-01',
+        endDate: '2022-02',
         current: false,
-        description: '• Developed RESTful APIs using Node.js and Express\n• Implemented CI/CD pipelines reducing deployment time by 60%\n• Collaborated with product team on feature development'
+        description: '• Phát triển RESTful APIs sử dụng Node.js, Express và MongoDB\n• Xây dựng responsive web apps với React và Redux\n• Tích hợp payment gateway (VNPay, Momo) và third-party services'
       }
     ],
     education: [
       {
         id: 1,
-        degree: 'Bachelor of Science in Computer Science',
-        school: 'University of Technology',
-        location: 'Boston, MA',
+        degree: 'Cử nhân Công nghệ Thông tin',
+        school: 'Đại học Bách Khoa Hà Nội',
+        location: 'Hà Nội',
         startDate: '2015-09',
-        endDate: '2019-05',
-        gpa: '3.8/4.0',
-        description: 'Relevant Coursework: Data Structures, Algorithms, Web Development, Database Systems'
+        endDate: '2019-06',
+        gpa: '3.6/4.0',
+        description: 'Chuyên ngành: Kỹ thuật Phần mềm. Các môn học: Cấu trúc dữ liệu & Giải thuật, Lập trình Web, Cơ sở dữ liệu'
       }
     ],
     skills: {
-      technical: ['JavaScript', 'React', 'Node.js', 'Python', 'Docker', 'AWS', 'MongoDB', 'PostgreSQL'],
-      soft: ['Leadership', 'Communication', 'Problem Solving', 'Team Collaboration'],
-      languages: ['English (Native)', 'Spanish (Intermediate)']
+      technical: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Docker', 'AWS', 'MongoDB', 'PostgreSQL', 'Redis'],
+      soft: ['Lãnh đạo nhóm', 'Giao tiếp hiệu quả', 'Giải quyết vấn đề', 'Làm việc nhóm'],
+      languages: ['Tiếng Việt (Bản ngữ)', 'Tiếng Anh (TOEIC 850)']
     },
     projects: [
       {
         id: 1,
-        name: 'E-commerce Platform',
-        description: 'Built a full-stack e-commerce platform with payment integration and real-time inventory management',
-        technologies: 'React, Node.js, MongoDB, Stripe API',
-        link: 'github.com/johndoe/ecommerce',
-        startDate: '2023-01',
-        endDate: '2023-06'
+        name: 'Nền tảng Thương mại Điện tử',
+        description: 'Xây dựng full-stack e-commerce platform với tích hợp thanh toán online, quản lý kho, và real-time analytics',
+        technologies: 'React, Node.js, MongoDB, Redis, VNPay API',
+        link: 'github.com/nguyenvanminh/ecommerce-platform',
+        startDate: '2023-03',
+        endDate: '2023-12'
       }
     ],
     certificates: [
       {
         id: 1,
-        name: 'AWS Certified Solutions Architect',
+        name: 'AWS Certified Solutions Architect - Associate',
         issuer: 'Amazon Web Services',
-        date: '2022-08',
+        date: '2023-06',
         link: 'aws.amazon.com/certification',
-        description: 'Professional level certification for designing distributed systems on AWS'
+        description: 'Chứng chỉ chuyên nghiệp về thiết kế và triển khai hệ thống phân tán trên AWS'
       }
     ]
   };

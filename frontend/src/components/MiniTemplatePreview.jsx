@@ -5,21 +5,21 @@ const MiniTemplatePreview = ({ template }) => {
   // Sample minimal data for mini preview
   const sampleData = {
     personal: {
-      fullName: 'John Doe',
-      email: 'john@example.com',
-      phone: '+1 234-567-8900',
-      summary: 'Experienced professional with expertise in modern technologies'
+      fullName: 'Nguyễn Văn Minh',
+      email: 'nguyenvanminh@example.com',
+      phone: '+84 912 345 678',
+      summary: 'Full-stack Developer với hơn 5 năm kinh nghiệm chuyên về React và Node.js'
     },
     experience: {
-      jobTitle: 'Senior Engineer',
-      company: 'Tech Corp',
-      period: '2021 - Present'
+      jobTitle: 'Senior Full-Stack Developer',
+      company: 'VNG Corporation',
+      period: '2022 - Hiện tại'
     },
     education: {
-      degree: 'Bachelor of Science',
-      school: 'University'
+      degree: 'Cử nhân Công nghệ Thông tin',
+      school: 'ĐH Bách Khoa Hà Nội'
     },
-    skills: ['JavaScript', 'React', 'Node.js', 'Python', 'AWS']
+    skills: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Docker', 'AWS']
   };
 
   const templateColor = template.gradient?.includes('linear-gradient')
