@@ -30,10 +30,6 @@ import './Editor.css';
 // ================================================================================
 // CUSTOM COMPONENTS
 // ================================================================================
-import EditableField from './components/EditableField';
-import SortableSection from './components/SortableSection';
-import SimpleSortableItem from './components/SimpleSortableItem';
-import CustomizationPanel from './components/CustomizationPanel';
 import TemplateSwitcher from './components/TemplateSwitcher';
 import ResumePreview from './components/ResumePreview';
 
@@ -57,7 +53,6 @@ import {
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -65,7 +60,6 @@ import {
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -961,6 +955,12 @@ const Editor = () => {
     });
   };
 
+  // ============================================================================
+  // ITEM MOVE HELPERS (Legacy - Used by up/down buttons)
+  // ============================================================================
+  /**
+   * Move education item up
+   */
   const moveEducationUp = (id) => {
     setCvData(prev => {
       const index = prev.education.findIndex(edu => edu.id === id);
@@ -1238,6 +1238,12 @@ const Editor = () => {
     }));
   };
 
+  // ============================================================================
+  // SECTION ORDER HELPERS (Legacy - Keep for backward compatibility)
+  // ============================================================================
+  /**
+   * Move section up in order (Alternative to drag-and-drop)
+   */
   const moveSectionUp = (index) => {
     if (index > 0) {
       const newOrder = [...sectionOrder];
