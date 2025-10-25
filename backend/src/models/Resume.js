@@ -95,8 +95,15 @@ const ResumeSchema = new mongoose.Schema({
     layout: {
       type: String,
       enum: [
-        'single-column',
-        'two-column',
+        // Standard layouts from Template model
+        'single-column',        // Traditional 1 column
+        'two-column',           // Sidebar + main
+        'two-column-equal',     // Equal split (50/50)
+        'timeline',             // Vertical timeline
+        'modern-blocks',        // Card/block based
+        'infographic',          // Visual/chart based
+        'grid',                 // Grid layout
+        // Legacy/Additional layouts for backward compatibility
         'modern',
         'academic',
         'creative-grid',

@@ -25,7 +25,9 @@ export const API_ENDPOINTS = {
   RESTORE_VERSION: (id, version) => `${API_BASE_URL}/resumes/${id}/restore/${version}`,
   COMPARE_VERSIONS: (id, v1, v2) => `${API_BASE_URL}/resumes/${id}/compare/${v1}/${v2}`,
   EXPORT_DOCX: (id) => `${API_BASE_URL}/resumes/${id}/export/docx`,
+  EXPORT_PDF: (id) => `${API_BASE_URL}/resumes/${id}/export/pdf`,
   EXPORT_SHARED_DOCX: (shareId) => `${API_BASE_URL}/resumes/share/${shareId}/export/docx`,
+  EXPORT_SHARED_PDF: (shareId) => `${API_BASE_URL}/resumes/share/${shareId}/export/pdf`,
 
   // Template endpoints
   TEMPLATES: `${API_BASE_URL}/templates`,

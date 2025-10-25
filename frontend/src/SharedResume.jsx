@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './SharedResume.css';
 import { API_ENDPOINTS } from './config/api';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const SharedResume = () => {
   const { shareId } = useParams();
@@ -45,36 +43,23 @@ const SharedResume = () => {
   const downloadPDF = async () => {
     try {
       setDownloading(true);
-      const element = document.getElementById('resume-preview');
-      
-      if (!element) {
-        throw new Error('Resume preview not found');
+      const response = await fetch(API_ENDPOINTS.EXPORT_SHARED_PDF(shareId));
+
+      if (!response.ok) {
+        throw new Error('Failed to download PDF');
       }
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${resume.title || 'resume'}.pdf`;
+      document.body.appendChild(a);
+      a.click();
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-      const imgX = (pdfWidth - imgWidth * ratio) / 2;
-      const imgY = 0;
-
-      pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
-      pdf.save(`${resume.title || 'resume'}.pdf`);
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (err) {
       console.error('Error downloading PDF:', err);
       alert('Failed to download PDF. Please try again.');

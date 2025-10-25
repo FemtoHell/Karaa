@@ -22,11 +22,13 @@ const Templates = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch templates from API
+  // Fetch templates from API - Only once on mount
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
         setLoading(true);
+        setError(null);
+        // Remove skipCache to use cached data and reduce API calls
         const response = await apiRequest(API_ENDPOINTS.TEMPLATES);
         if (response.success) {
           setAllTemplates(response.data);
@@ -40,7 +42,7 @@ const Templates = () => {
     };
 
     fetchTemplates();
-  }, []);
+  }, []); // Empty dependency - only run once
 
   const handleTemplateClick = (templateId, action) => {
     // Allow preview for everyone

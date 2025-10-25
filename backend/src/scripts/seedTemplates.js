@@ -2,18 +2,43 @@ const mongoose = require('mongoose');
 const Template = require('../models/Template');
 require('dotenv').config();
 
-const templates = [
-  // Modern Templates
+// Import templates from templateSeeds.js
+const path = require('path');
+const fs = require('fs');
+
+// Read templateSeeds.js and extract templates array
+const templateSeedsPath = path.join(__dirname, '../seeds/templateSeeds.js');
+const templateSeedsContent = fs.readFileSync(templateSeedsPath, 'utf-8');
+
+// Extract templates array using regex (simple approach)
+// Better approach: directly require if it exports templates
+let templates = [];
+
+try {
+  // Try to evaluate the templates array from the file
+  const templatesMatch = templateSeedsContent.match(/const templates = \[([\s\S]*?)\];/);
+  if (templatesMatch) {
+    // Use eval carefully - this is for development seeding only
+    eval(`templates = [${templatesMatch[1]}];`);
+    console.log(`📦 Loaded ${templates.length} templates from templateSeeds.js`);
+  } else {
+    throw new Error('Could not extract templates array');
+  }
+} catch (error) {
+  console.warn('⚠️  Could not load from templateSeeds.js, using fallback templates');
+
+  // Fallback to inline templates if import fails
+  templates = [
+  // 1. MODERN MINIMAL
   {
-    name: 'Modern Blue',
-    description: 'Clean and contemporary design perfect for tech professionals and software engineers',
+    name: 'Modern Minimal',
+    description: 'Clean, ATS-friendly single-column resume perfect for software engineers',
     category: 'modern',
     color: 'blue',
-    gradient: 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)',
-    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&h=600&fit=crop&q=80',
-    tags: ['tech', 'software', 'modern', 'clean', 'professional'],
-    popularity: 95
-  },
+    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    image: 'https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=400&h=500&fit=crop&q=80',
+    tags: ['tech', 'developer', 'modern', 'ats-friendly'],
+    popularity: 95,
   {
     name: 'Modern Green',
     description: 'Vibrant design with geometric elements for creative minds and designers',

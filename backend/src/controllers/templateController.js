@@ -7,19 +7,21 @@ const { ErrorResponse } = require('../middleware/errorHandler');
 // @route   GET /api/v1/templates
 // @access  Public
 exports.getTemplates = asyncHandler(async (req, res, next) => {
-  const { category, color, sort = 'popularity', order = 'desc', search = '' } = req.query;
+  const { category, color, sort = 'popularity', order = 'desc', search = '', skipCache } = req.query;
 
   // Cache key
   const cacheKey = `templates:category:${category || 'all'}:color:${color || 'all'}:sort:${sort}:search:${search}`;
 
-  // Check cache
-  const cachedData = await cache.get(cacheKey);
-  if (cachedData) {
-    return res.status(200).json({
-      success: true,
-      cached: true,
-      data: cachedData
-    });
+  // Check cache only if not skipping
+  if (!skipCache) {
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        cached: true,
+        data: cachedData
+      });
+    }
   }
 
   // Build query
@@ -45,10 +47,10 @@ exports.getTemplates = asyncHandler(async (req, res, next) => {
   const sortObj = {};
   sortObj[sort] = order === 'asc' ? 1 : -1;
 
-  const templates = await Template.find(query).sort(sortObj).select('-__v');
+  const templates = await Template.find(query).sort(sortObj).select('-__v').lean();
 
-  // Cache for 1 hour
-  await cache.set(cacheKey, templates, 3600);
+  // Cache for 30 minutes (reduced from 1 hour)
+  await cache.set(cacheKey, templates, 1800);
 
   res.status(200).json({
     success: true,
@@ -62,32 +64,34 @@ exports.getTemplates = asyncHandler(async (req, res, next) => {
 // @access  Public
 exports.getTemplate = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
+  const { skipCache } = req.query; // Allow bypassing cache
 
   // Cache key
   const cacheKey = `template:${id}`;
 
-  // Check cache
-  const cachedData = await cache.get(cacheKey);
-  if (cachedData) {
-    return res.status(200).json({
-      success: true,
-      cached: true,
-      data: cachedData
-    });
+  // Check cache only if not skipping
+  if (!skipCache) {
+    const cachedData = await cache.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json({
+        success: true,
+        cached: true,
+        data: cachedData
+      });
+    }
   }
 
-  const template = await Template.findOne({ _id: id, isActive: true }).select('-__v');
+  const template = await Template.findOne({ _id: id, isActive: true }).select('-__v').lean();
 
   if (!template) {
     return next(new ErrorResponse('Template not found', 404));
   }
 
-  // Increment view count
-  template.views += 1;
-  await template.save();
+  // Increment view count (without waiting)
+  Template.findByIdAndUpdate(id, { $inc: { views: 1 } }).catch(err => console.error('Failed to increment views:', err));
 
-  // Cache for 1 hour
-  await cache.set(cacheKey, template, 3600);
+  // Cache for 30 minutes (reduced from 1 hour to ensure fresher data)
+  await cache.set(cacheKey, template, 1800);
 
   res.status(200).json({
     success: true,

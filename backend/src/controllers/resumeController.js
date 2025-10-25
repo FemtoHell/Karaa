@@ -224,8 +224,11 @@ exports.createResume = asyncHandler(async (req, res, next) => {
     deleted_at: resume.deletedAt
   };
 
-  // Clear user's resumes cache
+  // Clear user's resumes cache AND template cache to ensure fresh data
   await cache.delPattern(`resumes:user:${req.user.id}:*`);
+  if (template_id) {
+    await cache.del(`template:${template_id}`);
+  }
 
   res.status(201).json({
     success: true,

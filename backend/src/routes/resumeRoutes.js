@@ -17,6 +17,7 @@ const {
   exportDocx,
   exportSharedDocx
 } = require('../controllers/resumeController');
+const { exportPdf, exportSharedPdf } = require('../controllers/pdfExport');
 const { protect } = require('../middleware/auth');
 const { resumeValidation } = require('../middleware/validation');
 
@@ -25,6 +26,7 @@ const router = express.Router();
 // Public routes
 router.get('/share/:shareId', getSharedResume);
 router.get('/share/:shareId/export/docx', exportSharedDocx);
+router.get('/share/:shareId/export/pdf', exportSharedPdf);
 
 // All other routes require authentication
 router.use(protect);
@@ -44,6 +46,7 @@ router.post('/:id/duplicate', duplicateResume);
 
 // Export routes
 router.get('/:id/export/docx', exportDocx);
+router.get('/:id/export/pdf', exportPdf);
 
 // Sharing routes
 router.post('/:id/share', generateShareLink);

@@ -123,6 +123,34 @@ export const resumeService = {
     return { blob, filename };
   },
 
+  // Export resume as PDF
+  exportPdf: async (id) => {
+    const token = getToken();
+    const response = await fetch(API_ENDPOINTS.EXPORT_PDF(id), {
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to export resume as PDF');
+    }
+
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'resume.pdf';
+    if (contentDisposition) {
+      const matches = /filename="([^"]*)"/.exec(contentDisposition);
+      if (matches && matches[1]) {
+        filename = matches[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { blob, filename };
+  },
+
   // Generate share link
   generateShareLink: async (id, settings = {}) => {
     return apiRequest(`${API_ENDPOINTS.RESUME_BY_ID(id)}/share`, {
@@ -171,6 +199,32 @@ export const resumeService = {
 
     const blob = await response.blob();
     return { blob, filename };
+  },
+
+  // Export shared resume as PDF
+  exportSharedPdf: async (shareId, password = null) => {
+    const url = password
+      ? `${API_ENDPOINTS.EXPORT_SHARED_PDF(shareId)}?password=${password}`
+      : API_ENDPOINTS.EXPORT_SHARED_PDF(shareId);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error('Failed to export shared resume as PDF');
+    }
+
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'resume.pdf';
+    if (contentDisposition) {
+      const matches = /filename="([^"]*)"/.exec(contentDisposition);
+      if (matches && matches[1]) {
+        filename = matches[1];
+      }
+    }
+
+    const blob = await response.blob();
+    return { blob, filename };
   }
 };
 
@@ -178,14 +232,17 @@ export const resumeService = {
 export const templateService = {
   // Get all templates
   getAll: async (params = {}) => {
-    const query = new URLSearchParams(params).toString();
-    const url = query ? `${API_ENDPOINTS.TEMPLATES}?${query}` : API_ENDPOINTS.TEMPLATES;
+    // Add skipCache by default to prevent stale data
+    const finalParams = { skipCache: true, ...params };
+    const query = new URLSearchParams(finalParams).toString();
+    const url = query ? `${API_ENDPOINTS.TEMPLATES}?${query}` : `${API_ENDPOINTS.TEMPLATES}?skipCache=true`;
     return apiRequest(url);
   },
 
   // Get single template
-  getById: async (id) => {
-    return apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(id));
+  getById: async (id, skipCache = true) => {
+    const url = skipCache ? `${API_ENDPOINTS.TEMPLATE_BY_ID(id)}?skipCache=true` : API_ENDPOINTS.TEMPLATE_BY_ID(id);
+    return apiRequest(url);
   },
 
   // Get categories

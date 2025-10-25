@@ -5,9 +5,11 @@ import EditableField from './components/EditableField';
 import SortableSection from './components/SortableSection';
 import SimpleSortableItem from './components/SimpleSortableItem';
 import CustomizationPanel from './components/CustomizationPanel';
+import TemplateSwitcher from './components/TemplateSwitcher';
+import ResumePreview from './components/ResumePreview';
 import { API_ENDPOINTS, apiRequest } from './config/api';
 import { useAuth } from './AuthContext';
-import { resumeService } from './services/api.service';
+import { resumeService, templateService } from './services/api.service';
 import {
   saveGuestResume,
   getGuestResume,
@@ -31,11 +33,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
-// Sortable Education Item Component for Form Editor
-const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEducation }) => {
+// =================================================================
+// 1. TẠO COMPONENT CHUNG ĐỂ TÁI SỬ DỤNG
+// =================================================================
+// Component này sẽ thay thế cho 4 components bị lặp
+const SortableFormItem = ({ id, children }) => {
   const {
     attributes,
     listeners,
@@ -44,7 +47,7 @@ const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEduc
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: edu.id });
+  } = useSortable({ id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -105,510 +108,17 @@ const SortableEducationItem = ({ edu, index, cvData, updateEducation, removeEduc
         </svg>
       </div>
 
-      {/* CONTENT */}
-      <div className="education-item">
-        <div className="item-header">
-          <h4>Education {index + 1}</h4>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              className="btn-remove"
-              onClick={() => removeEducation(edu.id)}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Degree *</label>
-          <input
-            type="text"
-            placeholder="Bachelor of Science in Computer Science"
-            value={edu.degree}
-            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>School *</label>
-          <input
-            type="text"
-            placeholder="University of California, Berkeley"
-            value={edu.school}
-            onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Location</label>
-          <input
-            type="text"
-            placeholder="Berkeley, CA"
-            value={edu.location}
-            onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
-          />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Start Date *</label>
-            <input
-              type="month"
-              value={edu.startDate}
-              onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>End Date</label>
-            <input
-              type="month"
-              value={edu.endDate}
-              onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>GPA</label>
-          <input
-            type="text"
-            placeholder="3.8/4.0"
-            value={edu.gpa}
-            onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-          <textarea
-            rows="3"
-            placeholder="Relevant coursework, honors, achievements..."
-            value={edu.description}
-            onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
-          />
-        </div>
-      </div>
+      {/* CONTENT (Nội dung form sẽ được truyền vào đây) */}
+      {children}
     </div>
   );
 };
 
-// Sortable Project Item Component for Form Editor
-const SortableProjectItem = ({ project, index, updateProject, removeProject }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: project.id });
+// =================================================================
+// 2. XÓA 4 COMPONENTS BỊ LẶP (SortableEducationItem, SortableProjectItem, v.v.)
+// =================================================================
+// ... (Đã xóa) ...
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    position: 'relative',
-    padding: '16px 16px 16px 56px',
-    margin: '12px 0',
-    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
-    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
-    borderRadius: '12px',
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const handleStyle = {
-    position: 'absolute',
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '32px',
-    height: '80%',
-    minHeight: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#ffffff',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    cursor: 'grab',
-    touchAction: 'none',
-    userSelect: 'none',
-    zIndex: 999,
-    pointerEvents: 'auto',
-  };
-
-  const handleActiveStyle = {
-    ...handleStyle,
-    cursor: 'grabbing',
-    background: '#e0e7ff',
-    borderColor: '#4f46e5',
-  };
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      <div
-        ref={setActivatorNodeRef}
-        style={isDragging ? handleActiveStyle : handleStyle}
-        {...attributes}
-        {...listeners}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
-        </svg>
-      </div>
-
-      <div className="project-item">
-        <div className="item-header">
-          <h4>Project {index + 1}</h4>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              className="btn-remove"
-              onClick={() => removeProject(project.id)}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Project Name *</label>
-          <input
-            type="text"
-            placeholder="E-commerce Platform"
-            value={project.name}
-            onChange={(e) => updateProject(project.id, 'name', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Description *</label>
-          <textarea
-            rows="3"
-            placeholder="Describe what the project does and your role..."
-            value={project.description}
-            onChange={(e) => updateProject(project.id, 'description', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Technologies Used</label>
-          <input
-            type="text"
-            placeholder="React, Node.js, MongoDB, AWS"
-            value={project.technologies}
-            onChange={(e) => updateProject(project.id, 'technologies', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Project Link</label>
-          <input
-            type="url"
-            placeholder="https://github.com/username/project"
-            value={project.link}
-            onChange={(e) => updateProject(project.id, 'link', e.target.value)}
-          />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Start Date</label>
-            <input
-              type="month"
-              value={project.startDate}
-              onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>End Date</label>
-            <input
-              type="month"
-              value={project.endDate}
-              onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Sortable Certificate Item Component for Form Editor
-const SortableCertificateItem = ({ cert, index, updateCertificate, removeCertificate }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: cert.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    position: 'relative',
-    padding: '16px 16px 16px 56px',
-    margin: '12px 0',
-    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
-    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
-    borderRadius: '12px',
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const handleStyle = {
-    position: 'absolute',
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '32px',
-    height: '80%',
-    minHeight: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#ffffff',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    cursor: 'grab',
-    touchAction: 'none',
-    userSelect: 'none',
-    zIndex: 999,
-    pointerEvents: 'auto',
-  };
-
-  const handleActiveStyle = {
-    ...handleStyle,
-    cursor: 'grabbing',
-    background: '#e0e7ff',
-    borderColor: '#4f46e5',
-  };
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      <div
-        ref={setActivatorNodeRef}
-        style={isDragging ? handleActiveStyle : handleStyle}
-        {...attributes}
-        {...listeners}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
-        </svg>
-      </div>
-
-      <div className="certificate-item">
-        <div className="item-header">
-          <h4>Certificate {index + 1}</h4>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              className="btn-remove"
-              onClick={() => removeCertificate(cert.id)}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Certificate Name *</label>
-          <input
-            type="text"
-            placeholder="AWS Certified Solutions Architect"
-            value={cert.name}
-            onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Issuing Organization *</label>
-          <input
-            type="text"
-            placeholder="Amazon Web Services"
-            value={cert.issuer}
-            onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Date Issued</label>
-          <input
-            type="month"
-            value={cert.date}
-            onChange={(e) => updateCertificate(cert.id, 'date', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Certificate Link</label>
-          <input
-            type="url"
-            placeholder="https://www.credly.com/badges/..."
-            value={cert.link}
-            onChange={(e) => updateCertificate(cert.id, 'link', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-          <textarea
-            rows="3"
-            placeholder="Brief description of what this certification covers..."
-            value={cert.description}
-            onChange={(e) => updateCertificate(cert.id, 'description', e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Sortable Activity Item Component for Form Editor
-const SortableActivityItem = ({ activity, index, updateActivity, removeActivity }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    setActivatorNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: activity.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    position: 'relative',
-    padding: '16px 16px 16px 56px',
-    margin: '12px 0',
-    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
-    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
-    borderRadius: '12px',
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const handleStyle = {
-    position: 'absolute',
-    left: '12px',
-    top: '50%',
-    transform: 'translateY(-50%)',
-    width: '32px',
-    height: '80%',
-    minHeight: '40px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#ffffff',
-    border: '2px solid #e5e7eb',
-    borderRadius: '8px',
-    cursor: 'grab',
-    touchAction: 'none',
-    userSelect: 'none',
-    zIndex: 999,
-    pointerEvents: 'auto',
-  };
-
-  const handleActiveStyle = {
-    ...handleStyle,
-    cursor: 'grabbing',
-    background: '#e0e7ff',
-    borderColor: '#4f46e5',
-  };
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      <div
-        ref={setActivatorNodeRef}
-        style={isDragging ? handleActiveStyle : handleStyle}
-        {...attributes}
-        {...listeners}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
-        </svg>
-      </div>
-
-      <div className="activity-item">
-        <div className="item-header">
-          <h4>Activity {index + 1}</h4>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              className="btn-remove"
-              onClick={() => removeActivity(activity.id)}
-            >
-              ×
-            </button>
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Title/Role *</label>
-          <input
-            type="text"
-            placeholder="Volunteer Coordinator"
-            value={activity.title}
-            onChange={(e) => updateActivity(activity.id, 'title', e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Organization *</label>
-          <input
-            type="text"
-            placeholder="Red Cross"
-            value={activity.organization}
-            onChange={(e) => updateActivity(activity.id, 'organization', e.target.value)}
-          />
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label>Start Date</label>
-            <input
-              type="month"
-              value={activity.startDate}
-              onChange={(e) => updateActivity(activity.id, 'startDate', e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label>End Date</label>
-            <input
-              type="month"
-              value={activity.endDate}
-              onChange={(e) => updateActivity(activity.id, 'endDate', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="form-group">
-          <label>Description</label>
-          <textarea
-            rows="3"
-            placeholder="Describe your role and contributions..."
-            value={activity.description}
-            onChange={(e) => updateActivity(activity.id, 'description', e.target.value)}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const Editor = () => {
   const [searchParams] = useSearchParams();
@@ -637,19 +147,47 @@ const Editor = () => {
     colorScheme: 'blue',
     spacing: 'normal',
     layout: 'single-column',
-    templateId: templateId || null
+    templateId: templateId || null,
+    photoStyle: 'circle',
+    photoPosition: 'header' // header, sidebar, top-left, top-right
   });
 
   // Template state - will be fetched from backend
   const [currentTemplate, setCurrentTemplate] = useState({
+    _id: null,
     name: 'Default',
     color: '#3B82F6',
-    gradient: 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)'
+    gradient: 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)',
+    layout: { type: 'single-column', columns: { count: 1, widths: ['100%'], gap: '0px' } },
+    sections: {
+      order: ['personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'],
+      visible: { personal: true, summary: true, experience: true, education: true, skills: true, projects: true, certificates: true, activities: true }
+    },
+    typography: {
+      headingFont: 'Inter',
+      bodyFont: 'Inter',
+      sizes: { name: '36px', heading: '20px', subheading: '17px', body: '14px' }
+    },
+    colors: {
+      primary: '#3B82F6',
+      secondary: '#1E40AF',
+      text: '#111827',
+      textLight: '#6B7280',
+      background: '#FFFFFF'
+    },
+    features: { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
   });
 
   const [sectionOrder, setSectionOrder] = useState([
     'personal', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'
   ]);
+
+  // Sync section order with current template
+  useEffect(() => {
+    if (currentTemplate?.sections?.order) {
+      setSectionOrder(currentTemplate.sections.order);
+    }
+  }, [currentTemplate?.sections?.order]);
 
   const [sectionVisibility, setSectionVisibility] = useState({
     personal: true,
@@ -668,7 +206,8 @@ const Editor = () => {
       location: '',
       linkedin: '',
       website: '',
-      summary: ''
+      summary: '',
+      photo: '' // Base64 encoded photo
     },
     experience: [
       {
@@ -803,15 +342,37 @@ const Editor = () => {
           // Fetch template data from backend
           try {
             console.log(`Fetching template data for ID: ${templateId}`);
-            const templateData = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(templateId));
+            // Add skipCache=true to get fresh template data
+            const templateData = await apiRequest(`${API_ENDPOINTS.TEMPLATE_BY_ID(templateId)}?skipCache=true`);
             if (templateData.success && templateData.data) {
               const template = templateData.data;
 
-              // Set current template for preview styling
+              // Set current template with full configuration
               setCurrentTemplate({
+                _id: template._id,
                 name: template.name,
+                description: template.description,
+                category: template.category,
                 color: template.color || '#3B82F6',
-                gradient: template.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)'
+                gradient: template.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)',
+                layout: template.layout || { type: 'single-column', columns: { count: 1, widths: ['100%'], gap: '0px' } },
+                sections: template.sections || {
+                  order: ['personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'],
+                  visible: { personal: true, summary: true, experience: true, education: true, skills: true, projects: true, certificates: true, activities: true }
+                },
+                typography: template.typography || {
+                  headingFont: 'Inter',
+                  bodyFont: 'Inter',
+                  sizes: { name: '36px', heading: '20px', subheading: '17px', body: '14px' }
+                },
+                colors: template.colors || {
+                  primary: '#3B82F6',
+                  secondary: '#1E40AF',
+                  text: '#111827',
+                  textLight: '#6B7280',
+                  background: '#FFFFFF'
+                },
+                features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
               });
 
               // Apply template config to customization if available
@@ -929,12 +490,35 @@ const Editor = () => {
                 if (resume.customization.templateId || resume.template_id) {
                   const tid = resume.customization.templateId || resume.template_id;
                   try {
-                    const templateData = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(tid));
+                    // Add skipCache=true to get fresh template data
+                    const templateData = await apiRequest(`${API_ENDPOINTS.TEMPLATE_BY_ID(tid)}?skipCache=true`);
                     if (templateData.success && templateData.data) {
+                      const template = templateData.data;
                       setCurrentTemplate({
-                        name: templateData.data.name,
-                        color: templateData.data.color || '#3B82F6',
-                        gradient: templateData.data.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)'
+                        _id: template._id,
+                        name: template.name,
+                        description: template.description,
+                        category: template.category,
+                        color: template.color || '#3B82F6',
+                        gradient: template.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)',
+                        layout: template.layout || { type: 'single-column', columns: { count: 1, widths: ['100%'], gap: '0px' } },
+                        sections: template.sections || {
+                          order: ['personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'],
+                          visible: { personal: true, summary: true, experience: true, education: true, skills: true, projects: true, certificates: true, activities: true }
+                        },
+                        typography: template.typography || {
+                          headingFont: 'Inter',
+                          bodyFont: 'Inter',
+                          sizes: { name: '36px', heading: '20px', subheading: '17px', body: '14px' }
+                        },
+                        colors: template.colors || {
+                          primary: '#3B82F6',
+                          secondary: '#1E40AF',
+                          text: '#111827',
+                          textLight: '#6B7280',
+                          background: '#FFFFFF'
+                        },
+                        features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
                       });
                     }
                   } catch (e) {
@@ -965,12 +549,35 @@ const Editor = () => {
               if (resume.template_id || resume.template) {
                 const tid = resume.template_id || resume.template?._id || resume.template;
                 try {
-                  const templateData = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(tid));
+                  // Add skipCache=true to get fresh template data
+                  const templateData = await apiRequest(`${API_ENDPOINTS.TEMPLATE_BY_ID(tid)}?skipCache=true`);
                   if (templateData.success && templateData.data) {
+                    const template = templateData.data;
                     setCurrentTemplate({
-                      name: templateData.data.name,
-                      color: templateData.data.color || '#3B82F6',
-                      gradient: templateData.data.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)'
+                      _id: template._id,
+                      name: template.name,
+                      description: template.description,
+                      category: template.category,
+                      color: template.color || '#3B82F6',
+                      gradient: template.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)',
+                      layout: template.layout || { type: 'single-column', columns: { count: 1, widths: ['100%'], gap: '0px' } },
+                      sections: template.sections || {
+                        order: ['personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'],
+                        visible: { personal: true, summary: true, experience: true, education: true, skills: true, projects: true, certificates: true, activities: true }
+                      },
+                      typography: template.typography || {
+                        headingFont: 'Inter',
+                        bodyFont: 'Inter',
+                        sizes: { name: '36px', heading: '20px', subheading: '17px', body: '14px' }
+                      },
+                      colors: template.colors || {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        text: '#111827',
+                        textLight: '#6B7280',
+                        background: '#FFFFFF'
+                      },
+                      features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
                     });
                   }
                 } catch (e) {
@@ -1374,50 +981,34 @@ const Editor = () => {
   };
 
   const exportToPDF = async () => {
+    if (!currentResumeId) {
+      alert('Please save your resume first before exporting.');
+      return;
+    }
+
+    if (guestMode) {
+      alert('PDF export is only available for logged-in users. Please sign in to use this feature.');
+      return;
+    }
+
     try {
       setSaveStatus('saving');
 
-      // Get the resume preview element
-      const resumeElement = document.querySelector('.resume-preview-page');
-      if (!resumeElement) {
-        throw new Error('Resume preview not found');
-      }
+      // Use resumeService to export PDF via backend API
+      const { blob, filename } = await resumeService.exportPdf(currentResumeId);
 
-      // Hide section controls during export
-      const controls = document.querySelectorAll('.section-controls');
-      controls.forEach(el => el.style.display = 'none');
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
 
-      // Capture the resume as canvas
-      const canvas = await html2canvas(resumeElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#FFFFFF'
-      });
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
-      // Show controls again
-      controls.forEach(el => el.style.display = 'flex');
-
-      // Calculate dimensions for PDF
-      const imgWidth = 210; // A4 width in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      // Create PDF
-      const pdf = new jsPDF({
-        orientation: imgHeight > imgWidth ? 'portrait' : 'landscape',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-
-      // Download PDF
-      const fileName = cvData.personal.fullName
-        ? `${cvData.personal.fullName.replace(/\s+/g, '_')}_Resume.pdf`
-        : 'Resume.pdf';
-
-      pdf.save(fileName);
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 2000);
     } catch (error) {
@@ -1686,6 +1277,67 @@ const Editor = () => {
     }
   };
 
+  // ========================================
+  // HANDLERS FOR RESUME PREVIEW DRAG & DROP
+  // ========================================
+
+  // Handle section reordering from preview
+  const handlePreviewSectionReorder = (activeId, overId) => {
+    if (activeId !== overId) {
+      setSectionOrder((items) => {
+        const oldIndex = items.indexOf(activeId);
+        const newIndex = items.indexOf(overId);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  // Handle item reordering from preview (using index)
+  const handlePreviewExperienceReorder = (activeIndex, overIndex) => {
+    if (activeIndex !== overIndex) {
+      setCvData(prev => ({
+        ...prev,
+        experience: arrayMove(prev.experience, activeIndex, overIndex)
+      }));
+    }
+  };
+
+  const handlePreviewEducationReorder = (activeIndex, overIndex) => {
+    if (activeIndex !== overIndex) {
+      setCvData(prev => ({
+        ...prev,
+        education: arrayMove(prev.education, activeIndex, overIndex)
+      }));
+    }
+  };
+
+  const handlePreviewProjectsReorder = (activeIndex, overIndex) => {
+    if (activeIndex !== overIndex) {
+      setCvData(prev => ({
+        ...prev,
+        projects: arrayMove(prev.projects, activeIndex, overIndex)
+      }));
+    }
+  };
+
+  const handlePreviewCertificatesReorder = (activeIndex, overIndex) => {
+    if (activeIndex !== overIndex) {
+      setCvData(prev => ({
+        ...prev,
+        certificates: arrayMove(prev.certificates, activeIndex, overIndex)
+      }));
+    }
+  };
+
+  const handlePreviewActivitiesReorder = (activeIndex, overIndex) => {
+    if (activeIndex !== overIndex) {
+      setCvData(prev => ({
+        ...prev,
+        activities: arrayMove(prev.activities, activeIndex, overIndex)
+      }));
+    }
+  };
+
   const calculateProgress = () => {
     const requiredFields = [
       cvData.personal.fullName,
@@ -1699,7 +1351,89 @@ const Editor = () => {
     return Math.round((filledCount / requiredFields.length) * 100);
   };
 
+  // Handle template change - Update FULL template configuration
+  const handleTemplateChange = async (template) => {
+    console.log('🎨 Changing template to:', template.name);
+    
+    // Update current template with FULL configuration
+    setCurrentTemplate({
+      _id: template._id,
+      name: template.name,
+      description: template.description,
+      category: template.category,
+      color: template.color || '#3B82F6',
+      gradient: template.gradient || 'linear-gradient(135deg, #3B82F6 0%, #9333EA 70.71%)',
+      layout: template.layout || { type: 'single-column', columns: { count: 1, widths: ['100%'], gap: '0px' } },
+      sections: template.sections || {
+        order: ['personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'],
+        visible: { personal: true, summary: true, experience: true, education: true, skills: true, projects: true, certificates: true, activities: true }
+      },
+      typography: template.typography || {
+        headingFont: 'Inter',
+        bodyFont: 'Inter',
+        sizes: { name: '36px', heading: '20px', subheading: '17px', body: '14px' }
+      },
+      colors: template.colors || {
+        primary: '#3B82F6',
+        secondary: '#1E40AF',
+        text: '#111827',
+        textLight: '#6B7280',
+        background: '#FFFFFF'
+      },
+      features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false },
+      photoConfig: template.photoConfig || { enabled: false, style: 'circle', position: 'header', size: 'medium' }
+    });
+
+    // Update customization with template config
+    setCustomization(prev => ({
+      ...prev,
+      templateId: template._id,
+      font: template.config?.fontFamily || template.typography?.headingFont || prev.font,
+      fontSize: template.config?.fontSize || prev.fontSize,
+      spacing: template.config?.spacing || prev.spacing,
+      layout: template.config?.layout || template.layout?.type || prev.layout,
+      colorScheme: template.color || prev.colorScheme,
+      photoStyle: template.config?.photoStyle || template.photoConfig?.style || 'circle',
+      photoPosition: template.config?.photoPosition || template.photoConfig?.position || 'header'
+    }));
+
+    console.log('✅ Template updated:', template.name, 'Layout:', template.layout?.type);
+  };
+
+  // Handle photo upload
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (JPG, PNG, etc.)');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    // Convert to base64 for storage
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      updatePersonalInfo('photo', reader.result);
+      console.log('✅ Photo uploaded');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Remove photo
+  const handlePhotoRemove = () => {
+    updatePersonalInfo('photo', '');
+    console.log('✅ Photo removed');
+  };
+
   return (
+    <>
     <div className="editor-page">
       {/* Loading Screen */}
       {loading && (
@@ -1875,6 +1609,133 @@ const Editor = () => {
             {activeTab === 'personal' && (
               <div className="form-section">
                 <h3 className="section-title">Personal Information</h3>
+
+                {/* Photo Upload */}
+                <div className="form-group">
+                  <label>Profile Photo</label>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    padding: '16px',
+                    background: '#F9FAFB',
+                    borderRadius: '12px',
+                    border: '2px dashed #D1D5DB'
+                  }}>
+                    {cvData.personal.photo ? (
+                      <>
+                        <div style={{
+                          width: '100px',
+                          height: '100px',
+                          borderRadius: customization.photoStyle === 'circle' ? '50%' : customization.photoStyle === 'rounded' ? '12px' : '0',
+                          overflow: 'hidden',
+                          border: '3px solid #4F46E5',
+                          flexShrink: 0
+                        }}>
+                          <img
+                            src={cvData.personal.photo}
+                            alt="Profile"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                          />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px' }}>
+                            Photo uploaded successfully!
+                          </p>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <label style={{
+                              padding: '6px 12px',
+                              background: '#4F46E5',
+                              color: '#FFFFFF',
+                              borderRadius: '6px',
+                              fontSize: '13px',
+                              cursor: 'pointer',
+                              display: 'inline-block'
+                            }}>
+                              Change Photo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handlePhotoUpload}
+                                style={{ display: 'none' }}
+                              />
+                            </label>
+                            <button
+                              onClick={handlePhotoRemove}
+                              style={{
+                                padding: '6px 12px',
+                                background: '#EF4444',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{
+                          width: '100px',
+                          height: '100px',
+                          borderRadius: customization.photoStyle === 'circle' ? '50%' : customization.photoStyle === 'rounded' ? '12px' : '0',
+                          background: '#E5E7EB',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0
+                        }}>
+                          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="#9CA3AF"/>
+                          </svg>
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '14px', color: '#374151', marginBottom: '8px', fontWeight: '500' }}>
+                            Add a profile photo (optional)
+                          </p>
+                          <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>
+                            JPG, PNG or GIF • Max 5MB • Square format recommended
+                          </p>
+                          <label style={{
+                            padding: '8px 16px',
+                            background: '#4F46E5',
+                            color: '#FFFFFF',
+                            borderRadius: '8px',
+                            fontSize: '14px',
+                            fontWeight: '500',
+                            cursor: 'pointer',
+                            display: 'inline-block',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.target.style.background = '#4338CA'}
+                          onMouseLeave={(e) => e.target.style.background = '#4F46E5'}
+                          >
+                            📷 Upload Photo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handlePhotoUpload}
+                              style={{ display: 'none' }}
+                            />
+                          </label>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  {currentTemplate.features?.hasPhoto && (
+                    <p style={{ fontSize: '12px', color: '#10B981', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>✓</span> This template supports photos
+                    </p>
+                  )}
+                </div>
 
                 <div className="form-group">
                   <label>Full Name *</label>
@@ -2086,14 +1947,93 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEducationDragEnd}>
                   <SortableContext items={cvData.education.map(e => e.id)} strategy={verticalListSortingStrategy}>
                     {cvData.education.map((edu, index) => (
-                      <SortableEducationItem
-                        key={edu.id}
-                        edu={edu}
-                        index={index}
-                        cvData={cvData}
-                        updateEducation={updateEducation}
-                        removeEducation={removeEducation}
-                      />
+                      // ======================================================
+                      // 3. SỬ DỤNG COMPONENT CHUNG
+                      // ======================================================
+                      <SortableFormItem key={edu.id} id={edu.id}>
+                        <div className="education-item">
+                          <div className="item-header">
+                            <h4>Education {index + 1}</h4>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                className="btn-remove"
+                                onClick={() => removeEducation(edu.id)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>Degree *</label>
+                            <input
+                              type="text"
+                              placeholder="Bachelor of Science in Computer Science"
+                              value={edu.degree}
+                              onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>School *</label>
+                            <input
+                              type="text"
+                              placeholder="University of California, Berkeley"
+                              value={edu.school}
+                              onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Location</label>
+                            <input
+                              type="text"
+                              placeholder="Berkeley, CA"
+                              value={edu.location}
+                              onChange={(e) => updateEducation(edu.id, 'location', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Start Date *</label>
+                              <input
+                                type="month"
+                                value={edu.startDate}
+                                onChange={(e) => updateEducation(edu.id, 'startDate', e.target.value)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>End Date</label>
+                              <input
+                                type="month"
+                                value={edu.endDate}
+                                onChange={(e) => updateEducation(edu.id, 'endDate', e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>GPA</label>
+                            <input
+                              type="text"
+                              placeholder="3.8/4.0"
+                              value={edu.gpa}
+                              onChange={(e) => updateEducation(edu.id, 'gpa', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Description</label>
+                            <textarea
+                              rows="3"
+                              placeholder="Relevant coursework, honors, achievements..."
+                              value={edu.description}
+                              onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </SortableFormItem>
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -2217,13 +2157,83 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
                   <SortableContext items={cvData.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
                     {cvData.projects.map((project, index) => (
-                      <SortableProjectItem
-                        key={project.id}
-                        project={project}
-                        index={index}
-                        updateProject={updateProject}
-                        removeProject={removeProject}
-                      />
+                      // ======================================================
+                      // 3. SỬ DỤNG COMPONENT CHUNG
+                      // ======================================================
+                      <SortableFormItem key={project.id} id={project.id}>
+                        <div className="project-item">
+                          <div className="item-header">
+                            <h4>Project {index + 1}</h4>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                className="btn-remove"
+                                onClick={() => removeProject(project.id)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>Project Name *</label>
+                            <input
+                              type="text"
+                              placeholder="E-commerce Platform"
+                              value={project.name}
+                              onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Description *</label>
+                            <textarea
+                              rows="3"
+                              placeholder="Describe what the project does and your role..."
+                              value={project.description}
+                              onChange={(e) => updateProject(project.id, 'description', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Technologies Used</label>
+                            <input
+                              type="text"
+                              placeholder="React, Node.js, MongoDB, AWS"
+                              value={project.technologies}
+                              onChange={(e) => updateProject(project.id, 'technologies', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Project Link</label>
+                            <input
+                              type="url"
+                              placeholder="https://github.com/username/project"
+                              value={project.link}
+                              onChange={(e) => updateProject(project.id, 'link', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Start Date</label>
+                              <input
+                                type="month"
+                                value={project.startDate}
+                                onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>End Date</label>
+                              <input
+                                type="month"
+                                value={project.endDate}
+                                onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </SortableFormItem>
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -2246,13 +2256,73 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCertificateDragEnd}>
                   <SortableContext items={cvData.certificates.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     {cvData.certificates.map((cert, index) => (
-                      <SortableCertificateItem
-                        key={cert.id}
-                        cert={cert}
-                        index={index}
-                        updateCertificate={updateCertificate}
-                        removeCertificate={removeCertificate}
-                      />
+                      // ======================================================
+                      // 3. SỬ DỤNG COMPONENT CHUNG
+                      // ======================================================
+                      <SortableFormItem key={cert.id} id={cert.id}>
+                        <div className="certificate-item">
+                          <div className="item-header">
+                            <h4>Certificate {index + 1}</h4>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                className="btn-remove"
+                                onClick={() => removeCertificate(cert.id)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>Certificate Name *</label>
+                            <input
+                              type="text"
+                              placeholder="AWS Certified Solutions Architect"
+                              value={cert.name}
+                              onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Issuing Organization *</label>
+                            <input
+                              type="text"
+                              placeholder="Amazon Web Services"
+                              value={cert.issuer}
+                              onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Date Issued</label>
+                            <input
+                              type="month"
+                              value={cert.date}
+                              onChange={(e) => updateCertificate(cert.id, 'date', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Certificate Link</label>
+                            <input
+                              type="url"
+                              placeholder="https://www.credly.com/badges/..."
+                              value={cert.link}
+                              onChange={(e) => updateCertificate(cert.id, 'link', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Description</label>
+                            <textarea
+                              rows="3"
+                              placeholder="Brief description of what this certification covers..."
+                              value={cert.description}
+                              onChange={(e) => updateCertificate(cert.id, 'description', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </SortableFormItem>
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -2275,13 +2345,73 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActivityDragEnd}>
                   <SortableContext items={cvData.activities.map(a => a.id)} strategy={verticalListSortingStrategy}>
                     {cvData.activities.map((activity, index) => (
-                      <SortableActivityItem
-                        key={activity.id}
-                        activity={activity}
-                        index={index}
-                        updateActivity={updateActivity}
-                        removeActivity={removeActivity}
-                      />
+                      // ======================================================
+                      // 3. SỬ DỤNG COMPONENT CHUNG
+                      // ======================================================
+                      <SortableFormItem key={activity.id} id={activity.id}>
+                        <div className="activity-item">
+                          <div className="item-header">
+                            <h4>Activity {index + 1}</h4>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                className="btn-remove"
+                                onClick={() => removeActivity(activity.id)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>Title/Role *</label>
+                            <input
+                              type="text"
+                              placeholder="Volunteer Coordinator"
+                              value={activity.title}
+                              onChange={(e) => updateActivity(activity.id, 'title', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <label>Organization *</label>
+                            <input
+                              type="text"
+                              placeholder="Red Cross"
+                              value={activity.organization}
+                              onChange={(e) => updateActivity(activity.id, 'organization', e.target.value)}
+                            />
+                          </div>
+
+                          <div className="form-row">
+                            <div className="form-group">
+                              <label>Start Date</label>
+                              <input
+                                type="month"
+                                value={activity.startDate}
+                                onChange={(e) => updateActivity(activity.id, 'startDate', e.target.value)}
+                              />
+                            </div>
+                            <div className="form-group">
+                              <label>End Date</label>
+                              <input
+                                type="month"
+                                value={activity.endDate}
+                                onChange={(e) => updateActivity(activity.id, 'endDate', e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-group">
+                            <label>Description</label>
+                            <textarea
+                              rows="3"
+                              placeholder="Describe your role and contributions..."
+                              value={activity.description}
+                              onChange={(e) => updateActivity(activity.id, 'description', e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </SortableFormItem>
                     ))}
                   </SortableContext>
                 </DndContext>
@@ -2306,15 +2436,187 @@ const Editor = () => {
               </div>
             </div>
             <div className="preview-actions">
+              <TemplateSwitcher
+                currentTemplateId={currentTemplate._id}
+                onTemplateChange={handleTemplateChange}
+              />
               <button className="btn-zoom">100%</button>
             </div>
           </div>
 
           <div className="preview-content">
             <div className="resume-preview-wrapper">
-              <div 
-                className={`resume-preview-page ${customization.layout}`} 
-                style={{ 
+              <ResumePreview
+                cvData={cvData}
+                customization={customization}
+                template={{
+                  ...currentTemplate,
+                  sections: {
+                    ...currentTemplate.sections,
+                    order: sectionOrder
+                  }
+                }}
+                editable={true}
+                onReorderSections={handlePreviewSectionReorder}
+                onReorderExperience={handlePreviewExperienceReorder}
+                onReorderEducation={handlePreviewEducationReorder}
+                onReorderProjects={handlePreviewProjectsReorder}
+                onReorderCertificates={handlePreviewCertificatesReorder}
+                onReorderActivities={handlePreviewActivitiesReorder}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Customization Panel */}
+    {showCustomization && (
+      <div className="customization-overlay" onClick={() => setShowCustomization(false)}>
+        <div className="customization-panel" onClick={(e) => e.stopPropagation()}>
+          <div className="panel-header">
+            <h3>Customize Your CV</h3>
+            <button className="btn-close" onClick={() => setShowCustomization(false)}>×</button>
+          </div>
+          <div className="panel-body">
+            <div className="customization-group">
+              <label>Current Template</label>
+              <div style={{
+                padding: '12px',
+                background: currentTemplate.gradient,
+                borderRadius: '8px',
+                color: '#FFFFFF',
+                fontWeight: '600',
+                textAlign: 'center',
+                marginBottom: '12px'
+              }}>
+                {currentTemplate.name}
+              </div>
+              <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>
+                Layout: <strong>{currentTemplate.layout?.type || 'single-column'}</strong>
+              </p>
+              
+              {/* Template Switcher */}
+              <TemplateSwitcher
+                currentTemplateId={currentTemplate._id}
+                onTemplateChange={handleTemplateChange}
+                inline={true}
+              />
+            </div>
+
+            <div className="customization-group">
+              <label>Font Family</label>
+              <select value={customization.font} onChange={(e) => updateCustomization('font', e.target.value)}>
+                <option value="Inter">Inter</option>
+                <option value="Roboto">Roboto</option>
+                <option value="Open Sans">Open Sans</option>
+                <option value="Lato">Lato</option>
+                <option value="Montserrat">Montserrat</option>
+                <option value="Poppins">Poppins</option>
+                <option value="Playfair Display">Playfair Display</option>
+                <option value="Merriweather">Merriweather</option>
+              </select>
+            </div>
+
+            <div className="customization-group">
+              <label>Primary Color</label>
+              <input
+                type="color"
+                value={customization.primaryColor}
+                onChange={(e) => updateCustomization('primaryColor', e.target.value)}
+              />
+            </div>
+
+            <div className="customization-group">
+              <label>Accent Color</label>
+              <input
+                type="color"
+                value={customization.accentColor}
+                onChange={(e) => updateCustomization('accentColor', e.target.value)}
+              />
+            </div>
+
+            <div className="customization-group">
+              <label>Font Size</label>
+              <input
+                type="range"
+                min="12"
+                max="18"
+                value={customization.fontSize}
+                onChange={(e) => updateCustomization('fontSize', parseInt(e.target.value))}
+              />
+              <span>{customization.fontSize}px</span>
+            </div>
+
+            <div className="customization-group">
+              <label>Line Height</label>
+              <input
+                type="range"
+                min="1.3"
+                max="2"
+                step="0.1"
+                value={customization.lineHeight}
+                onChange={(e) => updateCustomization('lineHeight', parseFloat(e.target.value))}
+              />
+              <span>{customization.lineHeight}</span>
+            </div>
+
+            <div className="customization-group">
+              <label>Spacing</label>
+              <input
+                type="range"
+                min="0"
+                max="40"
+                value={customization.spacing}
+                onChange={(e) => updateCustomization('spacing', parseInt(e.target.value))}
+              />
+              <span>{customization.spacing}px</span>
+            </div>
+
+            <div className="customization-group">
+              <label>Page Margins</label>
+              <input
+                type="range"
+                min="10"
+                max="60"
+                value={customization.margins}
+                onChange={(e) => updateCustomization('margins', parseInt(e.target.value))}
+              />
+              <span>{customization.margins}px</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Realtime Preview Modal */}
+    {showRealtimePreview && (
+      <div className="realtime-preview-overlay" onClick={() => setShowRealtimePreview(false)}>
+        <div className="realtime-preview-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="realtime-preview-header">
+            <h3>Realtime Preview - {currentTemplate.name}</h3>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div className="progress-indicator">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${calculateProgress()}%` }}
+                  />
+                </div>
+                <span className="progress-text">{calculateProgress()}% Complete</span>
+              </div>
+              <button className="btn-close-preview" onClick={() => setShowRealtimePreview(false)}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="realtime-preview-content">
+            <div className="resume-preview-wrapper">
+              <div
+                className={`resume-preview-page ${customization.layout}`}
+                style={{
                   '--template-color': currentTemplate.color,
                   fontFamily: customization.font || 'Inter, sans-serif',
                   fontSize: `${14 * (customization.fontSize === 'small' ? 0.9 : customization.fontSize === 'large' ? 1.1 : 1.0)}px`,
@@ -2335,243 +2637,119 @@ const Editor = () => {
                   '--spacing-scale': customization.spacing === 'compact' ? 0.8 : customization.spacing === 'relaxed' ? 1.2 : 1.0
                 }}
               >
-                {/* Resume Header with Template Styling */}
+                {/* Resume Header */}
                 <div className="resume-header-styled" style={{ background: currentTemplate.gradient }}>
-                  <EditableField
-                    value={cvData.personal.fullName}
-                    onChange={(val) => updatePersonalInfo('fullName', val)}
-                    placeholder="Your Name"
-                    className="resume-name-styled"
-                    style={{ fontWeight: 700, fontSize: '32px', marginBottom: '8px', textAlign: 'center', color: '#FFFFFF' }}
-                  />
+                  <div className="resume-name-styled" style={{ fontWeight: 700, fontSize: '32px', marginBottom: '8px', textAlign: 'center', color: '#FFFFFF' }}>
+                    {cvData.personal.fullName || 'Your Name'}
+                  </div>
                   <div className="resume-contact-styled">
-                    <EditableField
-                      value={cvData.personal.email}
-                      onChange={(val) => updatePersonalInfo('email', val)}
-                      placeholder="your.email@example.com"
-                      style={{ display: 'inline-block', color: '#FFFFFF' }}
-                    />
-                    {(cvData.personal.email && cvData.personal.phone) && <span>•</span>}
-                    <EditableField
-                      value={cvData.personal.phone}
-                      onChange={(val) => updatePersonalInfo('phone', val)}
-                      placeholder="+1 (555) 000-0000"
-                      style={{ display: 'inline-block', color: '#FFFFFF' }}
-                    />
-                    {((cvData.personal.email || cvData.personal.phone) && cvData.personal.location) && <span>•</span>}
-                    <EditableField
-                      value={cvData.personal.location}
-                      onChange={(val) => updatePersonalInfo('location', val)}
-                      placeholder="City, State"
-                      style={{ display: 'inline-block', color: '#FFFFFF' }}
-                    />
+                    {cvData.personal.email && <span>{cvData.personal.email}</span>}
+                    {cvData.personal.email && cvData.personal.phone && <span>•</span>}
+                    {cvData.personal.phone && <span>{cvData.personal.phone}</span>}
+                    {(cvData.personal.email || cvData.personal.phone) && cvData.personal.location && <span>•</span>}
+                    {cvData.personal.location && <span>{cvData.personal.location}</span>}
                   </div>
                   <div className="resume-links-styled">
-                    <EditableField
-                      value={cvData.personal.linkedin}
-                      onChange={(val) => updatePersonalInfo('linkedin', val)}
-                      placeholder="linkedin.com/in/yourprofile"
-                      style={{ display: 'inline-block', color: '#FFFFFF', textDecoration: 'underline' }}
-                    />
-                    {(cvData.personal.linkedin && cvData.personal.website) && <span>•</span>}
-                    <EditableField
-                      value={cvData.personal.website}
-                      onChange={(val) => updatePersonalInfo('website', val)}
-                      placeholder="yourwebsite.com"
-                      style={{ display: 'inline-block', color: '#FFFFFF', textDecoration: 'underline' }}
-                    />
+                    {cvData.personal.linkedin && <span style={{ textDecoration: 'underline' }}>{cvData.personal.linkedin}</span>}
+                    {cvData.personal.linkedin && cvData.personal.website && <span>•</span>}
+                    {cvData.personal.website && <span style={{ textDecoration: 'underline' }}>{cvData.personal.website}</span>}
                   </div>
                 </div>
 
                 {/* Professional Summary */}
-                {sectionVisibility.personal && (
+                {sectionVisibility.personal && cvData.personal.summary && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('personal')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Professional Summary</h2>
-                    <EditableField
-                      value={cvData.personal.summary}
-                      onChange={(val) => updatePersonalInfo('summary', val)}
-                      placeholder="Click to add professional summary..."
-                      multiline={true}
-                      className="summary-text-styled"
-                      style={{ lineHeight: 1.6, color: '#374151' }}
-                    />
+                    <p className="summary-text-styled" style={{ lineHeight: 1.6, color: '#374151' }}>
+                      {cvData.personal.summary}
+                    </p>
                   </div>
                 )}
 
                 {/* Experience */}
-                {sectionVisibility.experience && (
+                {sectionVisibility.experience && cvData.experience.some(exp => exp.jobTitle || exp.company) && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('experience')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Work Experience</h2>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleExperienceDragEnd}
-                    >
-                      <SortableContext
-                        items={cvData.experience.map(e => e.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {cvData.experience.map(exp => (
-                          <SimpleSortableItem key={exp.id} id={exp.id}>
-                            <div className="experience-header-styled">
-                              <div>
-                                <EditableField
-                                  value={exp.jobTitle}
-                                  onChange={(val) => updateExperience(exp.id, 'jobTitle', val)}
-                                  placeholder="Job Title"
-                                  className="job-title-styled"
-                                  style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}
-                                />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <EditableField
-                                    value={exp.company}
-                                    onChange={(val) => updateExperience(exp.id, 'company', val)}
-                                    placeholder="Company Name"
-                                    className="company-name-styled"
-                                    style={{ display: 'inline-block', color: '#6B7280' }}
-                                  />
-                                  {exp.location && <span>•</span>}
-                                  <EditableField
-                                    value={exp.location}
-                                    onChange={(val) => updateExperience(exp.id, 'location', val)}
-                                    placeholder="Location"
-                                    style={{ display: 'inline-block', color: '#6B7280' }}
-                                  />
-                                </div>
+                    {cvData.experience.map(exp => (
+                      (exp.jobTitle || exp.company) && (
+                        <div key={exp.id} style={{ marginBottom: '16px' }}>
+                          <div className="experience-header-styled">
+                            <div>
+                              <div className="job-title-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
+                                {exp.jobTitle || 'Job Title'}
                               </div>
-                              <div className="date-range-styled">
-                                {exp.startDate && new Date(exp.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
-                                  exp.current ? 'Present' :
-                                  exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'End Date'
-                                }
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="company-name-styled" style={{ color: '#6B7280' }}>
+                                  {exp.company || 'Company Name'}
+                                </span>
+                                {exp.location && <span>•</span>}
+                                {exp.location && <span style={{ color: '#6B7280' }}>{exp.location}</span>}
                               </div>
                             </div>
-                            <EditableField
-                              value={exp.description}
-                              onChange={(val) => updateExperience(exp.id, 'description', val)}
-                              placeholder="Click to add job description and achievements..."
-                              multiline={true}
-                              className="experience-description-styled"
-                              style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}
-                            />
-                          </SimpleSortableItem>
-                        ))}
-                      </SortableContext>
-                    </DndContext>
+                            <div className="date-range-styled">
+                              {exp.startDate && new Date(exp.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                exp.current ? 'Present' :
+                                exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'End Date'
+                              }
+                            </div>
+                          </div>
+                          {exp.description && (
+                            <p className="experience-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
+                              {exp.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
                   </div>
                 )}
 
                 {/* Education */}
-                {sectionVisibility.education && (
+                {sectionVisibility.education && cvData.education.some(edu => edu.degree || edu.school) && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('education')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Education</h2>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleEducationDragEnd}
-                    >
-                      <SortableContext
-                        items={cvData.education.map(e => e.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {cvData.education.map(edu => (
-                          <SimpleSortableItem key={edu.id} id={edu.id}>
-                            <div className="education-header-styled">
-                              <div>
-                                <EditableField
-                                  value={edu.degree}
-                                  onChange={(val) => updateEducation(edu.id, 'degree', val)}
-                                  placeholder="Degree"
-                                  className="degree-name-styled"
-                                  style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}
-                                />
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <EditableField
-                                    value={edu.school}
-                                    onChange={(val) => updateEducation(edu.id, 'school', val)}
-                                    placeholder="School Name"
-                                    className="school-name-styled"
-                                    style={{ display: 'inline-block', color: '#6B7280' }}
-                                  />
-                                  {edu.location && <span>•</span>}
-                                  <EditableField
-                                    value={edu.location}
-                                    onChange={(val) => updateEducation(edu.id, 'location', val)}
-                                    placeholder="Location"
-                                    style={{ display: 'inline-block', color: '#6B7280' }}
-                                  />
-                                </div>
+                    {cvData.education.map(edu => (
+                      (edu.degree || edu.school) && (
+                        <div key={edu.id} style={{ marginBottom: '16px' }}>
+                          <div className="education-header-styled">
+                            <div>
+                              <div className="degree-name-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
+                                {edu.degree || 'Degree'}
                               </div>
-                              <div className="date-range-styled">
-                                {edu.startDate && new Date(edu.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
-                                  edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
-                                }
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="school-name-styled" style={{ color: '#6B7280' }}>
+                                  {edu.school || 'School Name'}
+                                </span>
+                                {edu.location && <span>•</span>}
+                                {edu.location && <span style={{ color: '#6B7280' }}>{edu.location}</span>}
                               </div>
                             </div>
+                            <div className="date-range-styled">
+                              {edu.startDate && new Date(edu.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
+                              }
+                            </div>
+                          </div>
+                          {edu.gpa && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                               <span style={{ fontWeight: 600, color: '#374151' }}>GPA:</span>
-                              <EditableField
-                                value={edu.gpa}
-                                onChange={(val) => updateEducation(edu.id, 'gpa', val)}
-                                placeholder="3.8/4.0"
-                                className="gpa-styled"
-                                style={{ display: 'inline-block', color: '#6B7280' }}
-                              />
+                              <span className="gpa-styled" style={{ color: '#6B7280' }}>{edu.gpa}</span>
                             </div>
-                            <EditableField
-                              value={edu.description}
-                              onChange={(val) => updateEducation(edu.id, 'description', val)}
-                              placeholder="Click to add coursework, honors, achievements..."
-                              multiline={true}
-                              className="education-description-styled"
-                              style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}
-                            />
-                          </SimpleSortableItem>
-                        ))}
-                      </SortableContext>
-                    </DndContext>
+                          )}
+                          {edu.description && (
+                            <p className="education-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
+                              {edu.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
                   </div>
                 )}
 
                 {/* Skills */}
                 {sectionVisibility.skills && (cvData.skills.technical.length > 0 || cvData.skills.soft.length > 0 || cvData.skills.languages.length > 0) && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('skills')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Skills</h2>
                     <div className="skills-container-styled">
                       {cvData.skills.technical.length > 0 && (
@@ -2609,241 +2787,102 @@ const Editor = () => {
                 )}
 
                 {/* Projects */}
-                {sectionVisibility.projects && (
+                {sectionVisibility.projects && cvData.projects.some(p => p.name) && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('projects')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Projects</h2>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleProjectDragEnd}
-                    >
-                      <SortableContext
-                        items={cvData.projects.map(p => p.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {cvData.projects.map(project => (
-                          <SimpleSortableItem key={project.id} id={project.id}>
-                            <EditableField
-                              value={project.name}
-                              onChange={(val) => updateProject(project.id, 'name', val)}
-                              placeholder="Project Name"
-                              className="project-name-styled"
-                              style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}
-                            />
-                            <EditableField
-                              value={project.description}
-                              onChange={(val) => updateProject(project.id, 'description', val)}
-                              placeholder="Click to add project description..."
-                              multiline={true}
-                              className="project-description-styled"
-                              style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}
-                            />
+                    {cvData.projects.map(project => (
+                      project.name && (
+                        <div key={project.id} style={{ marginBottom: '12px' }}>
+                          <div className="project-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                            {project.name}
+                          </div>
+                          {project.description && (
+                            <p className="project-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                              {project.description}
+                            </p>
+                          )}
+                          {project.technologies && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
                               <strong>Technologies:</strong>
-                              <EditableField
-                                value={project.technologies}
-                                onChange={(val) => updateProject(project.id, 'technologies', val)}
-                                placeholder="React, Node.js, MongoDB"
-                                className="project-tech-styled"
-                                style={{ display: 'inline-block', color: '#6B7280' }}
-                              />
+                              <span className="project-tech-styled" style={{ color: '#6B7280' }}>{project.technologies}</span>
                             </div>
-                            <EditableField
-                              value={project.link}
-                              onChange={(val) => updateProject(project.id, 'link', val)}
-                              placeholder="github.com/username/project"
-                              className="project-link-styled"
-                              style={{ marginTop: '4px', color: '#3B82F6', textDecoration: 'underline' }}
-                            />
-                          </SimpleSortableItem>
-                        ))}
-                      </SortableContext>
-                    </DndContext>
+                          )}
+                          {project.link && (
+                            <div className="project-link-styled" style={{ marginTop: '4px', color: '#3B82F6', textDecoration: 'underline' }}>
+                              {project.link}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    ))}
                   </div>
                 )}
 
                 {/* Certificates */}
-                {sectionVisibility.certificates && (
+                {sectionVisibility.certificates && cvData.certificates.some(c => c.name) && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('certificates')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Certifications</h2>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleCertificateDragEnd}
-                    >
-                      <SortableContext
-                        items={cvData.certificates.map(c => c.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {cvData.certificates.map(cert => (
-                          <SimpleSortableItem key={cert.id} id={cert.id}>
-                            <div className="certificate-item-styled">
-                      <div className="certificate-header-styled">
-                        <EditableField
-                          value={cert.name}
-                          onChange={(val) => updateCertificate(cert.id, 'name', val)}
-                          placeholder="Certificate Name"
-                          className="certificate-name-styled"
-                          style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}
-                        />
-                        {cert.date && (
-                          <span className="certificate-date-styled">
-                            {new Date(cert.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}
-                          </span>
-                        )}
-                      </div>
-                      <EditableField
-                        value={cert.issuer}
-                        onChange={(val) => updateCertificate(cert.id, 'issuer', val)}
-                        placeholder="Issuing Organization"
-                        className="certificate-issuer-styled"
-                        style={{ color: '#6B7280' }}
-                      />
-                      <EditableField
-                        value={cert.description}
-                        onChange={(val) => updateCertificate(cert.id, 'description', val)}
-                        placeholder="Click to add certificate description..."
-                        multiline={true}
-                        className="certificate-description-styled"
-                        style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}
-                      />
+                    {cvData.certificates.map(cert => (
+                      cert.name && (
+                        <div key={cert.id} className="certificate-item-styled" style={{ marginBottom: '12px' }}>
+                          <div className="certificate-header-styled">
+                            <div className="certificate-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                              {cert.name}
                             </div>
-                          </SimpleSortableItem>
-                        ))}
-                      </SortableContext>
-                    </DndContext>
+                            {cert.date && (
+                              <span className="certificate-date-styled">
+                                {new Date(cert.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}
+                              </span>
+                            )}
+                          </div>
+                          {cert.issuer && (
+                            <div className="certificate-issuer-styled" style={{ color: '#6B7280' }}>
+                              {cert.issuer}
+                            </div>
+                          )}
+                          {cert.description && (
+                            <p className="certificate-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                              {cert.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
                   </div>
                 )}
 
                 {/* Activities */}
-                {sectionVisibility.activities && (
+                {sectionVisibility.activities && cvData.activities.some(a => a.title) && (
                   <div className="resume-section-styled">
-                    <div className="section-controls">
-                      <button
-                        className="section-control-btn visibility"
-                        onClick={() => toggleSectionVisibility('activities')}
-                        title="Hide Section"
-                      >
-                        👁️
-                      </button>
-                    </div>
                     <h2 className="section-title-styled">Activities & Volunteering</h2>
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleActivityDragEnd}
-                    >
-                      <SortableContext
-                        items={cvData.activities.map(a => a.id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        {cvData.activities.map(activity => (
-                          <SimpleSortableItem key={activity.id} id={activity.id}>
-                            <div className="activity-item-styled">
-                      <div className="activity-header-styled">
-                        <EditableField
-                          value={activity.title}
-                          onChange={(val) => updateActivity(activity.id, 'title', val)}
-                          placeholder="Activity Title"
-                          className="activity-title-styled"
-                          style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}
-                        />
-                        {activity.startDate && (
-                          <span className="date-range-styled">
-                            {new Date(activity.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
-                              activity.endDate ? new Date(activity.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
-                            }
-                          </span>
-                        )}
-                      </div>
-                      <EditableField
-                        value={activity.organization}
-                        onChange={(val) => updateActivity(activity.id, 'organization', val)}
-                        placeholder="Organization Name"
-                        className="activity-organization-styled"
-                        style={{ color: '#6B7280' }}
-                      />
-                      <EditableField
-                        value={activity.description}
-                        onChange={(val) => updateActivity(activity.id, 'description', val)}
-                        placeholder="Click to add activity description..."
-                        multiline={true}
-                        className="activity-description-styled"
-                        style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}
-                      />
+                    {cvData.activities.map(activity => (
+                      activity.title && (
+                        <div key={activity.id} className="activity-item-styled" style={{ marginBottom: '12px' }}>
+                          <div className="activity-header-styled">
+                            <div className="activity-title-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                              {activity.title}
                             </div>
-                          </SimpleSortableItem>
-                        ))}
-                      </SortableContext>
-                    </DndContext>
-                  </div>
-                )}
-
-                {/* Hidden Sections */}
-                {Object.entries(sectionVisibility).some(([key, value]) => !value) && (
-                  <div className="hidden-sections-panel" style={{
-                    marginTop: '24px',
-                    padding: '16px',
-                    background: '#F3F4F6',
-                    borderRadius: '8px',
-                    border: '2px dashed #9CA3AF'
-                  }}>
-                    <h3 style={{ fontSize: '14px', fontWeight: '600', color: '#6B7280', marginBottom: '12px' }}>
-                      Hidden Sections
-                    </h3>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                      {Object.entries(sectionVisibility).map(([sectionName, isVisible]) => (
-                        !isVisible && (
-                          <button
-                            key={sectionName}
-                            onClick={() => toggleSectionVisibility(sectionName)}
-                            style={{
-                              padding: '6px 12px',
-                              background: '#FFFFFF',
-                              border: '1px solid #D1D5DB',
-                              borderRadius: '6px',
-                              fontSize: '13px',
-                              color: '#374151',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              transition: 'all 0.2s'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.target.style.background = '#4F46E5';
-                              e.target.style.color = '#FFFFFF';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.target.style.background = '#FFFFFF';
-                              e.target.style.color = '#374151';
-                            }}
-                            title="Click to show section"
-                          >
-                            <span>👁️</span>
-                            <span>{sectionName.charAt(0).toUpperCase() + sectionName.slice(1)}</span>
-                          </button>
-                        )
-                      ))}
-                    </div>
+                            {activity.startDate && (
+                              <span className="date-range-styled">
+                                {new Date(activity.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                  activity.endDate ? new Date(activity.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
+                                }
+                              </span>
+                            )}
+                          </div>
+                          {activity.organization && (
+                            <div className="activity-organization-styled" style={{ color: '#6B7280' }}>
+                              {activity.organization}
+                            </div>
+                          )}
+                          {activity.description && (
+                            <p className="activity-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                              {activity.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
                   </div>
                 )}
               </div>
@@ -2851,493 +2890,82 @@ const Editor = () => {
           </div>
         </div>
       </div>
+    )}
 
-      {/* Customization Panel */}
-      {showCustomization && (
-        <div className="customization-overlay" onClick={() => setShowCustomization(false)}>
-          <div className="customization-panel" onClick={(e) => e.stopPropagation()}>
-            <div className="panel-header">
-              <h3>Customize Your CV</h3>
-              <button className="btn-close" onClick={() => setShowCustomization(false)}>×</button>
-            </div>
-            <div className="panel-body">
-              <div className="customization-group">
-                <label>Current Template</label>
-                <div style={{
-                  padding: '12px',
-                  background: currentTemplate.gradient,
-                  borderRadius: '8px',
-                  color: '#FFFFFF',
-                  fontWeight: '600',
-                  textAlign: 'center'
-                }}>
-                  {currentTemplate.name}
-                </div>
-                <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '8px' }}>
-                  To change template, go back to <Link to="/templates" style={{ color: '#4F46E5' }}>Templates</Link> page
-                </p>
-              </div>
-
-              <div className="customization-group">
-                <label>Font Family</label>
-                <select value={customization.font} onChange={(e) => updateCustomization('font', e.target.value)}>
-                  <option value="Inter">Inter</option>
-                  <option value="Roboto">Roboto</option>
-                  <option value="Open Sans">Open Sans</option>
-                  <option value="Lato">Lato</option>
-                  <option value="Montserrat">Montserrat</option>
-                  <option value="Poppins">Poppins</option>
-                </select>
-              </div>
-
-              <div className="customization-group">
-                <label>Font Size</label>
-                <select value={customization.fontSize} onChange={(e) => updateCustomization('fontSize', e.target.value)}>
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="large">Large</option>
-                </select>
-              </div>
-
-              <div className="customization-group">
-                <label>Color Scheme</label>
-                <div className="color-options">
-                  {['blue', 'green', 'purple', 'red', 'orange', 'gray'].map(color => (
-                    <button
-                      key={color}
-                      className={`color-option color-${color} ${customization.colorScheme === color ? 'active' : ''}`}
-                      onClick={() => updateCustomization('colorScheme', color)}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="customization-group">
-                <label>Spacing</label>
-                <select value={customization.spacing} onChange={(e) => updateCustomization('spacing', e.target.value)}>
-                  <option value="compact">Compact</option>
-                  <option value="normal">Normal</option>
-                  <option value="relaxed">Relaxed</option>
-                </select>
-              </div>
-
-              <div className="customization-group">
-                <label>Layout</label>
-                <select value={customization.layout} onChange={(e) => updateCustomization('layout', e.target.value)}>
-                  <option value="single-column">Single Column</option>
-                  <option value="two-column">Two Column</option>
-                  <option value="modern">Modern</option>
-                </select>
-              </div>
-
-              <div className="customization-group">
-                <label>Section Order</label>
-                <div className="section-order-list">
-                  {sectionOrder.map((section, index) => (
-                    <div key={section} className="section-order-item">
-                      <span className="section-name">{section.charAt(0).toUpperCase() + section.slice(1)}</span>
-                      <div className="section-order-controls">
-                        <button
-                          onClick={() => moveSectionUp(index)}
-                          disabled={index === 0}
-                          className="btn-move"
-                        >
-                          ↑
-                        </button>
-                        <button
-                          onClick={() => moveSectionDown(index)}
-                          disabled={index === sectionOrder.length - 1}
-                          className="btn-move"
-                        >
-                          ↓
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+    {/* Share Modal */}
+    {showShareModal && (
+      <div className="share-modal-overlay" onClick={() => setShowShareModal(false)}>
+        <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h3>Share Your CV</h3>
+            <button className="btn-close" onClick={() => setShowShareModal(false)}>×</button>
           </div>
-        </div>
-      )}
-
-      {/* Realtime Preview Modal */}
-      {showRealtimePreview && (
-        <div className="realtime-preview-overlay" onClick={() => setShowRealtimePreview(false)}>
-          <div className="realtime-preview-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="realtime-preview-header">
-              <h3>Realtime Preview - {currentTemplate.name}</h3>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div className="progress-indicator">
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${calculateProgress()}%` }}
-                    />
-                  </div>
-                  <span className="progress-text">{calculateProgress()}% Complete</span>
-                </div>
-                <button className="btn-close-preview" onClick={() => setShowRealtimePreview(false)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          <div className="modal-body">
+            <p className="modal-description">
+              Anyone with this link will be able to view your CV
+            </p>
+            <div className="share-link-container">
+              <input
+                type="text"
+                value={shareLink}
+                readOnly
+                className="share-link-input"
+              />
+              <button className="btn-copy" onClick={copyShareLink}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M11 2H4a2 2 0 00-2 2v7m4-5h7a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div className="share-options">
+              <h4>Share via:</h4>
+              <div className="share-buttons">
+                <button className="btn-share-social">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" fill="#1877F2"/>
                   </svg>
+                  Facebook
+                </button>
+                <button className="btn-share-social">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M19.59 3.07a8.15 8.15 0 01-2.36.65 4.12 4.12 0 001.8-2.27c-.79.47-1.66.81-2.59 1A4.08 4.08 0 0013.55 1c-2.26 0-4.1 1.84-4.1 4.1 0 .32.04.63.1.93A11.64 11.64 0 011.64 1.9a4.08 4.08 0 001.27 5.47c-.68-.02-1.32-.21-1.88-.52v.05c0 1.99 1.42 3.65 3.3 4.03-.34.09-.71.14-1.08.14-.26 0-.52-.02-.77-.07.52 1.63 2.03 2.82 3.83 2.85A8.21 8.21 0 010 15.54a11.57 11.57 0 006.29 1.85c7.55 0 11.68-6.25 11.68-11.67 0-.18 0-.36-.01-.53A8.35 8.35 0 0020 3.07h-.41z" fill="#1DA1F2"/>
+                  </svg>
+                  Twitter
+                </button>
+                <button className="btn-share-social">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M18.52 0H1.476C.66 0 0 .645 0 1.44v17.12C0 19.355.66 20 1.476 20h17.044c.816 0 1.48-.645 1.48-1.44V1.44C20 .645 19.336 0 18.52 0zM5.934 17.04H2.967V7.5h2.97v9.54h-.003zM4.45 6.195c-.952 0-1.723-.775-1.723-1.73 0-.954.771-1.73 1.723-1.73.95 0 1.72.776 1.72 1.73 0 .955-.77 1.73-1.72 1.73zM17.04 17.04h-2.963v-4.64c0-1.105-.02-2.526-1.54-2.526-1.54 0-1.776 1.202-1.776 2.444v4.722H7.8V7.5h2.844v1.305h.04c.396-.75 1.364-1.54 2.808-1.54 3.003 0 3.557 1.977 3.557 4.547v5.228h-.008z" fill="#0077B5"/>
+                  </svg>
+                  LinkedIn
                 </button>
               </div>
             </div>
-            <div className="realtime-preview-content">
-              <div className="resume-preview-wrapper">
-                <div
-                  className={`resume-preview-page ${customization.layout}`}
-                  style={{
-                    '--template-color': currentTemplate.color,
-                    fontFamily: customization.font || 'Inter, sans-serif',
-                    fontSize: `${14 * (customization.fontSize === 'small' ? 0.9 : customization.fontSize === 'large' ? 1.1 : 1.0)}px`,
-                    '--primary-color': (() => {
-                      const colors = {
-                        blue: '#3B82F6', purple: '#8B5CF6', green: '#10B981', red: '#EF4444',
-                        orange: '#F59E0B', teal: '#14B8A6', pink: '#EC4899', gray: '#6B7280'
-                      };
-                      return colors[customization.colorScheme] || '#3B82F6';
-                    })(),
-                    '--secondary-color': (() => {
-                      const colors = {
-                        blue: '#1E40AF', purple: '#6D28D9', green: '#059669', red: '#DC2626',
-                        orange: '#D97706', teal: '#0D9488', pink: '#DB2777', gray: '#4B5563'
-                      };
-                      return colors[customization.colorScheme] || '#1E40AF';
-                    })(),
-                    '--spacing-scale': customization.spacing === 'compact' ? 0.8 : customization.spacing === 'relaxed' ? 1.2 : 1.0
-                  }}
-                >
-                  {/* Resume Header */}
-                  <div className="resume-header-styled" style={{ background: currentTemplate.gradient }}>
-                    <div className="resume-name-styled" style={{ fontWeight: 700, fontSize: '32px', marginBottom: '8px', textAlign: 'center', color: '#FFFFFF' }}>
-                      {cvData.personal.fullName || 'Your Name'}
-                    </div>
-                    <div className="resume-contact-styled">
-                      {cvData.personal.email && <span>{cvData.personal.email}</span>}
-                      {cvData.personal.email && cvData.personal.phone && <span>•</span>}
-                      {cvData.personal.phone && <span>{cvData.personal.phone}</span>}
-                      {(cvData.personal.email || cvData.personal.phone) && cvData.personal.location && <span>•</span>}
-                      {cvData.personal.location && <span>{cvData.personal.location}</span>}
-                    </div>
-                    <div className="resume-links-styled">
-                      {cvData.personal.linkedin && <span style={{ textDecoration: 'underline' }}>{cvData.personal.linkedin}</span>}
-                      {cvData.personal.linkedin && cvData.personal.website && <span>•</span>}
-                      {cvData.personal.website && <span style={{ textDecoration: 'underline' }}>{cvData.personal.website}</span>}
-                    </div>
-                  </div>
-
-                  {/* Professional Summary */}
-                  {sectionVisibility.personal && cvData.personal.summary && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Professional Summary</h2>
-                      <p className="summary-text-styled" style={{ lineHeight: 1.6, color: '#374151' }}>
-                        {cvData.personal.summary}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Experience */}
-                  {sectionVisibility.experience && cvData.experience.some(exp => exp.jobTitle || exp.company) && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Work Experience</h2>
-                      {cvData.experience.map(exp => (
-                        (exp.jobTitle || exp.company) && (
-                          <div key={exp.id} style={{ marginBottom: '16px' }}>
-                            <div className="experience-header-styled">
-                              <div>
-                                <div className="job-title-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
-                                  {exp.jobTitle || 'Job Title'}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span className="company-name-styled" style={{ color: '#6B7280' }}>
-                                    {exp.company || 'Company Name'}
-                                  </span>
-                                  {exp.location && <span>•</span>}
-                                  {exp.location && <span style={{ color: '#6B7280' }}>{exp.location}</span>}
-                                </div>
-                              </div>
-                              <div className="date-range-styled">
-                                {exp.startDate && new Date(exp.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
-                                  exp.current ? 'Present' :
-                                  exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'End Date'
-                                }
-                              </div>
-                            </div>
-                            {exp.description && (
-                              <p className="experience-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
-                                {exp.description}
-                              </p>
-                            )}
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Education */}
-                  {sectionVisibility.education && cvData.education.some(edu => edu.degree || edu.school) && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Education</h2>
-                      {cvData.education.map(edu => (
-                        (edu.degree || edu.school) && (
-                          <div key={edu.id} style={{ marginBottom: '16px' }}>
-                            <div className="education-header-styled">
-                              <div>
-                                <div className="degree-name-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
-                                  {edu.degree || 'Degree'}
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span className="school-name-styled" style={{ color: '#6B7280' }}>
-                                    {edu.school || 'School Name'}
-                                  </span>
-                                  {edu.location && <span>•</span>}
-                                  {edu.location && <span style={{ color: '#6B7280' }}>{edu.location}</span>}
-                                </div>
-                              </div>
-                              <div className="date-range-styled">
-                                {edu.startDate && new Date(edu.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
-                                  edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
-                                }
-                              </div>
-                            </div>
-                            {edu.gpa && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                                <span style={{ fontWeight: 600, color: '#374151' }}>GPA:</span>
-                                <span className="gpa-styled" style={{ color: '#6B7280' }}>{edu.gpa}</span>
-                              </div>
-                            )}
-                            {edu.description && (
-                              <p className="education-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
-                                {edu.description}
-                              </p>
-                            )}
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Skills */}
-                  {sectionVisibility.skills && (cvData.skills.technical.length > 0 || cvData.skills.soft.length > 0 || cvData.skills.languages.length > 0) && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Skills</h2>
-                      <div className="skills-container-styled">
-                        {cvData.skills.technical.length > 0 && (
-                          <div className="skill-category-styled">
-                            <h4>Technical Skills</h4>
-                            <div className="skill-tags-styled">
-                              {cvData.skills.technical.map((skill, index) => (
-                                <span key={index} className="skill-tag-styled">{skill}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {cvData.skills.soft.length > 0 && (
-                          <div className="skill-category-styled">
-                            <h4>Soft Skills</h4>
-                            <div className="skill-tags-styled">
-                              {cvData.skills.soft.map((skill, index) => (
-                                <span key={index} className="skill-tag-styled">{skill}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        {cvData.skills.languages.length > 0 && (
-                          <div className="skill-category-styled">
-                            <h4>Languages</h4>
-                            <div className="skill-tags-styled">
-                              {cvData.skills.languages.map((skill, index) => (
-                                <span key={index} className="skill-tag-styled">{skill}</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Projects */}
-                  {sectionVisibility.projects && cvData.projects.some(p => p.name) && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Projects</h2>
-                      {cvData.projects.map(project => (
-                        project.name && (
-                          <div key={project.id} style={{ marginBottom: '12px' }}>
-                            <div className="project-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
-                              {project.name}
-                            </div>
-                            {project.description && (
-                              <p className="project-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
-                                {project.description}
-                              </p>
-                            )}
-                            {project.technologies && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                                <strong>Technologies:</strong>
-                                <span className="project-tech-styled" style={{ color: '#6B7280' }}>{project.technologies}</span>
-                              </div>
-                            )}
-                            {project.link && (
-                              <div className="project-link-styled" style={{ marginTop: '4px', color: '#3B82F6', textDecoration: 'underline' }}>
-                                {project.link}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Certificates */}
-                  {sectionVisibility.certificates && cvData.certificates.some(c => c.name) && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Certifications</h2>
-                      {cvData.certificates.map(cert => (
-                        cert.name && (
-                          <div key={cert.id} className="certificate-item-styled" style={{ marginBottom: '12px' }}>
-                            <div className="certificate-header-styled">
-                              <div className="certificate-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
-                                {cert.name}
-                              </div>
-                              {cert.date && (
-                                <span className="certificate-date-styled">
-                                  {new Date(cert.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}
-                                </span>
-                              )}
-                            </div>
-                            {cert.issuer && (
-                              <div className="certificate-issuer-styled" style={{ color: '#6B7280' }}>
-                                {cert.issuer}
-                              </div>
-                            )}
-                            {cert.description && (
-                              <p className="certificate-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
-                                {cert.description}
-                              </p>
-                            )}
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Activities */}
-                  {sectionVisibility.activities && cvData.activities.some(a => a.title) && (
-                    <div className="resume-section-styled">
-                      <h2 className="section-title-styled">Activities & Volunteering</h2>
-                      {cvData.activities.map(activity => (
-                        activity.title && (
-                          <div key={activity.id} className="activity-item-styled" style={{ marginBottom: '12px' }}>
-                            <div className="activity-header-styled">
-                              <div className="activity-title-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
-                                {activity.title}
-                              </div>
-                              {activity.startDate && (
-                                <span className="date-range-styled">
-                                  {new Date(activity.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
-                                    activity.endDate ? new Date(activity.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
-                                  }
-                                </span>
-                              )}
-                            </div>
-                            {activity.organization && (
-                              <div className="activity-organization-styled" style={{ color: '#6B7280' }}>
-                                {activity.organization}
-                              </div>
-                            )}
-                            {activity.description && (
-                              <p className="activity-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
-                                {activity.description}
-                              </p>
-                            )}
-                          </div>
-                        )
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Share Modal */}
-      {showShareModal && (
-        <div className="share-modal-overlay" onClick={() => setShowShareModal(false)}>
-          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Share Your CV</h3>
-              <button className="btn-close" onClick={() => setShowShareModal(false)}>×</button>
-            </div>
-            <div className="modal-body">
-              <p className="modal-description">
-                Anyone with this link will be able to view your CV
-              </p>
-              <div className="share-link-container">
+            <div className="share-settings">
+              <label className="share-setting-item">
                 <input
-                  type="text"
-                  value={shareLink}
-                  readOnly
-                  className="share-link-input"
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={togglePrivateStatus}
                 />
-                <button className="btn-copy" onClick={copyShareLink}>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path d="M11 2H4a2 2 0 00-2 2v7m4-5h7a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                  Copy
-                </button>
-              </div>
-              <div className="share-options">
-                <h4>Share via:</h4>
-                <div className="share-buttons">
-                  <button className="btn-share-social">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" fill="#1877F2"/>
-                    </svg>
-                    Facebook
-                  </button>
-                  <button className="btn-share-social">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path d="M19.59 3.07a8.15 8.15 0 01-2.36.65 4.12 4.12 0 001.8-2.27c-.79.47-1.66.81-2.59 1A4.08 4.08 0 0013.55 1c-2.26 0-4.1 1.84-4.1 4.1 0 .32.04.63.1.93A11.64 11.64 0 011.64 1.9a4.08 4.08 0 001.27 5.47c-.68-.02-1.32-.21-1.88-.52v.05c0 1.99 1.42 3.65 3.3 4.03-.34.09-.71.14-1.08.14-.26 0-.52-.02-.77-.07.52 1.63 2.03 2.82 3.83 2.85A8.21 8.21 0 010 15.54a11.57 11.57 0 006.29 1.85c7.55 0 11.68-6.25 11.68-11.67 0-.18 0-.36-.01-.53A8.35 8.35 0 0020 3.07h-.41z" fill="#1DA1F2"/>
-                    </svg>
-                    Twitter
-                  </button>
-                  <button className="btn-share-social">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                      <path d="M18.52 0H1.476C.66 0 0 .645 0 1.44v17.12C0 19.355.66 20 1.476 20h17.044c.816 0 1.48-.645 1.48-1.44V1.44C20 .645 19.336 0 18.52 0zM5.934 17.04H2.967V7.5h2.97v9.54h-.003zM4.45 6.195c-.952 0-1.723-.775-1.723-1.73 0-.954.771-1.73 1.723-1.73.95 0 1.72.776 1.72 1.73 0 .955-.77 1.73-1.72 1.73zM17.04 17.04h-2.963v-4.64c0-1.105-.02-2.526-1.54-2.526-1.54 0-1.776 1.202-1.776 2.444v4.722H7.8V7.5h2.844v1.305h.04c.396-.75 1.364-1.54 2.808-1.54 3.003 0 3.557 1.977 3.557 4.547v5.228h-.008z" fill="#0077B5"/>
-                    </svg>
-                    LinkedIn
-                  </button>
-                </div>
-              </div>
-              <div className="share-settings">
-                <label className="share-setting-item">
-                  <input
-                    type="checkbox"
-                    checked={isPrivate}
-                    onChange={togglePrivateStatus}
-                  />
-                  <span style={{ fontWeight: isPrivate ? '600' : '400', color: isPrivate ? '#EF4444' : 'inherit' }}>
-                    🔒 Make Private {isPrivate && '(Link is currently inaccessible)'}
-                  </span>
-                </label>
-                <label className="share-setting-item">
-                  <input type="checkbox" defaultChecked />
-                  <span>Allow viewers to download CV</span>
-                </label>
-                <label className="share-setting-item">
-                  <input type="checkbox" />
-                  <span>Require password to view</span>
-                </label>
-              </div>
+                <span style={{ fontWeight: isPrivate ? '600' : '400', color: isPrivate ? '#EF4444' : 'inherit' }}>
+                  🔒 Make Private {isPrivate && '(Link is currently inaccessible)'}
+                </span>
+              </label>
+              <label className="share-setting-item">
+                <input type="checkbox" defaultChecked />
+                <span>Allow viewers to download CV</span>
+              </label>
+              <label className="share-setting-item">
+                <input type="checkbox" />
+                <span>Require password to view</span>
+              </label>
             </div>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    )}
+  </>
   );
 };
 

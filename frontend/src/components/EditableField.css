@@ -1,0 +1,136 @@
+/* Editable Field Base Styles */
+.editable-field {
+  position: relative;
+  cursor: text;
+}
+
+.editable-field:focus {
+  cursor: text;
+}
+
+.editable-field:empty:before {
+  content: attr(data-placeholder);
+  color: #9CA3AF;
+  font-style: italic;
+  pointer-events: none;
+}
+
+/* Rich Text Toolbar */
+.rich-text-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toolbar-btn:hover {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+.toolbar-btn.active {
+  background: #4F46E5;
+  color: #FFFFFF;
+}
+
+.toolbar-btn:active {
+  transform: scale(0.95);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: #E5E7EB;
+  margin: 0 4px;
+}
+
+/* Rich Text Content Styles */
+.editable-field strong,
+.editable-field b {
+  font-weight: 700;
+}
+
+.editable-field em,
+.editable-field i {
+  font-style: italic;
+}
+
+.editable-field u {
+  text-decoration: underline;
+}
+
+.editable-field ul,
+.editable-field ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.editable-field ul {
+  list-style-type: disc;
+}
+
+.editable-field ol {
+  list-style-type: decimal;
+}
+
+.editable-field li {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.editable-field p {
+  margin: 4px 0;
+}
+
+/* Prevent default outline on contentEditable */
+.editable-field:focus {
+  outline: none;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .rich-text-toolbar {
+    gap: 2px;
+    padding: 4px 6px;
+  }
+
+  .toolbar-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .toolbar-divider {
+    margin: 0 2px;
+  }
+}
