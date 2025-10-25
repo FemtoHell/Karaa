@@ -30,6 +30,10 @@ import './Editor.css';
 // ================================================================================
 // CUSTOM COMPONENTS
 // ================================================================================
+import EditableField from './components/EditableField';
+import SortableSection from './components/SortableSection';
+import SimpleSortableItem from './components/SimpleSortableItem';
+import CustomizationPanel from './components/CustomizationPanel';
 import TemplateSwitcher from './components/TemplateSwitcher';
 import ResumePreview from './components/ResumePreview';
 
@@ -53,6 +57,7 @@ import {
 import {
   DndContext,
   closestCenter,
+  KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
@@ -60,6 +65,7 @@ import {
 import {
   arrayMove,
   SortableContext,
+  sortableKeyboardCoordinates,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
@@ -955,107 +961,7 @@ const Editor = () => {
     });
   };
 
-  // ============================================================================
-  // ITEM MOVE HELPERS (Legacy - Used by up/down buttons)
-  // ============================================================================
-  /**
-   * Move education item up
-   */
-  const moveEducationUp = (id) => {
-    setCvData(prev => {
-      const index = prev.education.findIndex(edu => edu.id === id);
-      if (index > 0) {
-        const newEducation = [...prev.education];
-        [newEducation[index - 1], newEducation[index]] = [newEducation[index], newEducation[index - 1]];
-        return { ...prev, education: newEducation };
-      }
-      return prev;
-    });
-  };
-
-  const moveEducationDown = (id) => {
-    setCvData(prev => {
-      const index = prev.education.findIndex(edu => edu.id === id);
-      if (index < prev.education.length - 1) {
-        const newEducation = [...prev.education];
-        [newEducation[index], newEducation[index + 1]] = [newEducation[index + 1], newEducation[index]];
-        return { ...prev, education: newEducation };
-      }
-      return prev;
-    });
-  };
-
-  const moveProjectUp = (id) => {
-    setCvData(prev => {
-      const index = prev.projects.findIndex(proj => proj.id === id);
-      if (index > 0) {
-        const newProjects = [...prev.projects];
-        [newProjects[index - 1], newProjects[index]] = [newProjects[index], newProjects[index - 1]];
-        return { ...prev, projects: newProjects };
-      }
-      return prev;
-    });
-  };
-
-  const moveProjectDown = (id) => {
-    setCvData(prev => {
-      const index = prev.projects.findIndex(proj => proj.id === id);
-      if (index < prev.projects.length - 1) {
-        const newProjects = [...prev.projects];
-        [newProjects[index], newProjects[index + 1]] = [newProjects[index + 1], newProjects[index]];
-        return { ...prev, projects: newProjects };
-      }
-      return prev;
-    });
-  };
-
-  const moveCertificateUp = (id) => {
-    setCvData(prev => {
-      const index = prev.certificates.findIndex(cert => cert.id === id);
-      if (index > 0) {
-        const newCertificates = [...prev.certificates];
-        [newCertificates[index - 1], newCertificates[index]] = [newCertificates[index], newCertificates[index - 1]];
-        return { ...prev, certificates: newCertificates };
-      }
-      return prev;
-    });
-  };
-
-  const moveCertificateDown = (id) => {
-    setCvData(prev => {
-      const index = prev.certificates.findIndex(cert => cert.id === id);
-      if (index < prev.certificates.length - 1) {
-        const newCertificates = [...prev.certificates];
-        [newCertificates[index], newCertificates[index + 1]] = [newCertificates[index + 1], newCertificates[index]];
-        return { ...prev, certificates: newCertificates };
-      }
-      return prev;
-    });
-  };
-
-  const moveActivityUp = (id) => {
-    setCvData(prev => {
-      const index = prev.activities.findIndex(act => act.id === id);
-      if (index > 0) {
-        const newActivities = [...prev.activities];
-        [newActivities[index - 1], newActivities[index]] = [newActivities[index], newActivities[index - 1]];
-        return { ...prev, activities: newActivities };
-      }
-      return prev;
-    });
-  };
-
-  const moveActivityDown = (id) => {
-    setCvData(prev => {
-      const index = prev.activities.findIndex(act => act.id === id);
-      if (index < prev.activities.length - 1) {
-        const newActivities = [...prev.activities];
-        [newActivities[index], newActivities[index + 1]] = [newActivities[index + 1], newActivities[index]];
-        return { ...prev, activities: newActivities };
-      }
-      return prev;
-    });
-  };
+   
 
   // ============================================================================
   // SAVE & EXPORT HANDLERS
@@ -1238,12 +1144,6 @@ const Editor = () => {
     }));
   };
 
-  // ============================================================================
-  // SECTION ORDER HELPERS (Legacy - Keep for backward compatibility)
-  // ============================================================================
-  /**
-   * Move section up in order (Alternative to drag-and-drop)
-   */
   const moveSectionUp = (index) => {
     if (index > 0) {
       const newOrder = [...sectionOrder];
@@ -1449,7 +1349,7 @@ const Editor = () => {
    */
   const handleTemplateChange = async (template) => {
     console.log('🎨 Changing template to:', template.name);
-    
+
     // Update current template with FULL configuration
     setCurrentTemplate({
       _id: template._id,
@@ -1479,20 +1379,46 @@ const Editor = () => {
       photoConfig: template.photoConfig || { enabled: false, style: 'circle', position: 'header', size: 'medium' }
     });
 
-    // Update customization with template config
-    setCustomization(prev => ({
-      ...prev,
+    // RESET customization to template defaults (no carry-over from previous template)
+    setCustomization({
+      font: template.typography?.headingFont || 'Inter',
+      fontSize: 'medium',
+      colorScheme: template.category || 'blue',
+      spacing: 'normal',
+      layout: template.layout?.type || 'single-column',
       templateId: template._id,
-      font: template.config?.fontFamily || template.typography?.headingFont || prev.font,
-      fontSize: template.config?.fontSize || prev.fontSize,
-      spacing: template.config?.spacing || prev.spacing,
-      layout: template.config?.layout || template.layout?.type || prev.layout,
-      colorScheme: template.color || prev.colorScheme,
-      photoStyle: template.config?.photoStyle || template.photoConfig?.style || 'circle',
-      photoPosition: template.config?.photoPosition || template.photoConfig?.position || 'header'
-    }));
+      photoStyle: template.photoConfig?.style || 'circle',
+      photoPosition: template.photoConfig?.position || 'header',
+      primaryColor: template.colors?.primary || '#3B82F6',
+      accentColor: template.colors?.secondary || '#1E40AF',
+      lineHeight: 1.6,
+      margins: 40
+    });
 
-    console.log('✅ Template updated:', template.name, 'Layout:', template.layout?.type);
+    // RESET section order to template defaults
+    const templateSectionOrder = template.sections?.order || [
+      'personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'
+    ];
+    setSectionOrder(templateSectionOrder);
+
+    // RESET section visibility to template defaults
+    const templateSectionVisibility = template.sections?.visible || {
+      personal: true,
+      summary: true,
+      experience: true,
+      education: true,
+      skills: true,
+      projects: true,
+      certificates: true,
+      activities: true
+    };
+    setSectionVisibility(templateSectionVisibility);
+
+    console.log('✅ Template fully applied:', template.name, {
+      layout: template.layout?.type,
+      colors: template.colors?.primary,
+      sections: templateSectionOrder
+    });
   };
 
   // Handle photo upload
@@ -2723,19 +2649,278 @@ const Editor = () => {
           </div>
           <div className="realtime-preview-content">
             <div className="resume-preview-wrapper">
-              <ResumePreview
-                cvData={cvData}
-                customization={customization}
-                template={{
-                  ...currentTemplate,
-                  sections: {
-                    ...currentTemplate.sections,
-                    order: sectionOrder,
-                    visible: sectionVisibility
-                  }
+              <div
+                className={`resume-preview-page ${customization.layout}`}
+                style={{
+                  '--template-color': currentTemplate.color,
+                  fontFamily: customization.font || 'Inter, sans-serif',
+                  fontSize: `${14 * (customization.fontSize === 'small' ? 0.9 : customization.fontSize === 'large' ? 1.1 : 1.0)}px`,
+                  '--primary-color': (() => {
+                    const colors = {
+                      blue: '#3B82F6', purple: '#8B5CF6', green: '#10B981', red: '#EF4444',
+                      orange: '#F59E0B', teal: '#14B8A6', pink: '#EC4899', gray: '#6B7280'
+                    };
+                    return colors[customization.colorScheme] || '#3B82F6';
+                  })(),
+                  '--secondary-color': (() => {
+                    const colors = {
+                      blue: '#1E40AF', purple: '#6D28D9', green: '#059669', red: '#DC2626',
+                      orange: '#D97706', teal: '#0D9488', pink: '#DB2777', gray: '#4B5563'
+                    };
+                    return colors[customization.colorScheme] || '#1E40AF';
+                  })(),
+                  '--spacing-scale': customization.spacing === 'compact' ? 0.8 : customization.spacing === 'relaxed' ? 1.2 : 1.0
                 }}
-                editable={false}
-              />
+              >
+                {/* Resume Header */}
+                <div className="resume-header-styled" style={{ background: currentTemplate.gradient }}>
+                  <div className="resume-name-styled" style={{ fontWeight: 700, fontSize: '32px', marginBottom: '8px', textAlign: 'center', color: '#FFFFFF' }}>
+                    {cvData.personal.fullName || 'Your Name'}
+                  </div>
+                  <div className="resume-contact-styled">
+                    {cvData.personal.email && <span>{cvData.personal.email}</span>}
+                    {cvData.personal.email && cvData.personal.phone && <span>•</span>}
+                    {cvData.personal.phone && <span>{cvData.personal.phone}</span>}
+                    {(cvData.personal.email || cvData.personal.phone) && cvData.personal.location && <span>•</span>}
+                    {cvData.personal.location && <span>{cvData.personal.location}</span>}
+                  </div>
+                  <div className="resume-links-styled">
+                    {cvData.personal.linkedin && <span style={{ textDecoration: 'underline' }}>{cvData.personal.linkedin}</span>}
+                    {cvData.personal.linkedin && cvData.personal.website && <span>•</span>}
+                    {cvData.personal.website && <span style={{ textDecoration: 'underline' }}>{cvData.personal.website}</span>}
+                  </div>
+                </div>
+
+                {/* Professional Summary */}
+                {sectionVisibility.personal && cvData.personal.summary && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Professional Summary</h2>
+                    <p className="summary-text-styled" style={{ lineHeight: 1.6, color: '#374151' }}>
+                      {cvData.personal.summary}
+                    </p>
+                  </div>
+                )}
+
+                {/* Experience */}
+                {sectionVisibility.experience && cvData.experience.some(exp => exp.jobTitle || exp.company) && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Work Experience</h2>
+                    {cvData.experience.map(exp => (
+                      (exp.jobTitle || exp.company) && (
+                        <div key={exp.id} style={{ marginBottom: '16px' }}>
+                          <div className="experience-header-styled">
+                            <div>
+                              <div className="job-title-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
+                                {exp.jobTitle || 'Job Title'}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="company-name-styled" style={{ color: '#6B7280' }}>
+                                  {exp.company || 'Company Name'}
+                                </span>
+                                {exp.location && <span>•</span>}
+                                {exp.location && <span style={{ color: '#6B7280' }}>{exp.location}</span>}
+                              </div>
+                            </div>
+                            <div className="date-range-styled">
+                              {exp.startDate && new Date(exp.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                exp.current ? 'Present' :
+                                exp.endDate ? new Date(exp.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'End Date'
+                              }
+                            </div>
+                          </div>
+                          {exp.description && (
+                            <p className="experience-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
+                              {exp.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+
+                {/* Education */}
+                {sectionVisibility.education && cvData.education.some(edu => edu.degree || edu.school) && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Education</h2>
+                    {cvData.education.map(edu => (
+                      (edu.degree || edu.school) && (
+                        <div key={edu.id} style={{ marginBottom: '16px' }}>
+                          <div className="education-header-styled">
+                            <div>
+                              <div className="degree-name-styled" style={{ fontSize: '18px', fontWeight: 600, color: '#1F2937' }}>
+                                {edu.degree || 'Degree'}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span className="school-name-styled" style={{ color: '#6B7280' }}>
+                                  {edu.school || 'School Name'}
+                                </span>
+                                {edu.location && <span>•</span>}
+                                {edu.location && <span style={{ color: '#6B7280' }}>{edu.location}</span>}
+                              </div>
+                            </div>
+                            <div className="date-range-styled">
+                              {edu.startDate && new Date(edu.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                edu.endDate ? new Date(edu.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
+                              }
+                            </div>
+                          </div>
+                          {edu.gpa && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                              <span style={{ fontWeight: 600, color: '#374151' }}>GPA:</span>
+                              <span className="gpa-styled" style={{ color: '#6B7280' }}>{edu.gpa}</span>
+                            </div>
+                          )}
+                          {edu.description && (
+                            <p className="education-description-styled" style={{ marginTop: '8px', lineHeight: 1.6, color: '#374151' }}>
+                              {edu.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+
+                {/* Skills */}
+                {sectionVisibility.skills && (cvData.skills.technical.length > 0 || cvData.skills.soft.length > 0 || cvData.skills.languages.length > 0) && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Skills</h2>
+                    <div className="skills-container-styled">
+                      {cvData.skills.technical.length > 0 && (
+                        <div className="skill-category-styled">
+                          <h4>Technical Skills</h4>
+                          <div className="skill-tags-styled">
+                            {cvData.skills.technical.map((skill, index) => (
+                              <span key={index} className="skill-tag-styled">{skill}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {cvData.skills.soft.length > 0 && (
+                        <div className="skill-category-styled">
+                          <h4>Soft Skills</h4>
+                          <div className="skill-tags-styled">
+                            {cvData.skills.soft.map((skill, index) => (
+                              <span key={index} className="skill-tag-styled">{skill}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {cvData.skills.languages.length > 0 && (
+                        <div className="skill-category-styled">
+                          <h4>Languages</h4>
+                          <div className="skill-tags-styled">
+                            {cvData.skills.languages.map((skill, index) => (
+                              <span key={index} className="skill-tag-styled">{skill}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Projects */}
+                {sectionVisibility.projects && cvData.projects.some(p => p.name) && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Projects</h2>
+                    {cvData.projects.map(project => (
+                      project.name && (
+                        <div key={project.id} style={{ marginBottom: '12px' }}>
+                          <div className="project-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                            {project.name}
+                          </div>
+                          {project.description && (
+                            <p className="project-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                              {project.description}
+                            </p>
+                          )}
+                          {project.technologies && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                              <strong>Technologies:</strong>
+                              <span className="project-tech-styled" style={{ color: '#6B7280' }}>{project.technologies}</span>
+                            </div>
+                          )}
+                          {project.link && (
+                            <div className="project-link-styled" style={{ marginTop: '4px', color: '#3B82F6', textDecoration: 'underline' }}>
+                              {project.link}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+
+                {/* Certificates */}
+                {sectionVisibility.certificates && cvData.certificates.some(c => c.name) && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Certifications</h2>
+                    {cvData.certificates.map(cert => (
+                      cert.name && (
+                        <div key={cert.id} className="certificate-item-styled" style={{ marginBottom: '12px' }}>
+                          <div className="certificate-header-styled">
+                            <div className="certificate-name-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                              {cert.name}
+                            </div>
+                            {cert.date && (
+                              <span className="certificate-date-styled">
+                                {new Date(cert.date).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})}
+                              </span>
+                            )}
+                          </div>
+                          {cert.issuer && (
+                            <div className="certificate-issuer-styled" style={{ color: '#6B7280' }}>
+                              {cert.issuer}
+                            </div>
+                          )}
+                          {cert.description && (
+                            <p className="certificate-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                              {cert.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+
+                {/* Activities */}
+                {sectionVisibility.activities && cvData.activities.some(a => a.title) && (
+                  <div className="resume-section-styled">
+                    <h2 className="section-title-styled">Activities & Volunteering</h2>
+                    {cvData.activities.map(activity => (
+                      activity.title && (
+                        <div key={activity.id} className="activity-item-styled" style={{ marginBottom: '12px' }}>
+                          <div className="activity-header-styled">
+                            <div className="activity-title-styled" style={{ fontSize: '16px', fontWeight: 600, color: '#1F2937' }}>
+                              {activity.title}
+                            </div>
+                            {activity.startDate && (
+                              <span className="date-range-styled">
+                                {new Date(activity.startDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'})} - {
+                                  activity.endDate ? new Date(activity.endDate).toLocaleDateString('en-US', {month: 'short', year: 'numeric'}) : 'Present'
+                                }
+                              </span>
+                            )}
+                          </div>
+                          {activity.organization && (
+                            <div className="activity-organization-styled" style={{ color: '#6B7280' }}>
+                              {activity.organization}
+                            </div>
+                          )}
+                          {activity.description && (
+                            <p className="activity-description-styled" style={{ marginTop: '4px', lineHeight: 1.6, color: '#374151' }}>
+                              {activity.description}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -2751,55 +2936,72 @@ const Editor = () => {
             <button className="btn-close" onClick={() => setShowShareModal(false)}>×</button>
           </div>
           <div className="modal-body">
-            <div className="share-options">
-              <div className="share-option">
-                <label>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    checked={isPrivate}
-                    onChange={() => setIsPrivate(true)}
-                  />
-                  <span>Private (Only you can access)</span>
-                </label>
-              </div>
-              <div className="share-option">
-                <label>
-                  <input
-                    type="radio"
-                    name="privacy"
-                    checked={!isPrivate}
-                    onChange={() => setIsPrivate(false)}
-                  />
-                  <span>Public (Anyone with the link)</span>
-                </label>
-              </div>
+            <p className="modal-description">
+              Anyone with this link will be able to view your CV
+            </p>
+            <div className="share-link-container">
+              <input
+                type="text"
+                value={shareLink}
+                readOnly
+                className="share-link-input"
+              />
+              <button className="btn-copy" onClick={copyShareLink}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M11 2H4a2 2 0 00-2 2v7m4-5h7a2 2 0 012 2v7a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Copy
+              </button>
             </div>
-            {shareLink && (
-              <div className="share-link-container">
-                <input
-                  type="text"
-                  value={shareLink}
-                  readOnly
-                  className="share-link-input"
-                />
-                <button
-                  className="btn-copy"
-                  onClick={() => {
-                    navigator.clipboard.writeText(shareLink);
-                    alert('Link copied to clipboard!');
-                  }}
-                >
-                  Copy Link
+            <div className="share-options">
+              <h4>Share via:</h4>
+              <div className="share-buttons">
+                <button className="btn-share-social">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" fill="#1877F2"/>
+                  </svg>
+                  Facebook
+                </button>
+                <button className="btn-share-social">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M19.59 3.07a8.15 8.15 0 01-2.36.65 4.12 4.12 0 001.8-2.27c-.79.47-1.66.81-2.59 1A4.08 4.08 0 0013.55 1c-2.26 0-4.1 1.84-4.1 4.1 0 .32.04.63.1.93A11.64 11.64 0 011.64 1.9a4.08 4.08 0 001.27 5.47c-.68-.02-1.32-.21-1.88-.52v.05c0 1.99 1.42 3.65 3.3 4.03-.34.09-.71.14-1.08.14-.26 0-.52-.02-.77-.07.52 1.63 2.03 2.82 3.83 2.85A8.21 8.21 0 010 15.54a11.57 11.57 0 006.29 1.85c7.55 0 11.68-6.25 11.68-11.67 0-.18 0-.36-.01-.53A8.35 8.35 0 0020 3.07h-.41z" fill="#1DA1F2"/>
+                  </svg>
+                  Twitter
+                </button>
+                <button className="btn-share-social">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M18.52 0H1.476C.66 0 0 .645 0 1.44v17.12C0 19.355.66 20 1.476 20h17.044c.816 0 1.48-.645 1.48-1.44V1.44C20 .645 19.336 0 18.52 0zM5.934 17.04H2.967V7.5h2.97v9.54h-.003zM4.45 6.195c-.952 0-1.723-.775-1.723-1.73 0-.954.771-1.73 1.723-1.73.95 0 1.72.776 1.72 1.73 0 .955-.77 1.73-1.72 1.73zM17.04 17.04h-2.963v-4.64c0-1.105-.02-2.526-1.54-2.526-1.54 0-1.776 1.202-1.776 2.444v4.722H7.8V7.5h2.844v1.305h.04c.396-.75 1.364-1.54 2.808-1.54 3.003 0 3.557 1.977 3.557 4.547v5.228h-.008z" fill="#0077B5"/>
+                  </svg>
+                  LinkedIn
                 </button>
               </div>
-            )}
+            </div>
+            <div className="share-settings">
+              <label className="share-setting-item">
+                <input
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={togglePrivateStatus}
+                />
+                <span style={{ fontWeight: isPrivate ? '600' : '400', color: isPrivate ? '#EF4444' : 'inherit' }}>
+                  🔒 Make Private {isPrivate && '(Link is currently inaccessible)'}
+                </span>
+              </label>
+              <label className="share-setting-item">
+                <input type="checkbox" defaultChecked />
+                <span>Allow viewers to download CV</span>
+              </label>
+              <label className="share-setting-item">
+                <input type="checkbox" />
+                <span>Require password to view</span>
+              </label>
+            </div>
           </div>
         </div>
       </div>
     )}
-  </div>
-);
+  </>
+  );
 };
 
 export default Editor;
