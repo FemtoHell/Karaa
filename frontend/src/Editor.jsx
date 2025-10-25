@@ -1,12 +1,45 @@
+/**
+ * ================================================================================
+ * RESUME BUILDER - EDITOR COMPONENT
+ * ================================================================================
+ * Main editor component for creating and editing resumes
+ *
+ * Features:
+ * - Multi-tab form interface (Personal, Experience, Education, Skills, etc.)
+ * - Real-time preview with drag-and-drop reordering
+ * - Template switching and customization
+ * - Auto-save functionality
+ * - Guest mode support
+ * - PDF export
+ *
+ * File Size: ~3000 lines
+ * - State Management: Lines 130-250
+ * - Data Handlers: Lines 250-1200
+ * - Form Tabs: Lines 1600-2420
+ * - Render: Lines 2420-2972
+ * ================================================================================
+ */
+
+// ================================================================================
+// REACT & ROUTING IMPORTS
+// ================================================================================
 import React, { useState, useEffect, useRef } from 'react';
-import './Editor.css';
 import { Link, useSearchParams, useParams, useNavigate } from 'react-router-dom';
+import './Editor.css';
+
+// ================================================================================
+// CUSTOM COMPONENTS
+// ================================================================================
 import EditableField from './components/EditableField';
 import SortableSection from './components/SortableSection';
 import SimpleSortableItem from './components/SimpleSortableItem';
 import CustomizationPanel from './components/CustomizationPanel';
 import TemplateSwitcher from './components/TemplateSwitcher';
 import ResumePreview from './components/ResumePreview';
+
+// ================================================================================
+// API & SERVICES
+// ================================================================================
 import { API_ENDPOINTS, apiRequest } from './config/api';
 import { useAuth } from './AuthContext';
 import { resumeService, templateService } from './services/api.service';
@@ -17,6 +50,10 @@ import {
   migrateGuestData,
   isGuestMode
 } from './utils/guestSession';
+
+// ================================================================================
+// DRAG & DROP LIBRARIES
+// ================================================================================
 import {
   DndContext,
   closestCenter,
@@ -34,10 +71,13 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// =================================================================
-// 1. TẠO COMPONENT CHUNG ĐỂ TÁI SỬ DỤNG
-// =================================================================
-// Component này sẽ thay thế cho 4 components bị lặp
+// ================================================================================
+// SORTABLE FORM ITEM COMPONENT
+// ================================================================================
+/**
+ * Reusable sortable wrapper for form items (Education, Projects, Certificates, etc.)
+ * Provides drag-and-drop functionality with visual feedback
+ */
 const SortableFormItem = ({ id, children }) => {
   const {
     attributes,
@@ -114,13 +154,13 @@ const SortableFormItem = ({ id, children }) => {
   );
 };
 
-// =================================================================
-// 2. XÓA 4 COMPONENTS BỊ LẶP (SortableEducationItem, SortableProjectItem, v.v.)
-// =================================================================
-// ... (Đã xóa) ...
-
-
+// ================================================================================
+// MAIN EDITOR COMPONENT
+// ================================================================================
 const Editor = () => {
+  // ============================================================================
+  // ROUTING & AUTH
+  // ============================================================================
   const [searchParams] = useSearchParams();
   const { id: resumeId } = useParams();
   const navigate = useNavigate();
@@ -128,19 +168,29 @@ const Editor = () => {
   const templateId = searchParams.get('template');
   const action = searchParams.get('action');
 
-  const [currentResumeId, setCurrentResumeId] = useState(resumeId || null);
-  const [loading, setLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
-  const [guestMode, setGuestMode] = useState(isGuest); // Use isGuest to detect guest mode correctly
-  const [userDataPrefilled, setUserDataPrefilled] = useState(false); // Track if user data has been prefilled
-
+  // ============================================================================
+  // UI STATE
+  // ============================================================================
   const [activeTab, setActiveTab] = useState('personal');
   const [showCustomization, setShowCustomization] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareLink, setShareLink] = useState('');
-  const [isPrivate, setIsPrivate] = useState(true); // Default to private
+  const [isPrivate, setIsPrivate] = useState(true);
   const [showPreview, setShowPreview] = useState(action === 'preview');
-  const [showRealtimePreview, setShowRealtimePreview] = useState(false); // Realtime preview modal
+  const [showRealtimePreview, setShowRealtimePreview] = useState(false);
+
+  // ============================================================================
+  // LOADING & STATUS STATE
+  // ============================================================================
+  const [currentResumeId, setCurrentResumeId] = useState(resumeId || null);
+  const [loading, setLoading] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(''); // 'saving', 'saved', 'error'
+  const [guestMode, setGuestMode] = useState(isGuest);
+  const [userDataPrefilled, setUserDataPrefilled] = useState(false);
+
+  // ============================================================================
+  // CUSTOMIZATION STATE
+  // ============================================================================
   const [customization, setCustomization] = useState({
     font: 'Inter',
     fontSize: 'medium',
@@ -149,10 +199,12 @@ const Editor = () => {
     layout: 'single-column',
     templateId: templateId || null,
     photoStyle: 'circle',
-    photoPosition: 'header' // header, sidebar, top-left, top-right
+    photoPosition: 'header'
   });
 
-  // Template state - will be fetched from backend
+  // ============================================================================
+  // TEMPLATE STATE
+  // ============================================================================
   const [currentTemplate, setCurrentTemplate] = useState({
     _id: null,
     name: 'Default',
@@ -178,16 +230,12 @@ const Editor = () => {
     features: { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
   });
 
+  // ============================================================================
+  // SECTION ORDER & VISIBILITY
+  // ============================================================================
   const [sectionOrder, setSectionOrder] = useState([
     'personal', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'
   ]);
-
-  // Sync section order with current template
-  useEffect(() => {
-    if (currentTemplate?.sections?.order) {
-      setSectionOrder(currentTemplate.sections.order);
-    }
-  }, [currentTemplate?.sections?.order]);
 
   const [sectionVisibility, setSectionVisibility] = useState({
     personal: true,
@@ -198,6 +246,17 @@ const Editor = () => {
     certificates: true,
     activities: true
   });
+
+  // Sync section order with current template
+  useEffect(() => {
+    if (currentTemplate?.sections?.order) {
+      setSectionOrder(currentTemplate.sections.order);
+    }
+  }, [currentTemplate?.sections?.order]);
+
+  // ============================================================================
+  // CV DATA STATE (Main Resume Content)
+  // ============================================================================
   const [cvData, setCvData] = useState({
     personal: {
       fullName: '',
@@ -667,6 +726,12 @@ const Editor = () => {
     handleAuthChange();
   }, [isAuthenticated, isGuest]);
 
+  // ============================================================================
+  // PERSONAL INFO HANDLERS
+  // ============================================================================
+  /**
+   * Update personal information fields (name, email, phone, etc.)
+   */
   const updatePersonalInfo = (field, value) => {
     setCvData(prev => ({
       ...prev,
@@ -677,6 +742,12 @@ const Editor = () => {
     }));
   };
 
+  // ============================================================================
+  // EXPERIENCE HANDLERS
+  // ============================================================================
+  /**
+   * Add a new work experience entry
+   */
   const addExperience = () => {
     const newExp = {
       id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -765,6 +836,12 @@ const Editor = () => {
     }));
   };
 
+  // ============================================================================
+  // PROJECTS HANDLERS
+  // ============================================================================
+  /**
+   * Add a new project entry
+   */
   const addProject = () => {
     const newProject = {
       id: `proj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -980,6 +1057,12 @@ const Editor = () => {
     });
   };
 
+  // ============================================================================
+  // SAVE & EXPORT HANDLERS
+  // ============================================================================
+  /**
+   * Export resume to PDF format
+   */
   const exportToPDF = async () => {
     if (!currentResumeId) {
       alert('Please save your resume first before exporting.');
@@ -1277,11 +1360,12 @@ const Editor = () => {
     }
   };
 
-  // ========================================
-  // HANDLERS FOR RESUME PREVIEW DRAG & DROP
-  // ========================================
-
-  // Handle section reordering from preview
+  // ============================================================================
+  // DRAG & DROP HANDLERS (Preview Side - WYSIWYG)
+  // ============================================================================
+  /**
+   * Handle section reordering from preview (WYSIWYG drag & drop)
+   */
   const handlePreviewSectionReorder = (activeId, overId) => {
     if (activeId !== overId) {
       setSectionOrder((items) => {
@@ -1351,7 +1435,12 @@ const Editor = () => {
     return Math.round((filledCount / requiredFields.length) * 100);
   };
 
-  // Handle template change - Update FULL template configuration
+  // ============================================================================
+  // TEMPLATE & CUSTOMIZATION HANDLERS
+  // ============================================================================
+  /**
+   * Handle template change - Update FULL template configuration
+   */
   const handleTemplateChange = async (template) => {
     console.log('🎨 Changing template to:', template.name);
     
@@ -1605,7 +1694,9 @@ const Editor = () => {
           </div>
 
           <div className="editor-form">
-            {/* Personal Information */}
+            {/* ================================================================
+                FORM TAB: PERSONAL INFORMATION
+                ================================================================ */}
             {activeTab === 'personal' && (
               <div className="form-section">
                 <h3 className="section-title">Personal Information</h3>
@@ -1809,7 +1900,9 @@ const Editor = () => {
               </div>
             )}
 
-            {/* Work Experience */}
+            {/* ================================================================
+                FORM TAB: WORK EXPERIENCE
+                ================================================================ */}
             {activeTab === 'experience' && (
               <div className="form-section">
                 <div className="section-header">
@@ -1931,7 +2024,9 @@ const Editor = () => {
               </div>
             )}
 
-            {/* Education */}
+            {/* ================================================================
+                FORM TAB: EDUCATION
+                ================================================================ */}
             {activeTab === 'education' && (
               <div className="form-section">
                 <div className="section-header">
@@ -2040,7 +2135,9 @@ const Editor = () => {
               </div>
             )}
 
-            {/* Skills */}
+            {/* ================================================================
+                FORM TAB: SKILLS
+                ================================================================ */}
             {activeTab === 'skills' && (
               <div className="form-section">
                 <h3 className="section-title">Skills</h3>
@@ -2141,7 +2238,9 @@ const Editor = () => {
               </div>
             )}
 
-            {/* Projects */}
+            {/* ================================================================
+                FORM TAB: PROJECTS
+                ================================================================ */}
             {activeTab === 'projects' && (
               <div className="form-section">
                 <div className="section-header">
@@ -2240,7 +2339,9 @@ const Editor = () => {
               </div>
             )}
 
-            {/* Certificates */}
+            {/* ================================================================
+                FORM TAB: CERTIFICATES & LICENSES
+                ================================================================ */}
             {activeTab === 'certificates' && (
               <div className="form-section">
                 <div className="section-header">
@@ -2329,7 +2430,9 @@ const Editor = () => {
               </div>
             )}
 
-            {/* Activities */}
+            {/* ================================================================
+                FORM TAB: ACTIVITIES & VOLUNTEERING
+                ================================================================ */}
             {activeTab === 'activities' && (
               <div className="form-section">
                 <div className="section-header">
