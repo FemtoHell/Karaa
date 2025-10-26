@@ -98,6 +98,15 @@ const CompareVersions = () => {
     // Use template from API or fallback to complete default template
     const templateConfig = template || DEFAULT_TEMPLATE;
 
+    // Force enable photo display in compare mode
+    const compareTemplate = {
+      ...templateConfig,
+      features: {
+        ...templateConfig.features,
+        hasPhoto: true
+      }
+    };
+
     return (
       <div className="resume-preview-container">
         <div className="preview-header">
@@ -115,9 +124,88 @@ const CompareVersions = () => {
           <ResumePreview
             cvData={content}
             customization={customization}
-            template={templateConfig}
+            template={compareTemplate}
             editable={false}
           />
+        </div>
+      </div>
+    );
+  };
+
+  const renderSummaryComparison = () => {
+    if (!comparisonData) return null;
+
+    const { version1, version2 } = comparisonData;
+    const v1Personal = version1.content?.personal || {};
+    const v2Personal = version2.content?.personal || {};
+
+    const isDifferent = (field) => {
+      return v1Personal[field] !== v2Personal[field];
+    };
+
+    return (
+      <div className="summary-comparison">
+        <h3>Quick Comparison Summary</h3>
+        <div className="summary-grid">
+          {/* Version 1 Column */}
+          <div className="summary-column">
+            <div className="summary-version-label">
+              Version {version1.version}
+            </div>
+
+            {v1Personal.photo && (
+              <div className="summary-avatar">
+                <img src={v1Personal.photo} alt={v1Personal.fullName || 'Avatar'} />
+              </div>
+            )}
+
+            <div className="summary-info">
+              <div className={`summary-field ${isDifferent('fullName') ? 'different' : ''}`}>
+                <strong>Name:</strong> {v1Personal.fullName || 'N/A'}
+              </div>
+              <div className={`summary-field ${isDifferent('email') ? 'different' : ''}`}>
+                <strong>Email:</strong> {v1Personal.email || 'N/A'}
+              </div>
+              <div className={`summary-field ${isDifferent('phone') ? 'different' : ''}`}>
+                <strong>Phone:</strong> {v1Personal.phone || 'N/A'}
+              </div>
+              <div className={`summary-field ${isDifferent('location') ? 'different' : ''}`}>
+                <strong>Location:</strong> {v1Personal.location || 'N/A'}
+              </div>
+            </div>
+          </div>
+
+          <div className="summary-divider">
+            <div className="vs-badge">VS</div>
+          </div>
+
+          {/* Version 2 Column */}
+          <div className="summary-column">
+            <div className="summary-version-label">
+              {version2.version === 'current' ? 'Current Version' : `Version ${version2.version}`}
+            </div>
+
+            {v2Personal.photo && (
+              <div className="summary-avatar">
+                <img src={v2Personal.photo} alt={v2Personal.fullName || 'Avatar'} />
+              </div>
+            )}
+
+            <div className="summary-info">
+              <div className={`summary-field ${isDifferent('fullName') ? 'different' : ''}`}>
+                <strong>Name:</strong> {v2Personal.fullName || 'N/A'}
+              </div>
+              <div className={`summary-field ${isDifferent('email') ? 'different' : ''}`}>
+                <strong>Email:</strong> {v2Personal.email || 'N/A'}
+              </div>
+              <div className={`summary-field ${isDifferent('phone') ? 'different' : ''}`}>
+                <strong>Phone:</strong> {v2Personal.phone || 'N/A'}
+              </div>
+              <div className={`summary-field ${isDifferent('location') ? 'different' : ''}`}>
+                <strong>Location:</strong> {v2Personal.location || 'N/A'}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -229,6 +317,7 @@ const CompareVersions = () => {
           </div>
         )}
 
+        {comparisonData && renderSummaryComparison()}
         {comparisonData && renderContentComparison()}
 
         {!comparisonData && !comparing && (
