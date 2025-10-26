@@ -5,7 +5,7 @@ import { useAuth } from './AuthContext';
 import './NotificationsPage.css';
 
 const NotificationsPage = () => {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // 'all', 'unread', 'read'

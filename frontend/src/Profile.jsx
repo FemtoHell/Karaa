@@ -26,7 +26,7 @@ const Profile = () => {
   const [deletePassword, setDeletePassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
 
   // Fetch user profile from backend
   useEffect(() => {

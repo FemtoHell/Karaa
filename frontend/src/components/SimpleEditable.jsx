@@ -21,7 +21,7 @@ const SimpleEditable = ({
     }
   }, [value]);
 
-  const handleBlur = (e) => {
+  const _handleBlur = (e) => {
     const newValue = e.target.textContent;
     onChange(newValue);
   };

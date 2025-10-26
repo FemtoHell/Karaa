@@ -26,6 +26,7 @@ const MiniTemplatePreview = ({ template }) => {
   // Use template's primary color instead of extracting from gradient
   const primaryColor = template.colors?.primary || '#3B82F6';
   const templateColor = primaryColor;
+  const templateGradient = template.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
 
   const layoutType = template.layout?.type || 'single-column';
   const sidebarBg = template.colors?.sidebarBg || '#F3F4F6';
@@ -85,7 +86,7 @@ const MiniTemplatePreview = ({ template }) => {
 
   const renderSingleColumnLayout = () => (
     <>
-      <div className="mini-resume-header" style={{ background: template.gradient }}>
+      <div className="mini-resume-header" style={{ background: templateGradient }}>
         {hasPhoto && photoPosition === 'header' && (
           <div style={{ marginBottom: '8px' }}>
             {renderPhoto('50px', '14px')}
@@ -117,7 +118,7 @@ const MiniTemplatePreview = ({ template }) => {
   const renderTwoColumnLayout = () => (
     <div className="mini-two-column-layout">
       <aside className="mini-sidebar" style={{ backgroundColor: sidebarBg, width: '35%' }}>
-        <div className="mini-resume-header-compact" style={{ background: template.gradient, padding: '12px 8px' }}>
+        <div className="mini-resume-header-compact" style={{ background: templateGradient, padding: '12px 8px' }}>
           {hasPhoto && photoPosition === 'sidebar' && (
             <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
               {renderPhoto('35px', '10px')}
@@ -158,7 +159,7 @@ const MiniTemplatePreview = ({ template }) => {
   const renderTwoColumnEqualLayout = () => (
     <div className="mini-two-column-equal">
       <div className="mini-column" style={{ width: '48%' }}>
-        <div className="mini-resume-header-compact" style={{ background: template.gradient, padding: '12px 8px' }}>
+        <div className="mini-resume-header-compact" style={{ background: templateGradient, padding: '12px 8px' }}>
           {hasPhoto && photoPosition === 'header' && (
             <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
               {renderPhoto('35px', '10px')}
@@ -189,7 +190,7 @@ const MiniTemplatePreview = ({ template }) => {
 
   const renderInfographicLayout = () => (
     <>
-      <div className="mini-resume-header-modern" style={{ background: template.gradient, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px' }}>
+      <div className="mini-resume-header-modern" style={{ background: templateGradient, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px' }}>
         {hasPhoto && photoPosition === 'header' ? (
           renderPhoto('30px', '9px')
         ) : (
@@ -212,7 +213,7 @@ const MiniTemplatePreview = ({ template }) => {
 
   const renderTimelineLayout = () => (
     <>
-      <div className="mini-resume-header" style={{ background: template.gradient }}>
+      <div className="mini-resume-header" style={{ background: templateGradient }}>
         {hasPhoto && photoPosition === 'header' && (
           <div style={{ marginBottom: '8px' }}>
             {renderPhoto('45px', '12px')}
@@ -238,7 +239,7 @@ const MiniTemplatePreview = ({ template }) => {
 
   const renderModernBlocksLayout = () => (
     <>
-      <div className="mini-resume-header-modern" style={{ background: template.gradient }}>
+      <div className="mini-resume-header-modern" style={{ background: templateGradient }}>
         {hasPhoto && photoPosition === 'header' && (
           <div style={{ marginBottom: '8px' }}>
             {renderPhoto('45px', '12px')}
@@ -270,7 +271,7 @@ const MiniTemplatePreview = ({ template }) => {
 
   const renderGridLayout = () => (
     <>
-      <div className="mini-resume-header" style={{ background: template.gradient }}>
+      <div className="mini-resume-header" style={{ background: templateGradient }}>
         {hasPhoto && photoPosition === 'header' && (
           <div style={{ marginBottom: '8px' }}>
             {renderPhoto('45px', '12px')}

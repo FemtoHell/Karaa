@@ -754,7 +754,7 @@ exports.compareVersions = asyncHandler(async (req, res, next) => {
     _id: id,
     user: req.user.id,
     deletedAt: null
-  });
+  }).populate('template');
 
   if (!resume) {
     return next(new ErrorResponse('Resume not found', 404));
@@ -786,7 +786,8 @@ exports.compareVersions = asyncHandler(async (req, res, next) => {
         content: version2.content,
         customization: version2.customization,
         createdAt: version2.createdAt
-      }
+      },
+      template: resume.template
     }
   });
 });

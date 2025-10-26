@@ -8,12 +8,12 @@ import {
   useSensors,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { DEFAULT_TEMPLATE } from '../constants/defaultTemplate';
 
 // Draggable Section Component
 const DraggableSection = ({ id, children, editable, sectionTitle }) => {
@@ -165,30 +165,8 @@ const ResumePreview = forwardRef(({
     }
   };
 
-  // Use template configuration or fallback to defaults
-  const currentTemplate = template || {
-    name: 'Classic',
-    color: '#3B82F6',
-    gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    layout: { type: 'single-column', columns: { count: 1, widths: ['100%'], gap: '0px' } },
-    sections: {
-      order: ['personal', 'summary', 'experience', 'education', 'skills', 'projects', 'certificates', 'activities'],
-      visible: { personal: true, summary: true, experience: true, education: true, skills: true, projects: true, certificates: true, activities: true }
-    },
-    typography: {
-      headingFont: 'Inter',
-      bodyFont: 'Inter',
-      sizes: { name: '36px', heading: '20px', subheading: '17px', body: '14px' }
-    },
-    colors: {
-      primary: '#3B82F6',
-      secondary: '#1E40AF',
-      text: '#111827',
-      textLight: '#6B7280',
-      background: '#FFFFFF'
-    },
-    features: { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
-  };
+  // Use template configuration or fallback to shared default template
+  const currentTemplate = template || DEFAULT_TEMPLATE;
 
   const getColorValue = (colorName) => {
     const colors = {
@@ -444,7 +422,7 @@ const ResumePreview = forwardRef(({
                     }}>
                       {exp.achievements.map((achievement, achIdx) => (
                         <li key={achIdx} style={{ marginBottom: '4px' }}>
-                          {achievement.replace(/^[•\-\*]\s*/, '')}
+                          {achievement.replace(/^[•\-*]\s*/, '')}
                         </li>
                       ))}
                     </ul>
@@ -1133,7 +1111,7 @@ const ResumePreview = forwardRef(({
         <div className="resume-section">
           <h2 className="section-title" style={{ color: currentTemplate.colors?.primary }}>Career Timeline</h2>
           <div className="timeline-container">
-            {cvData.experience?.map((exp, index) => (
+            {cvData.experience?.map((exp) => (
               <div key={exp.id} className="timeline-item">
                 <div className="timeline-marker" style={{ backgroundColor: currentTemplate.colors?.primary }}>
                   <div className="timeline-dot"></div>
@@ -1148,7 +1126,7 @@ const ResumePreview = forwardRef(({
                 </div>
               </div>
             ))}
-            {cvData.education?.map((edu, index) => (
+            {cvData.education?.map((edu) => (
               <div key={edu.id} className="timeline-item">
                 <div className="timeline-marker" style={{ backgroundColor: currentTemplate.colors?.secondary }}>
                   <div className="timeline-dot"></div>

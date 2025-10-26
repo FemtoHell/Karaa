@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import './CompareVersions.css';
 import { API_ENDPOINTS, apiRequest } from './config/api';
 import ResumePreview from './components/ResumePreview';
+import { DEFAULT_TEMPLATE } from './constants/defaultTemplate';
 
 const CompareVersions = () => {
   const { id } = useParams();
@@ -91,8 +92,11 @@ const CompareVersions = () => {
     }
   };
 
-  const renderResumePreview = (content, customization, label, version) => {
+  const renderResumePreview = (content, customization, label, version, template) => {
     const isCurrentVersion = version === 'current';
+
+    // Use template from API or fallback to complete default template
+    const templateConfig = template || DEFAULT_TEMPLATE;
 
     return (
       <div className="resume-preview-container">
@@ -111,11 +115,7 @@ const CompareVersions = () => {
           <ResumePreview
             cvData={content}
             customization={customization}
-            template={{
-              name: 'Classic',
-              color: '#3B82F6',
-              gradient: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-            }}
+            template={templateConfig}
             editable={false}
           />
         </div>
@@ -126,7 +126,7 @@ const CompareVersions = () => {
   const renderContentComparison = () => {
     if (!comparisonData) return null;
 
-    const { version1, version2 } = comparisonData;
+    const { version1, version2, template } = comparisonData;
 
     return (
       <div className="comparison-grid">
@@ -134,7 +134,8 @@ const CompareVersions = () => {
           version1.content,
           version1.customization,
           `Version ${version1.version} - ${new Date(version1.createdAt).toLocaleDateString()}`,
-          version1.version
+          version1.version,
+          template
         )}
         {renderResumePreview(
           version2.content,
@@ -142,7 +143,8 @@ const CompareVersions = () => {
           version2.version === 'current'
             ? 'Current Version'
             : `Version ${version2.version} - ${new Date(version2.createdAt).toLocaleDateString()}`,
-          version2.version
+          version2.version,
+          template
         )}
       </div>
     );

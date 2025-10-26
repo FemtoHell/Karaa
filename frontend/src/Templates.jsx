@@ -28,8 +28,8 @@ const Templates = () => {
       try {
         setLoading(true);
         setError(null);
-        // Use cached data to avoid 429 errors
-        const response = await apiRequest(API_ENDPOINTS.TEMPLATES);
+        // Skip cache to get fresh template data with full schema (colors, layout, typography, etc.)
+        const response = await apiRequest(`${API_ENDPOINTS.TEMPLATES}?skipCache=true`);
         if (response.success) {
           setAllTemplates(response.data);
         }

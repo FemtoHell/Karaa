@@ -68,7 +68,7 @@ const SharedResume = () => {
     }
   };
 
-  const downloadDocx = async () => {
+  const _downloadDocx = async () => {
     try {
       setDownloading(true);
       const response = await fetch(API_ENDPOINTS.EXPORT_SHARED_DOCX(shareId));

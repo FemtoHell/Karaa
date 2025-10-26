@@ -1,28 +1,35 @@
-/* Mini Template Preview Styles */
+/* Mini Template Preview Styles - ENHANCED VERSION */
 .mini-template-wrapper {
-  width: 300px;
-  height: 424px;
+  width: 420px;
+  height: 594px;
   overflow: hidden;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 8px 16px rgba(0, 0, 0, 0.08);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
 .mini-template-wrapper:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.06);
-  transform: translateY(-4px);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.08),
+    0 8px 16px rgba(0, 0, 0, 0.12),
+    0 16px 32px rgba(0, 0, 0, 0.16),
+    0 0 0 2px rgba(79, 70, 229, 0.1);
+  transform: translateY(-6px) scale(1.02);
 }
 
 .mini-resume-container {
   width: 210mm;
   height: 297mm;
   background: white;
-  transform: scale(0.36);
+  transform: scale(0.54);
   transform-origin: top center;
   padding: 20mm;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
@@ -324,15 +331,47 @@
   margin: 5px 0 0 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* Responsive adjustments - ENHANCED */
+@media (max-width: 1280px) {
+  .mini-template-wrapper {
+    width: 380px;
+    height: 537px;
+  }
+
   .mini-resume-container {
-    transform: scale(0.32);
+    transform: scale(0.48);
+  }
+}
+
+@media (max-width: 1024px) {
+  .mini-template-wrapper {
+    width: 360px;
+    height: 509px;
+  }
+
+  .mini-resume-container {
+    transform: scale(0.46);
+  }
+}
+
+@media (max-width: 768px) {
+  .mini-template-wrapper {
+    width: 340px;
+    height: 480px;
+  }
+
+  .mini-resume-container {
+    transform: scale(0.43);
   }
 }
 
 @media (max-width: 640px) {
+  .mini-template-wrapper {
+    width: 320px;
+    height: 452px;
+  }
+
   .mini-resume-container {
-    transform: scale(0.25);
+    transform: scale(0.40);
   }
 }
