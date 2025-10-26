@@ -17,7 +17,7 @@ const {
   exportDocx,
   exportSharedDocx
 } = require('../controllers/resumeController');
-const { exportPdf, exportSharedPdf } = require('../controllers/pdfExport');
+const { exportPdf, exportSharedPdf, exportPdfFromHtml } = require('../controllers/pdfExport');
 const { protect } = require('../middleware/auth');
 const { resumeValidation } = require('../middleware/validation');
 
@@ -47,6 +47,7 @@ router.post('/:id/duplicate', duplicateResume);
 // Export routes
 router.get('/:id/export/docx', exportDocx);
 router.get('/:id/export/pdf', exportPdf);
+router.post('/:id/export/pdf-html', exportPdfFromHtml);
 
 // Sharing routes
 router.post('/:id/share', generateShareLink);

@@ -812,10 +812,18 @@ exports.exportDocx = asyncHandler(async (req, res, next) => {
     // Decrypt personal data before exporting
     const decryptedContent = decryptResumePersonalData(resume.content);
 
-    // Generate DOCX buffer
+    // Load template if exists
+    let template = null;
+    if (resume.template) {
+      const Template = require('../models/Template');
+      template = await Template.findById(resume.template);
+    }
+
+    // Generate DOCX buffer with template info
     const buffer = await generateDocx({
       content: decryptedContent,
-      customization: resume.customization
+      customization: resume.customization,
+      template: template
     });
 
     // Set response headers

@@ -1,13 +1,38 @@
-const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } = require('docx');
+const { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, ImageRun, Table, TableRow, TableCell, WidthType } = require('docx');
+const axios = require('axios');
 
 /**
- * Generate DOCX file from resume data
- * @param {object} resumeData - Resume content and customization
+ * Generate DOCX file from resume data with photo support and template layouts
+ * @param {object} resumeData - Resume content, customization, and template
  * @returns {Buffer} - DOCX file buffer
  */
 const generateDocx = async (resumeData) => {
-  const { content, customization } = resumeData;
+  const { content, customization, template } = resumeData;
   const sections = [];
+  
+  // Get layout type
+  const layoutType = customization?.layout || template?.layout?.type || 'single-column';
+  
+  // NOTE: DOCX uses simplified linear layout for compatibility
+  // Complex layouts are adapted to maintain readability in Word
+  // Template colors and styling are preserved
+  
+  // Download photo if exists
+  let photoData = null;
+  if (content.personal?.photo) {
+    try {
+      const photoUrl = content.personal.photo;
+      if (photoUrl.startsWith('http')) {
+        const response = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+        photoData = Buffer.from(response.data);
+      } else if (photoUrl.startsWith('data:image')) {
+        const base64Data = photoUrl.split(',')[1];
+        photoData = Buffer.from(base64Data, 'base64');
+      }
+    } catch (err) {
+      console.warn('Failed to load photo for DOCX:', err.message);
+    }
+  }
 
   // Helper function to create a heading
   const createHeading = (text) => {
@@ -47,43 +72,104 @@ const generateDocx = async (resumeData) => {
     });
   };
 
-  // Title - Personal Info
+  // Title - Personal Info with Photo
   if (content.personal) {
     const p = content.personal;
 
-    // Name
-    sections.push(new Paragraph({
-      text: p.fullName || '',
-      heading: HeadingLevel.TITLE,
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 200 }
-    }));
-
-    // Contact info
-    const contactInfo = [];
-    if (p.email) contactInfo.push(p.email);
-    if (p.phone) contactInfo.push(p.phone);
-    if (p.location) contactInfo.push(p.location);
-
-    if (contactInfo.length > 0) {
+    // If we have a photo, create a table with photo and info side-by-side
+    if (photoData) {
+      try {
+        const headerTable = new Table({
+          rows: [
+            new TableRow({
+              children: [
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      children: [
+                        new ImageRun({
+                          data: photoData,
+                          transformation: {
+                            width: 100,
+                            height: 100,
+                          },
+                        }),
+                      ],
+                      alignment: AlignmentType.CENTER,
+                    }),
+                  ],
+                  width: { size: 20, type: WidthType.PERCENTAGE },
+                }),
+                new TableCell({
+                  children: [
+                    new Paragraph({
+                      text: p.fullName || '',
+                      heading: HeadingLevel.TITLE,
+                      spacing: { after: 100 }
+                    }),
+                    new Paragraph({
+                      text: [p.email, p.phone, p.location].filter(Boolean).join(' | '),
+                      spacing: { after: 100 }
+                    }),
+                    ...(p.linkedin || p.website ? [new Paragraph({
+                      text: [p.linkedin && `LinkedIn: ${p.linkedin}`, p.website && `Website: ${p.website}`].filter(Boolean).join(' | '),
+                    })] : [])
+                  ],
+                  width: { size: 80, type: WidthType.PERCENTAGE },
+                }),
+              ],
+            }),
+          ],
+          width: { size: 100, type: WidthType.PERCENTAGE },
+        });
+        sections.push(headerTable);
+      } catch (err) {
+        console.warn('Failed to add photo to DOCX, falling back to text-only:', err.message);
+        // Fallback to text-only if image fails
+        sections.push(new Paragraph({
+          text: p.fullName || '',
+          heading: HeadingLevel.TITLE,
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 200 }
+        }));
+      }
+    } else {
+      // Name without photo
       sections.push(new Paragraph({
-        text: contactInfo.join(' | '),
+        text: p.fullName || '',
+        heading: HeadingLevel.TITLE,
         alignment: AlignmentType.CENTER,
         spacing: { after: 200 }
       }));
     }
 
-    // Links
-    const links = [];
-    if (p.linkedin) links.push(`LinkedIn: ${p.linkedin}`);
-    if (p.website) links.push(`Website: ${p.website}`);
+    // Contact info (if not in photo table)
+    if (!photoData) {
+      const contactInfo = [];
+      if (p.email) contactInfo.push(p.email);
+      if (p.phone) contactInfo.push(p.phone);
+      if (p.location) contactInfo.push(p.location);
 
-    if (links.length > 0) {
-      sections.push(new Paragraph({
-        text: links.join(' | '),
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 400 }
-      }));
+      if (contactInfo.length > 0) {
+        sections.push(new Paragraph({
+          text: contactInfo.join(' | '),
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 200 }
+        }));
+      }
+
+      // Links
+      const links = [];
+      if (p.linkedin) links.push(`LinkedIn: ${p.linkedin}`);
+      if (p.website) links.push(`Website: ${p.website}`);
+
+      if (links.length > 0) {
+        sections.push(new Paragraph({
+          text: links.join(' | '),
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 400 }
+        }));
+      }
     }
 
     // Summary

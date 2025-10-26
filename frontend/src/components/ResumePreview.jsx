@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import './ResumePreview.css';
 import {
   DndContext,
@@ -107,7 +107,7 @@ const DraggableItem = ({ id, children, editable }) => {
   );
 };
 
-const ResumePreview = ({
+const ResumePreview = forwardRef(({
   cvData,
   customization,
   template,
@@ -118,7 +118,7 @@ const ResumePreview = ({
   onReorderProjects,
   onReorderCertificates,
   onReorderActivities
-}) => {
+}, ref) => {
   // DnD Kit sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -253,6 +253,8 @@ const ResumePreview = ({
         return renderEducationSection();
       case 'skills':
         return renderSkillsSection();
+      case 'languages':
+        return renderLanguagesSection();
       case 'projects':
         return renderProjectsSection();
       case 'certificates':
@@ -421,7 +423,7 @@ const ResumePreview = ({
                       <div className="item-subtitle" style={{
                         fontSize: templateTypography.sizes.body,
                         color: templateColors.textLight
-                      }}>{exp.company}</div>
+                      }}>{exp.company}{exp.location ? ` • ${exp.location}` : ''}</div>
                     </div>
                     <div className="item-date" style={{
                       fontSize: templateTypography.sizes.body,
@@ -430,14 +432,35 @@ const ResumePreview = ({
                       {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
                     </div>
                   </div>
-                  {exp.location && <div className="item-location" style={{
-                    fontSize: templateTypography.sizes.body,
-                    color: templateColors.textLight
-                  }}>{exp.location}</div>}
-                  {exp.description && <p className="item-description" style={{
-                    fontSize: templateTypography.sizes.body,
-                    color: templateColors.text
-                  }}>{exp.description}</p>}
+                  
+                  {/* Render Achievements if available */}
+                  {exp.achievements && exp.achievements.length > 0 ? (
+                    <ul style={{
+                      margin: '8px 0 0 0',
+                      padding: '0 0 0 20px',
+                      fontSize: templateTypography.sizes.body,
+                      color: templateColors.text,
+                      lineHeight: '1.6'
+                    }}>
+                      {exp.achievements.map((achievement, achIdx) => (
+                        <li key={achIdx} style={{ marginBottom: '4px' }}>
+                          {achievement.replace(/^[•\-\*]\s*/, '')}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    /* Legacy Description */
+                    exp.description && (
+                      <p className="item-description" style={{
+                        fontSize: templateTypography.sizes.body,
+                        color: templateColors.text,
+                        marginTop: '8px',
+                        lineHeight: '1.6'
+                      }}>
+                        {exp.description}
+                      </p>
+                    )
+                  )}
                 </div>
               </DraggableItem>
             ))}
@@ -512,11 +535,16 @@ const ResumePreview = ({
 
   // Skills Section
   const renderSkillsSection = () => {
-    if (!cvData?.skills || (
-      (!cvData.skills.technical || cvData.skills.technical.length === 0) &&
-      (!cvData.skills.soft || cvData.skills.soft.length === 0) &&
-      (!cvData.skills.languages || cvData.skills.languages.length === 0)
-    )) return null;
+    const hasLegacySkills = cvData?.skills && (
+      (cvData.skills.technical && cvData.skills.technical.length > 0) ||
+      (cvData.skills.soft && cvData.skills.soft.length > 0) ||
+      (cvData.skills.languages && cvData.skills.languages.length > 0)
+    );
+    
+    const hasNewSkills = cvData?.skillsWithProficiency && cvData.skillsWithProficiency.length > 0;
+    
+    if (!hasLegacySkills && !hasNewSkills) return null;
+
     return (
       <div key="skills" className="resume-section-styled">
         <h2 className="section-title-styled" style={{
@@ -524,35 +552,239 @@ const ResumePreview = ({
           fontSize: templateTypography.sizes.heading,
           fontFamily: templateTypography.headingFont
         }}>
-          Skills
+          Skills & Expertise
         </h2>
-        {cvData.skills.technical?.length > 0 && (
-          <div className="skills-group" style={{
-            fontSize: templateTypography.sizes.body,
-            color: templateColors.text
-          }}>
-            <strong>Technical:</strong> {cvData.skills.technical.join(', ')}
+        
+        {/* New Skills with Proficiency */}
+        {hasNewSkills && (
+          <div className="skills-with-proficiency" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {cvData.skillsWithProficiency.map((skill, idx) => (
+              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{
+                    fontSize: templateTypography.sizes.body,
+                    fontWeight: '600',
+                    color: templateColors.text
+                  }}>
+                    {skill.name}
+                  </span>
+                  <div style={{ display: 'flex', gap: '2px' }}>
+                    {[1, 2, 3, 4, 5].map(level => (
+                      <span
+                        key={level}
+                        style={{
+                          fontSize: '14px',
+                          color: level <= skill.proficiency ? '#FBBF24' : '#E5E7EB'
+                        }}
+                      >
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div style={{
+                  height: '6px',
+                  background: '#E5E7EB',
+                  borderRadius: '3px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${(skill.proficiency / 5) * 100}%`,
+                    height: '100%',
+                    background: templateColors.primary,
+                    borderRadius: '3px',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+              </div>
+            ))}
           </div>
         )}
-        {cvData.skills.soft?.length > 0 && (
-          <div className="skills-group" style={{
-            fontSize: templateTypography.sizes.body,
-            color: templateColors.text
-          }}>
-            <strong>Soft Skills:</strong> {cvData.skills.soft.join(', ')}
-          </div>
-        )}
-        {cvData.skills.languages?.length > 0 && (
-          <div className="skills-group" style={{
-            fontSize: templateTypography.sizes.body,
-            color: templateColors.text
-          }}>
-            <strong>Languages:</strong> {cvData.skills.languages.join(', ')}
+        
+        {/* Legacy Skills */}
+        {hasLegacySkills && (
+          <div style={{ marginTop: hasNewSkills ? '16px' : '0' }}>
+            {cvData.skills.technical?.length > 0 && (
+              <div className="skills-group" style={{
+                fontSize: templateTypography.sizes.body,
+                color: templateColors.text,
+                marginBottom: '8px'
+              }}>
+                <strong>Technical:</strong> {cvData.skills.technical.join(', ')}
+              </div>
+            )}
+            {cvData.skills.soft?.length > 0 && (
+              <div className="skills-group" style={{
+                fontSize: templateTypography.sizes.body,
+                color: templateColors.text,
+                marginBottom: '8px'
+              }}>
+                <strong>Soft Skills:</strong> {cvData.skills.soft.join(', ')}
+              </div>
+            )}
+            {cvData.skills.languages?.length > 0 && (
+              <div className="skills-group" style={{
+                fontSize: templateTypography.sizes.body,
+                color: templateColors.text
+              }}>
+                <strong>Languages:</strong> {cvData.skills.languages.join(', ')}
+              </div>
+            )}
           </div>
         )}
       </div>
     );
   };
+
+  // Languages Section
+  const renderLanguagesSection = () => {
+    const languages = cvData?.skills?.languages || [];
+    if (languages.length === 0) return null;
+
+    const sectionConfig = currentTemplate.sections?.config?.languages || {};
+    const displayType = sectionConfig.displayType || 'list';
+    const position = sectionConfig.position || 'main';
+
+    return (
+      <div key="languages" className="resume-section-styled">
+        <h2 className={position === 'sidebar' ? 'sidebar-title' : 'section-title-styled'} style={{
+          color: templateColors.primary,
+          fontSize: position === 'sidebar' ? '16px' : templateTypography.sizes.heading,
+          fontFamily: templateTypography.headingFont
+        }}>
+          Languages
+        </h2>
+
+        {displayType === 'bars' && (
+          <div className={position === 'sidebar' ? 'sidebar-skills' : 'skills-grid'}>
+            {languages.map((language, i) => (
+              <div key={i} className="skill-item">
+                <span className="skill-name" style={{
+                  fontSize: templateTypography.sizes.body,
+                  color: position === 'sidebar' ? templateColors.text : templateColors.text
+                }}>{language}</span>
+                {position === 'sidebar' && (
+                  <div className="skill-bar-container">
+                    <div className="skill-bar" style={{
+                      width: `${Math.max(70, 95 - i * 10)}%`,
+                      backgroundColor: templateColors.primary
+                    }}></div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {displayType === 'list' && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+            {languages.map((language, i) => (
+              <span key={i} style={{
+                padding: '6px 14px',
+                background: position === 'sidebar' ? 'rgba(255,255,255,0.1)' : '#F3F4F6',
+                color: position === 'sidebar' ? templateColors.text : templateColors.text,
+                borderRadius: '6px',
+                fontSize: templateTypography.sizes.body,
+                fontWeight: '500'
+              }}>
+                {language}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ============================================================================
+  // SIDEBAR COMPACT HELPERS (for Two-Column Layout)
+  // ============================================================================
+
+  const renderSidebarPersonal = () => {
+    return (
+      <div className="sidebar-section">
+        <h1 className="sidebar-name" style={{ color: currentTemplate.colors?.primary }}>
+          {cvData.personal.fullName || 'Your Name'}
+        </h1>
+        {cvData.personal.email && <p className="sidebar-contact">{cvData.personal.email}</p>}
+        {cvData.personal.phone && <p className="sidebar-contact">{cvData.personal.phone}</p>}
+        {cvData.personal.location && <p className="sidebar-contact">{cvData.personal.location}</p>}
+      </div>
+    );
+  };
+
+  const renderSidebarSkills = () => {
+    // Check new skills format first
+    const hasNewSkills = cvData?.skillsWithProficiency && cvData.skillsWithProficiency.length > 0;
+    const hasLegacySkills = cvData?.skills && (
+      (cvData.skills.technical && cvData.skills.technical.length > 0) ||
+      (cvData.skills.soft && cvData.skills.soft.length > 0)
+    );
+
+    if (!hasNewSkills && !hasLegacySkills) return null;
+
+    // Use new skills if available, otherwise fallback to legacy
+    const skillsToDisplay = hasNewSkills
+      ? cvData.skillsWithProficiency.slice(0, 6)
+      : [...(cvData.skills?.technical || []), ...(cvData.skills?.soft || [])].slice(0, 6);
+
+    return (
+      <div className="sidebar-section">
+        <h2 className="sidebar-title" style={{ color: currentTemplate.colors?.primary }}>
+          Skills
+        </h2>
+        <div className="sidebar-skills">
+          {skillsToDisplay.map((skill, i) => {
+            const skillName = typeof skill === 'string' ? skill : skill.name;
+            const proficiency = typeof skill === 'string' ? null : skill.proficiency;
+            const barWidth = proficiency ? `${(proficiency / 5) * 100}%` : `${85 - i * 5}%`;
+
+            return (
+              <div key={i} className="skill-item">
+                <span className="skill-name">{skillName}</span>
+                <div className="skill-bar-container">
+                  <div className="skill-bar" style={{
+                    width: barWidth,
+                    backgroundColor: currentTemplate.colors?.primary
+                  }}></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSidebarLanguages = () => {
+    const languages = cvData?.skills?.languages || [];
+    if (languages.length === 0) return null;
+
+    return (
+      <div className="sidebar-section">
+        <h2 className="sidebar-title" style={{ color: currentTemplate.colors?.primary }}>
+          Languages
+        </h2>
+        <div className="sidebar-skills">
+          {languages.slice(0, 4).map((language, i) => (
+            <div key={i} className="skill-item">
+              <span className="skill-name">{language}</span>
+              <div className="skill-bar-container">
+                <div className="skill-bar" style={{
+                  width: `${Math.max(70, 95 - i * 10)}%`,
+                  backgroundColor: currentTemplate.colors?.primary
+                }}></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // ============================================================================
+  // MAIN SECTION RENDERERS
+  // ============================================================================
 
   // Projects Section
   const renderProjectsSection = () => {
@@ -781,87 +1013,76 @@ const ResumePreview = ({
     );
   };
 
-  // Two Column Layout (Sidebar + Main) - MATCH TemplatePreview EXACTLY
+  // Two Column Layout (Sidebar + Main) - Restored Original Essence
   const renderTwoColumnLayout = () => {
     const hasPhoto = cvData?.personal?.photo && currentTemplate.features?.hasPhoto;
     const photoStyle = customization?.photoStyle || currentTemplate.photoConfig?.style || 'circle';
-    
+
+    // Get section configuration from template
+    const sectionConfig = currentTemplate.sections?.config || {};
+
+    // Split sections into sidebar and main based on position config
+    const sidebarSections = [];
+    const mainSections = [];
+
+    sectionOrder.forEach(sectionName => {
+      if (!sectionVisibility[sectionName]) return;
+
+      const position = sectionConfig[sectionName]?.position || 'main';
+      if (position === 'sidebar') {
+        sidebarSections.push(sectionName);
+      } else {
+        mainSections.push(sectionName);
+      }
+    });
+
+    // Helper to render sidebar sections with compact style
+    const renderSidebarSection = (sectionName) => {
+      switch (sectionName) {
+        case 'personal':
+          return renderSidebarPersonal();
+        case 'skills':
+          return renderSidebarSkills();
+        case 'languages':
+          return renderSidebarLanguages();
+        default:
+          // For other sections, render in sidebar with compact wrapper
+          return (
+            <div key={sectionName} className="sidebar-section">
+              {renderSection(sectionName)}
+            </div>
+          );
+      }
+    };
+
     return (
       <div className="resume-two-column">
-        <aside className="resume-sidebar" style={{ 
+        <aside className="resume-sidebar" style={{
           backgroundColor: currentTemplate.colors?.sidebarBg || '#F3F4F6',
           width: currentTemplate.layout?.columns?.widths[0] || '30%'
         }}>
-          {hasPhoto && (
+          {/* Photo (if in sidebar) */}
+          {hasPhoto && currentTemplate.photoConfig?.position === 'sidebar' && (
             <div className={`resume-photo resume-photo-${photoStyle}`} style={{ marginBottom: '20px' }}>
               <img src={cvData.personal.photo} alt={cvData.personal.fullName} />
             </div>
           )}
-          <div className="sidebar-section">
-            <h1 className="sidebar-name" style={{ color: currentTemplate.colors?.primary }}>
-              {cvData.personal.fullName || 'Your Name'}
-            </h1>
-            <p className="sidebar-contact">{cvData.personal.email}</p>
-            <p className="sidebar-contact">{cvData.personal.phone}</p>
-            <p className="sidebar-contact">{cvData.personal.location}</p>
-          </div>
-          
-          <div className="sidebar-section">
-            <h2 className="sidebar-title" style={{ color: currentTemplate.colors?.primary }}>Skills</h2>
-            <div className="sidebar-skills">
-              {[...(cvData.skills?.technical || []), ...(cvData.skills?.soft || [])].slice(0, 6).map((skill, i) => (
-                <div key={i} className="skill-item">
-                  <span className="skill-name">{skill}</span>
-                  <div className="skill-bar-container">
-                    <div className="skill-bar" style={{ 
-                      width: `${85 - i * 5}%`,
-                      backgroundColor: currentTemplate.colors?.primary 
-                    }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+
+          {/* Render sidebar sections with compact helpers */}
+          {sidebarSections.map(sectionName => (
+            <React.Fragment key={sectionName}>
+              {renderSidebarSection(sectionName)}
+            </React.Fragment>
+          ))}
         </aside>
-        
+
         <main className="resume-main" style={{ width: currentTemplate.layout?.columns?.widths[1] || '70%' }}>
-          <div className="resume-section">
-            <h2 className="section-title" style={{ color: currentTemplate.colors?.primary }}>Professional Summary</h2>
-            <p className="summary-text">{cvData.personal?.summary}</p>
-          </div>
-
-          <div className="resume-section">
-            <h2 className="section-title" style={{ color: currentTemplate.colors?.primary }}>Work Experience</h2>
-            {cvData.experience?.map(exp => (
-              <div key={exp.id} className="experience-item">
-                <div className="experience-header">
-                  <div>
-                    <h3 className="job-title">{exp.jobTitle}</h3>
-                    <p className="company-name">{exp.company}</p>
-                  </div>
-                  <div className="date-range" style={{ color: currentTemplate.colors?.textLight }}>
-                    {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                  </div>
-                </div>
-                <div className="experience-description">
-                  {exp.description && exp.description.split('\n').map((line, i) => (
-                    <p key={i}>{line}</p>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="resume-section">
-            <h2 className="section-title" style={{ color: currentTemplate.colors?.primary }}>Education</h2>
-            {cvData.education?.map(edu => (
-              <div key={edu.id} className="education-item">
-                <h3 className="degree-name">{edu.degree}</h3>
-                <p className="school-name">{edu.school}</p>
-                <p className="gpa">GPA: {edu.gpa}</p>
-              </div>
-            ))}
-          </div>
+          {/* Render main sections with full detail */}
+          {mainSections.map(sectionName => (
+            <div key={sectionName} className="resume-section">
+              {renderSection(sectionName)}
+            </div>
+          ))}
         </main>
       </div>
     );
@@ -1173,6 +1394,7 @@ const ResumePreview = ({
 
   return (
     <div
+      ref={ref}
       className={`resume-preview-page layout-${layoutType}`}
       style={{
         '--template-color': currentTemplate.color,
@@ -1193,6 +1415,6 @@ const ResumePreview = ({
       {renderLayout()}
     </div>
   );
-};
+});
 
 export default ResumePreview;

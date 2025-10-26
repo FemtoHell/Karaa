@@ -28,8 +28,8 @@ const Templates = () => {
       try {
         setLoading(true);
         setError(null);
-        // Use skipCache to always get fresh templates from DB
-        const response = await apiRequest(`${API_ENDPOINTS.TEMPLATES}?skipCache=true`);
+        // Use cached data to avoid 429 errors
+        const response = await apiRequest(API_ENDPOINTS.TEMPLATES);
         if (response.success) {
           setAllTemplates(response.data);
         }

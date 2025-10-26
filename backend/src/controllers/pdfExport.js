@@ -3,6 +3,47 @@ const asyncHandler = require('../utils/asyncHandler');
 const { ErrorResponse } = require('../middleware/errorHandler');
 const { decryptResumePersonalData } = require('../utils/encryption');
 const { generatePdf } = require('../utils/pdfGenerator');
+const { generatePdfFromHtml } = require('../utils/htmlToPdf');
+
+// @desc    Export resume as PDF (HTML-to-PDF for exact layout)
+// @route   POST /api/v1/resumes/:id/export/pdf-html
+// @access  Private
+exports.exportPdfFromHtml = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { html, css } = req.body;
+
+  if (!html || !css) {
+    return next(new ErrorResponse('HTML and CSS are required', 400));
+  }
+
+  const resume = await Resume.findOne({
+    _id: id,
+    user: req.user.id,
+    deletedAt: null
+  });
+
+  if (!resume) {
+    return next(new ErrorResponse('Resume not found', 404));
+  }
+
+  try {
+    const decryptedContent = decryptResumePersonalData(resume.content);
+    
+    const buffer = await generatePdfFromHtml({ html, css });
+
+    const fileName = `${decryptedContent.personal?.fullName || 'Resume'}_${resume.title}.pdf`.replace(/\s+/g, '_');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:5173');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    res.send(buffer);
+  } catch (error) {
+    console.error('HTML-to-PDF generation error:', error);
+    return next(new ErrorResponse('Failed to generate PDF file', 500));
+  }
+});
 
 // @desc    Export resume as PDF
 // @route   GET /api/v1/resumes/:id/export/pdf
@@ -24,10 +65,18 @@ exports.exportPdf = asyncHandler(async (req, res, next) => {
     // Decrypt personal data before exporting
     const decryptedContent = decryptResumePersonalData(resume.content);
 
-    // Generate PDF buffer
+    // Load template if exists
+    let template = null;
+    if (resume.template) {
+      const Template = require('../models/Template');
+      template = await Template.findById(resume.template);
+    }
+
+    // Generate PDF buffer with template info
     const buffer = await generatePdf({
       content: decryptedContent,
-      customization: resume.customization
+      customization: resume.customization,
+      template: template
     });
 
     // Set response headers with CORS
@@ -82,10 +131,18 @@ exports.exportSharedPdf = asyncHandler(async (req, res, next) => {
     // Decrypt personal data before exporting
     const decryptedContent = decryptResumePersonalData(resume.content);
 
-    // Generate PDF buffer
+    // Load template if exists
+    let template = null;
+    if (resume.template) {
+      const Template = require('../models/Template');
+      template = await Template.findById(resume.template);
+    }
+
+    // Generate PDF buffer with template info
     const buffer = await generatePdf({
       content: decryptedContent,
-      customization: resume.customization
+      customization: resume.customization,
+      template: template
     });
 
     // Set response headers with CORS

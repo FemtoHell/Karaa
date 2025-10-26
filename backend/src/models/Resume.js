@@ -25,7 +25,8 @@ const ResumeSchema = new mongoose.Schema({
       location: String,
       linkedin: String,
       website: String,
-      summary: String
+      summary: String,
+      photo: String  // Add photo field for avatar URL
     },
     experience: [{
       jobTitle: String,
@@ -34,7 +35,13 @@ const ResumeSchema = new mongoose.Schema({
       startDate: String,
       endDate: String,
       current: Boolean,
-      description: String
+      description: String,
+      achievements: [String],
+      metrics: [{
+        type: { type: String, enum: ['percentage', 'number', 'currency', 'time'] },
+        value: String,
+        description: String
+      }]
     }],
     education: [{
       degree: String,
@@ -50,6 +57,12 @@ const ResumeSchema = new mongoose.Schema({
       soft: [String],
       languages: [String]
     },
+    skillsWithProficiency: [{
+      id: String,
+      name: String,
+      category: { type: String, enum: ['technical', 'soft', 'language', 'tool'], default: 'technical' },
+      proficiency: { type: Number, min: 1, max: 5, default: 3 }
+    }],
     projects: [{
       name: String,
       description: String,

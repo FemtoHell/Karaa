@@ -8,6 +8,7 @@ const MiniTemplatePreview = ({ template }) => {
       fullName: 'Nguyễn Văn Minh',
       email: 'nguyenvanminh@example.com',
       phone: '+84 912 345 678',
+      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&q=80',
       summary: 'Full-stack Developer với hơn 5 năm kinh nghiệm chuyên về React và Node.js'
     },
     experience: {
@@ -22,13 +23,44 @@ const MiniTemplatePreview = ({ template }) => {
     skills: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Docker', 'AWS']
   };
 
-  const templateColor = template.gradient?.includes('linear-gradient')
-    ? '#667eea'
-    : template.gradient || '#667eea';
+  // Use template's primary color instead of extracting from gradient
+  const primaryColor = template.colors?.primary || '#3B82F6';
+  const templateColor = primaryColor;
 
   const layoutType = template.layout?.type || 'single-column';
-  const primaryColor = template.colors?.primary || '#3B82F6';
   const sidebarBg = template.colors?.sidebarBg || '#F3F4F6';
+
+  // Photo configuration
+  const hasPhoto = template.features?.hasPhoto || false;
+  const photoStyle = template.photoConfig?.style || 'circle';
+  const photoPosition = template.photoConfig?.position || 'header';
+
+  // Helper function to render photo
+  const renderPhoto = (size = '40px', fontSize = '11px') => {
+    if (!hasPhoto || !sampleData.personal.photo) return null;
+
+    const photoStyles = {
+      circle: { borderRadius: '50%' },
+      rounded: { borderRadius: '8px' },
+      square: { borderRadius: '0' }
+    };
+
+    return (
+      <img
+        src={sampleData.personal.photo}
+        alt="Profile"
+        style={{
+          width: size,
+          height: size,
+          objectFit: 'cover',
+          border: '2px solid white',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          fontSize: fontSize,
+          ...photoStyles[photoStyle]
+        }}
+      />
+    );
+  };
 
   // Render different layouts
   const renderLayout = () => {
@@ -54,6 +86,11 @@ const MiniTemplatePreview = ({ template }) => {
   const renderSingleColumnLayout = () => (
     <>
       <div className="mini-resume-header" style={{ background: template.gradient }}>
+        {hasPhoto && photoPosition === 'header' && (
+          <div style={{ marginBottom: '8px' }}>
+            {renderPhoto('50px', '14px')}
+          </div>
+        )}
         <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
         <div className="mini-resume-contact">{sampleData.personal.email}</div>
       </div>
@@ -81,6 +118,11 @@ const MiniTemplatePreview = ({ template }) => {
     <div className="mini-two-column-layout">
       <aside className="mini-sidebar" style={{ backgroundColor: sidebarBg, width: '35%' }}>
         <div className="mini-resume-header-compact" style={{ background: template.gradient, padding: '12px 8px' }}>
+          {hasPhoto && photoPosition === 'sidebar' && (
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+              {renderPhoto('35px', '10px')}
+            </div>
+          )}
           <h1 className="mini-resume-name-small">{sampleData.personal.fullName}</h1>
         </div>
         <div className="mini-resume-section-small">
@@ -117,6 +159,11 @@ const MiniTemplatePreview = ({ template }) => {
     <div className="mini-two-column-equal">
       <div className="mini-column" style={{ width: '48%' }}>
         <div className="mini-resume-header-compact" style={{ background: template.gradient, padding: '12px 8px' }}>
+          {hasPhoto && photoPosition === 'header' && (
+            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+              {renderPhoto('35px', '10px')}
+            </div>
+          )}
           <h1 className="mini-resume-name-small">{sampleData.personal.fullName}</h1>
         </div>
         <div className="mini-resume-section-small">
@@ -143,7 +190,11 @@ const MiniTemplatePreview = ({ template }) => {
   const renderInfographicLayout = () => (
     <>
       <div className="mini-resume-header-modern" style={{ background: template.gradient, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px' }}>
-        <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }}></div>
+        {hasPhoto && photoPosition === 'header' ? (
+          renderPhoto('30px', '9px')
+        ) : (
+          <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }}></div>
+        )}
         <h1 className="mini-resume-name" style={{ fontSize: '11px' }}>{sampleData.personal.fullName}</h1>
       </div>
       <div className="mini-infographic-grid">
@@ -162,6 +213,11 @@ const MiniTemplatePreview = ({ template }) => {
   const renderTimelineLayout = () => (
     <>
       <div className="mini-resume-header" style={{ background: template.gradient }}>
+        {hasPhoto && photoPosition === 'header' && (
+          <div style={{ marginBottom: '8px' }}>
+            {renderPhoto('45px', '12px')}
+          </div>
+        )}
         <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
       </div>
       <div className="mini-timeline-container">
@@ -183,6 +239,11 @@ const MiniTemplatePreview = ({ template }) => {
   const renderModernBlocksLayout = () => (
     <>
       <div className="mini-resume-header-modern" style={{ background: template.gradient }}>
+        {hasPhoto && photoPosition === 'header' && (
+          <div style={{ marginBottom: '8px' }}>
+            {renderPhoto('45px', '12px')}
+          </div>
+        )}
         <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
       </div>
       <div className="mini-blocks-container">
@@ -210,6 +271,11 @@ const MiniTemplatePreview = ({ template }) => {
   const renderGridLayout = () => (
     <>
       <div className="mini-resume-header" style={{ background: template.gradient }}>
+        {hasPhoto && photoPosition === 'header' && (
+          <div style={{ marginBottom: '8px' }}>
+            {renderPhoto('45px', '12px')}
+          </div>
+        )}
         <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
       </div>
       <div className="mini-grid-container">

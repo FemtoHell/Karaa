@@ -92,8 +92,8 @@ const TemplatePreview = () => {
         setLoading(true);
         console.log('Fetching template with ID:', templateId);
         
-        // Add skipCache=true to get fresh template data and avoid stale cache
-        const response = await apiRequest(`${API_ENDPOINTS.TEMPLATE_BY_ID(templateId)}?skipCache=true`);
+        // Use cached data for performance
+        const response = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(templateId));
         console.log('Template response:', response);
         
         if (response.success) {

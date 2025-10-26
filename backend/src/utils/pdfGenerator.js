@@ -1,14 +1,15 @@
 const PDFDocument = require('pdfkit');
+const axios = require('axios');
 
 /**
- * Generate PDF file from resume data
- * @param {object} resumeData - Resume content and customization
+ * Generate PDF file from resume data with photo support and template layouts
+ * @param {object} resumeData - Resume content, customization, and template
  * @returns {Buffer} - PDF file buffer
  */
 const generatePdf = async (resumeData) => {
-  const { content, customization } = resumeData;
+  const { content, customization, template } = resumeData;
 
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       // Create PDF document
       const doc = new PDFDocument({
@@ -22,7 +23,10 @@ const generatePdf = async (resumeData) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
 
-      // Color scheme based on customization
+      // Get layout type from customization or template
+      const layoutType = customization?.layout || template?.layout?.type || 'single-column';
+      
+      // Color scheme based on customization or template
       const colorSchemes = {
         blue: '#3B82F6',
         purple: '#8B5CF6',
@@ -33,12 +37,39 @@ const generatePdf = async (resumeData) => {
         pink: '#EC4899',
         gray: '#6B7280'
       };
-      const primaryColor = colorSchemes[customization?.colorScheme] || '#3B82F6';
+      const primaryColor = template?.colors?.primary || colorSchemes[customization?.colorScheme] || '#3B82F6';
+      const secondaryColor = template?.colors?.secondary || '#1E40AF';
 
       // Font setup
       const fontSize = customization?.fontSize === 'small' ? 10 : customization?.fontSize === 'large' ? 13 : 11;
 
       let yPosition = 50;
+      
+      // Download photo if exists
+      let photoBuffer = null;
+      if (content.personal?.photo) {
+        try {
+          const photoUrl = content.personal.photo;
+          if (photoUrl.startsWith('http')) {
+            const response = await axios.get(photoUrl, { responseType: 'arraybuffer' });
+            photoBuffer = Buffer.from(response.data);
+          } else if (photoUrl.startsWith('data:image')) {
+            const base64Data = photoUrl.split(',')[1];
+            photoBuffer = Buffer.from(base64Data, 'base64');
+          }
+        } catch (err) {
+          console.warn('Failed to load photo for PDF:', err.message);
+        }
+      }
+
+      // NOTE: PDF rendering uses linear layout for simplicity and compatibility
+      // Complex layouts (two-column, timeline, etc) are simplified to single-column
+      // but maintain template colors, fonts, and styling for consistency
+      // For exact layout matching, users should use the web preview
+      
+      // Apply spacing multiplier based on customization
+      const spacingMultiplier = customization?.spacing === 'compact' ? 0.8 : 
+                               customization?.spacing === 'relaxed' ? 1.2 : 1.0;
 
       // Helper function to add heading
       const addHeading = (text, color = primaryColor) => {
@@ -102,12 +133,25 @@ const generatePdf = async (resumeData) => {
       if (content.personal) {
         const { fullName, email, phone, location, linkedin, website, summary } = content.personal;
 
+        // Add photo if available (top-right corner)
+        if (photoBuffer) {
+          try {
+            doc.image(photoBuffer, 480, 50, { 
+              width: 65, 
+              height: 65,
+              fit: [65, 65]
+            });
+          } catch (err) {
+            console.warn('Failed to add photo to PDF:', err.message);
+          }
+        }
+
         // Name
         if (fullName) {
           doc.fontSize(24)
             .fillColor(primaryColor)
             .font('Helvetica-Bold')
-            .text(fullName, 50, yPosition, { align: 'center' });
+            .text(fullName, 50, yPosition, { align: photoBuffer ? 'left' : 'center', width: photoBuffer ? 400 : 495 });
           yPosition += 30;
         }
 
@@ -121,7 +165,7 @@ const generatePdf = async (resumeData) => {
           doc.fontSize(fontSize)
             .fillColor('#6B7280')
             .font('Helvetica')
-            .text(contactInfo.join(' | '), 50, yPosition, { align: 'center' });
+            .text(contactInfo.join(' | '), 50, yPosition, { align: photoBuffer ? 'left' : 'center', width: photoBuffer ? 400 : 495 });
           yPosition += 15;
         }
 
@@ -133,8 +177,13 @@ const generatePdf = async (resumeData) => {
         if (links.length > 0) {
           doc.fontSize(fontSize)
             .fillColor(primaryColor)
-            .text(links.join(' | '), 50, yPosition, { align: 'center', link: linkedin || website });
+            .text(links.join(' | '), 50, yPosition, { align: photoBuffer ? 'left' : 'center', link: linkedin || website, width: photoBuffer ? 400 : 495 });
           yPosition += 20;
+        }
+        
+        // Ensure we're below the photo if it exists
+        if (photoBuffer && yPosition < 130) {
+          yPosition = 130;
         }
 
         // Summary

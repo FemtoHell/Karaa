@@ -50,6 +50,7 @@ import {
   migrateGuestData,
   isGuestMode
 } from './utils/guestSession';
+import { exportResumeAsHtmlPdf } from './utils/htmlToPdfExport';
 
 // ================================================================================
 // DRAG & DROP LIBRARIES
@@ -90,15 +91,22 @@ const SortableFormItem = ({ id, children }) => {
   } = useSortable({ id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: isDragging
+      ? `${CSS.Transform.toString(transform)} rotate(2deg)`
+      : CSS.Transform.toString(transform),
+    transition: isDragging ? transition : `${transition}, box-shadow 0.2s ease, transform 0.2s ease`,
     position: 'relative',
     padding: '16px 16px 16px 56px',
     margin: '12px 0',
-    backgroundColor: isDragging ? '#dbeafe' : '#ffffff',
-    border: `2px solid ${isDragging ? '#3b82f6' : '#e5e7eb'}`,
+    backgroundColor: isDragging ? '#EEF2FF' : '#F9FAFB',
+    border: `2px solid ${isDragging ? '#4F46E5' : '#E5E7EB'}`,
     borderRadius: '12px',
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? 0.8 : 1,
+    boxShadow: isDragging
+      ? '0 8px 20px rgba(79, 70, 229, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1)'
+      : '0 1px 3px rgba(0, 0, 0, 0.05)',
+    zIndex: isDragging ? 9999 : 'auto',
+    cursor: isDragging ? 'grabbing' : 'default',
   };
 
   const handleStyle = {
@@ -112,33 +120,45 @@ const SortableFormItem = ({ id, children }) => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#ffffff',
-    border: '2px solid #e5e7eb',
+    background: '#FFFFFF',
+    border: '2px solid #E5E7EB',
     borderRadius: '8px',
     cursor: 'grab',
     touchAction: 'none',
     userSelect: 'none',
     zIndex: 999,
     pointerEvents: 'auto',
+    transition: 'all 0.2s ease',
   };
 
   const handleActiveStyle = {
     ...handleStyle,
     cursor: 'grabbing',
-    background: '#e0e7ff',
-    borderColor: '#4f46e5',
+    background: '#EEF2FF',
+    borderColor: '#4F46E5',
+    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.2)',
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      role="listitem"
+      aria-label="Draggable item"
+    >
       {/* DRAG HANDLE */}
       <div
         ref={setActivatorNodeRef}
         style={isDragging ? handleActiveStyle : handleStyle}
         {...attributes}
         {...listeners}
+        role="button"
+        tabIndex={0}
+        aria-label="Drag to reorder. Press space to grab, arrow keys to move, space to drop, escape to cancel"
+        aria-grabbed={isDragging}
+        aria-roledescription="sortable"
       >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
           <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
           <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
@@ -178,6 +198,9 @@ const Editor = () => {
   const [isPrivate, setIsPrivate] = useState(true);
   const [showPreview, setShowPreview] = useState(action === 'preview');
   const [showRealtimePreview, setShowRealtimePreview] = useState(false);
+  const [newSkillInput, setNewSkillInput] = useState(''); // For controlled skill input
+
+  const previewRef = useRef(null);
 
   // ============================================================================
   // LOADING & STATUS STATE
@@ -247,12 +270,32 @@ const Editor = () => {
     activities: true
   });
 
-  // Sync section order with current template
+  // Sync section order & visibility with current template
   useEffect(() => {
     if (currentTemplate?.sections?.order) {
       setSectionOrder(currentTemplate.sections.order);
     }
-  }, [currentTemplate?.sections?.order]);
+    if (currentTemplate?.sections?.visible) {
+      setSectionVisibility(currentTemplate.sections.visible);
+    }
+  }, [currentTemplate?.sections?.order, currentTemplate?.sections?.visible]);
+
+  // Get visible tabs based on template
+  const getVisibleTabs = () => {
+    const tabConfig = [
+      { id: 'personal', label: 'Personal Info', icon: '👤', alwaysShow: true },
+      { id: 'experience', label: 'Experience', icon: '💼' },
+      { id: 'education', label: 'Education', icon: '🎓' },
+      { id: 'skills', label: 'Skills', icon: '⚡' },
+      { id: 'projects', label: 'Projects', icon: '🚀' },
+      { id: 'certificates', label: 'Certificates', icon: '🏆' },
+      { id: 'activities', label: 'Activities', icon: '🎯' }
+    ];
+
+    return tabConfig.filter(tab => 
+      tab.alwaysShow || sectionVisibility[tab.id] !== false
+    );
+  };
 
   // ============================================================================
   // CV DATA STATE (Main Resume Content)
@@ -277,7 +320,9 @@ const Editor = () => {
         startDate: '',
         endDate: '',
         current: false,
-        description: ''
+        description: '',
+        achievements: [],
+        metrics: []
       }
     ],
     education: [
@@ -297,6 +342,7 @@ const Editor = () => {
       soft: [],
       languages: []
     },
+    skillsWithProficiency: [],
     projects: [
       {
         id: `proj-${Date.now()}`,
@@ -549,8 +595,8 @@ const Editor = () => {
                 if (resume.customization.templateId || resume.template_id) {
                   const tid = resume.customization.templateId || resume.template_id;
                   try {
-                    // Add skipCache=true to get fresh template data
-                    const templateData = await apiRequest(`${API_ENDPOINTS.TEMPLATE_BY_ID(tid)}?skipCache=true`);
+                    // Use cached template data for performance
+                    const templateData = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(tid));
                     if (templateData.success && templateData.data) {
                       const template = templateData.data;
                       setCurrentTemplate({
@@ -577,8 +623,15 @@ const Editor = () => {
                           textLight: '#6B7280',
                           background: '#FFFFFF'
                         },
-                        features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
+                        features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false },
+                        photoConfig: template.photoConfig || { style: 'circle', position: 'header' }
                       });
+                      
+                      // Sync customization layout with template layout
+                      setCustomization(prev => ({
+                        ...prev,
+                        layout: template.layout?.type || prev.layout
+                      }));
                     }
                   } catch (e) {
                     console.warn('Could not fetch template:', e);
@@ -608,8 +661,8 @@ const Editor = () => {
               if (resume.template_id || resume.template) {
                 const tid = resume.template_id || resume.template?._id || resume.template;
                 try {
-                  // Add skipCache=true to get fresh template data
-                  const templateData = await apiRequest(`${API_ENDPOINTS.TEMPLATE_BY_ID(tid)}?skipCache=true`);
+                  // Use cached template data for performance
+                  const templateData = await apiRequest(API_ENDPOINTS.TEMPLATE_BY_ID(tid));
                   if (templateData.success && templateData.data) {
                     const template = templateData.data;
                     setCurrentTemplate({
@@ -636,8 +689,15 @@ const Editor = () => {
                         textLight: '#6B7280',
                         background: '#FFFFFF'
                       },
-                      features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false }
+                      features: template.features || { hasPhoto: false, hasIcons: false, hasCharts: false, atsFriendly: true, multiPage: false },
+                      photoConfig: template.photoConfig || { style: 'circle', position: 'header' }
                     });
+                    
+                    // Sync customization layout with template layout
+                    setCustomization(prev => ({
+                      ...prev,
+                      layout: template.layout?.type || prev.layout
+                    }));
                   }
                 } catch (e) {
                   console.warn('Could not fetch template:', e);
@@ -836,6 +896,96 @@ const Editor = () => {
     }));
   };
 
+  const addSkillWithProficiency = (name, category = 'technical', proficiency = 3) => {
+    if (!name.trim()) return;
+    const newSkill = {
+      id: `skill-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name: name.trim(),
+      category,
+      proficiency
+    };
+    setCvData(prev => ({
+      ...prev,
+      skillsWithProficiency: [...prev.skillsWithProficiency, newSkill]
+    }));
+  };
+
+  const updateSkillProficiency = (id, proficiency) => {
+    setCvData(prev => ({
+      ...prev,
+      skillsWithProficiency: prev.skillsWithProficiency.map(skill =>
+        skill.id === id ? { ...skill, proficiency } : skill
+      )
+    }));
+  };
+
+  const removeSkillWithProficiency = (id) => {
+    setCvData(prev => ({
+      ...prev,
+      skillsWithProficiency: prev.skillsWithProficiency.filter(skill => skill.id !== id)
+    }));
+  };
+
+  const COMMON_SKILLS = {
+    technical: {
+      'Programming': ['JavaScript', 'Python', 'Java', 'C++', 'TypeScript', 'Go', 'Ruby', 'PHP'],
+      'Frontend': ['React', 'Vue.js', 'Angular', 'HTML/CSS', 'Tailwind', 'Next.js', 'Redux'],
+      'Backend': ['Node.js', 'Express', 'Django', 'Flask', 'Spring Boot', 'Laravel', 'Ruby on Rails'],
+      'Database': ['MongoDB', 'PostgreSQL', 'MySQL', 'Redis', 'Firebase', 'DynamoDB'],
+      'Cloud': ['AWS', 'Azure', 'Google Cloud', 'Docker', 'Kubernetes', 'Terraform'],
+      'Tools': ['Git', 'GitHub', 'JIRA', 'VS Code', 'Figma', 'Postman']
+    },
+    soft: ['Leadership', 'Communication', 'Problem Solving', 'Team Collaboration', 'Time Management', 'Critical Thinking', 'Adaptability', 'Creativity'],
+    languages: ['English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Korean']
+  };
+
+  const ACTION_VERBS = {
+    leadership: ['Led', 'Managed', 'Directed', 'Coordinated', 'Supervised', 'Mentored', 'Guided', 'Orchestrated'],
+    achievement: ['Achieved', 'Accomplished', 'Delivered', 'Exceeded', 'Improved', 'Increased', 'Reduced', 'Optimized'],
+    creation: ['Created', 'Developed', 'Built', 'Designed', 'Implemented', 'Launched', 'Established', 'Initiated'],
+    analysis: ['Analyzed', 'Evaluated', 'Assessed', 'Investigated', 'Researched', 'Identified', 'Measured', 'Calculated'],
+    collaboration: ['Collaborated', 'Partnered', 'Facilitated', 'Contributed', 'Supported', 'Assisted', 'Cooperated']
+  };
+
+  const addAchievement = (expId, verb = '') => {
+    setCvData(prev => ({
+      ...prev,
+      experience: prev.experience.map(exp =>
+        exp.id === expId
+          ? { ...exp, achievements: [...(exp.achievements || []), verb] }
+          : exp
+      )
+    }));
+  };
+
+  const updateAchievement = (expId, index, value) => {
+    setCvData(prev => ({
+      ...prev,
+      experience: prev.experience.map(exp =>
+        exp.id === expId
+          ? {
+              ...exp,
+              achievements: exp.achievements.map((ach, i) => i === index ? value : ach)
+            }
+          : exp
+      )
+    }));
+  };
+
+  const removeAchievement = (expId, index) => {
+    setCvData(prev => ({
+      ...prev,
+      experience: prev.experience.map(exp =>
+        exp.id === expId
+          ? {
+              ...exp,
+              achievements: exp.achievements.filter((_, i) => i !== index)
+            }
+          : exp
+      )
+    }));
+  };
+
   // ============================================================================
   // PROJECTS HANDLERS
   // ============================================================================
@@ -982,21 +1132,9 @@ const Editor = () => {
 
     try {
       setSaveStatus('saving');
-
-      // Use resumeService to export PDF via backend API
-      const { blob, filename } = await resumeService.exportPdf(currentResumeId);
-
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-
-      // Cleanup
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      
+      const token = localStorage.getItem('token');
+      await exportResumeAsHtmlPdf(currentResumeId, previewRef, token);
 
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 2000);
@@ -1167,11 +1305,11 @@ const Editor = () => {
     }));
   };
 
-  // Drag and Drop Sensors - EXACT COPY from DragTestSimple
+  // Drag and Drop Sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 0, // Instant drag - OK because we use setActivatorNodeRef
+        distance: 8, // 8px movement required - prevents conflict with form inputs
       },
     }),
     useSensor(KeyboardSensor, {
@@ -1216,6 +1354,21 @@ const Editor = () => {
           prev.education,
           prev.education.findIndex(e => e.id === active.id),
           prev.education.findIndex(e => e.id === over.id)
+        )
+      }));
+    }
+  };
+
+  // Handle skills drag end
+  const handleSkillsDragEnd = (event) => {
+    const { active, over } = event;
+    if (active && over && active.id !== over.id) {
+      setCvData(prev => ({
+        ...prev,
+        skillsWithProficiency: arrayMove(
+          prev.skillsWithProficiency,
+          prev.skillsWithProficiency.findIndex(s => s.id === active.id),
+          prev.skillsWithProficiency.findIndex(s => s.id === over.id)
         )
       }));
     }
@@ -1580,49 +1733,41 @@ const Editor = () => {
       <div className="editor-main">
         {/* Left Sidebar - Form */}
         <div className="editor-sidebar">
+          {/* Template Info Banner */}
+          {currentTemplate && currentTemplate._id && (
+            <div style={{
+              padding: '12px 16px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#FFFFFF',
+              borderRadius: '8px',
+              marginBottom: '16px',
+              fontSize: '13px'
+            }}>
+              <div style={{ fontWeight: '600', marginBottom: '4px' }}>
+                📄 {currentTemplate.name}
+              </div>
+              <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                {currentTemplate.description}
+              </div>
+            </div>
+          )}
+
           <div className="editor-tabs">
-            <button
-              className={`tab ${activeTab === 'personal' ? 'active' : ''}`}
-              onClick={() => setActiveTab('personal')}
-            >
-              Personal Info
-            </button>
-            <button
-              className={`tab ${activeTab === 'experience' ? 'active' : ''}`}
-              onClick={() => setActiveTab('experience')}
-            >
-              Experience
-            </button>
-            <button
-              className={`tab ${activeTab === 'education' ? 'active' : ''}`}
-              onClick={() => setActiveTab('education')}
-            >
-              Education
-            </button>
-            <button
-              className={`tab ${activeTab === 'skills' ? 'active' : ''}`}
-              onClick={() => setActiveTab('skills')}
-            >
-              Skills
-            </button>
-            <button
-              className={`tab ${activeTab === 'projects' ? 'active' : ''}`}
-              onClick={() => setActiveTab('projects')}
-            >
-              Projects
-            </button>
-            <button
-              className={`tab ${activeTab === 'certificates' ? 'active' : ''}`}
-              onClick={() => setActiveTab('certificates')}
-            >
-              Certificates
-            </button>
-            <button
-              className={`tab ${activeTab === 'activities' ? 'active' : ''}`}
-              onClick={() => setActiveTab('activities')}
-            >
-              Activities
-            </button>
+            {getVisibleTabs().map(tab => (
+              <button
+                key={tab.id}
+                className={`tab ${activeTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
           </div>
 
           <div className="editor-form">
@@ -1833,7 +1978,7 @@ const Editor = () => {
             )}
 
             {/* ================================================================
-                FORM TAB: WORK EXPERIENCE
+                FORM TAB: WORK EXPERIENCE - CANVA STYLE
                 ================================================================ */}
             {activeTab === 'experience' && (
               <div className="form-section">
@@ -1847,39 +1992,31 @@ const Editor = () => {
                   </button>
                 </div>
 
-                {cvData.experience.map((exp, index) => (
-                  <div key={exp.id} className="experience-item">
-                    <div className="item-header">
-                      <h4>Experience {index + 1}</h4>
-                      <div style={{ display: 'flex', gap: '4px' }}>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveExperienceUp(exp.id)}
-                          disabled={index === 0}
-                          title="Move Up"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↑
-                        </button>
-                        <button
-                          className="btn-move"
-                          onClick={() => moveExperienceDown(exp.id)}
-                          disabled={index === cvData.experience.length - 1}
-                          title="Move Down"
-                          style={{ padding: '4px 8px', fontSize: '14px' }}
-                        >
-                          ↓
-                        </button>
-                        {cvData.experience.length > 1 && (
-                          <button
-                            className="btn-remove"
-                            onClick={() => removeExperience(exp.id)}
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExperienceDragEnd}>
+                  <SortableContext items={cvData.experience.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                    {cvData.experience.map((exp, index) => (
+                      <SortableFormItem key={exp.id} id={exp.id}>
+                        <div style={{
+                          padding: '0',
+                          background: 'transparent',
+                          borderRadius: '0',
+                          border: 'none'
+                        }}>
+                          <div className="item-header">
+                            <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
+                              Experience {index + 1}
+                            </h4>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              {cvData.experience.length > 1 && (
+                                <button
+                                  className="btn-remove"
+                                  onClick={() => removeExperience(exp.id)}
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
+                          </div>
 
                     <div className="form-group">
                       <label>Job Title *</label>
@@ -1942,19 +2079,141 @@ const Editor = () => {
                       </label>
                     </div>
 
-                    <div className="form-group">
-                      <label>Description</label>
-                      <textarea
-                        rows="4"
-                        placeholder="Describe your responsibilities and achievements..."
-                        value={exp.description}
-                        onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                      />
+                    {/* Achievement-Focused Section */}
+                    <div style={{ marginTop: '24px', padding: '16px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <h5 style={{ fontSize: '14px', fontWeight: '600', color: '#374151' }}>
+                          🎯 Key Achievements & Impact
+                        </h5>
+                        <button
+                          onClick={() => addAchievement(exp.id, '• ')}
+                          style={{
+                            padding: '4px 12px',
+                            fontSize: '13px',
+                            background: '#EEF2FF',
+                            color: '#4F46E5',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          + Add Achievement
+                        </button>
+                      </div>
+                      
+                      <p style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>
+                        Use action verbs and quantify your impact with metrics (%, $, #)
+                      </p>
+
+                      {/* Action Verb Suggestions */}
+                      <details style={{ marginBottom: '12px' }}>
+                        <summary style={{ fontSize: '13px', color: '#4F46E5', cursor: 'pointer', fontWeight: '500' }}>
+                          💡 Action Verb Suggestions
+                        </summary>
+                        <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {Object.entries(ACTION_VERBS).map(([category, verbs]) => (
+                            <div key={category} style={{ marginBottom: '8px', width: '100%' }}>
+                              <p style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px', textTransform: 'capitalize' }}>
+                                {category}:
+                              </p>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                {verbs.map(verb => (
+                                  <button
+                                    key={verb}
+                                    onClick={() => addAchievement(exp.id, `• ${verb} `)}
+                                    style={{
+                                      padding: '3px 8px',
+                                      fontSize: '11px',
+                                      background: '#F3F4F6',
+                                      color: '#374151',
+                                      border: 'none',
+                                      borderRadius: '4px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    {verb}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+
+                      {/* Achievements List */}
+                      {exp.achievements && exp.achievements.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {exp.achievements.map((achievement, achIndex) => (
+                            <div key={achIndex} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                              <textarea
+                                value={achievement}
+                                onChange={(e) => updateAchievement(exp.id, achIndex, e.target.value)}
+                                placeholder="• Led team of 5 engineers to deliver project 30% ahead of schedule"
+                                rows="2"
+                                style={{
+                                  flex: 1,
+                                  fontSize: '13px',
+                                  padding: '8px',
+                                  border: '1px solid #E5E7EB',
+                                  borderRadius: '6px',
+                                  resize: 'vertical'
+                                }}
+                              />
+                              <button
+                                onClick={() => removeAchievement(exp.id, achIndex)}
+                                style={{
+                                  padding: '4px 8px',
+                                  background: '#FEE2E2',
+                                  color: '#DC2626',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Examples */}
+                      <details style={{ marginTop: '12px' }}>
+                        <summary style={{ fontSize: '12px', color: '#6B7280', cursor: 'pointer' }}>
+                          📝 See Examples
+                        </summary>
+                        <ul style={{ fontSize: '12px', color: '#6B7280', marginTop: '8px', paddingLeft: '20px' }}>
+                          <li>Increased sales revenue by 45% ($2M) through strategic partnership initiatives</li>
+                          <li>Led cross-functional team of 12 to deliver product launch 3 months ahead of schedule</li>
+                          <li>Reduced operational costs by $500K annually through process optimization</li>
+                          <li>Improved customer satisfaction score from 3.2 to 4.7 out of 5</li>
+                        </ul>
+                      </details>
                     </div>
+
+                    {/* Legacy Description Field */}
+                    {(!exp.achievements || exp.achievements.length === 0) && (
+                      <div className="form-group" style={{ marginTop: '16px' }}>
+                        <label>Description (Legacy Format)</label>
+                        <textarea
+                          rows="4"
+                          placeholder="Describe your responsibilities and achievements..."
+                          value={exp.description}
+                          onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
+                        />
+                        <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>
+                          💡 Tip: Use the Achievement section above for better impact!
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                </SortableFormItem>
+              ))}
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
 
             {/* ================================================================
                 FORM TAB: EDUCATION
@@ -1974,11 +2233,13 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEducationDragEnd}>
                   <SortableContext items={cvData.education.map(e => e.id)} strategy={verticalListSortingStrategy}>
                     {cvData.education.map((edu, index) => (
-                      // ======================================================
-                      // 3. SỬ DỤNG COMPONENT CHUNG
-                      // ======================================================
                       <SortableFormItem key={edu.id} id={edu.id}>
-                        <div className="education-item">
+                        <div style={{
+                          padding: '0',
+                          background: 'transparent',
+                          borderRadius: '0',
+                          border: 'none'
+                        }}>
                           <div className="item-header">
                             <h4>Education {index + 1}</h4>
                             <div style={{ display: 'flex', gap: '4px' }}>
@@ -2068,105 +2329,200 @@ const Editor = () => {
             )}
 
             {/* ================================================================
-                FORM TAB: SKILLS
+                FORM TAB: SKILLS - CANVA STYLE
                 ================================================================ */}
             {activeTab === 'skills' && (
               <div className="form-section">
-                <h3 className="section-title">Skills</h3>
+                <h3 className="section-title">Skills & Expertise</h3>
+                <p style={{ color: '#6B7280', fontSize: '14px', marginBottom: '24px' }}>
+                  Add your skills with proficiency levels. Use the slider to rate yourself.
+                </p>
 
-                {/* Technical Skills */}
-                <div className="skills-category">
-                  <h4>Technical Skills</h4>
-                  <div className="form-group">
-                    <label>Add Skill</label>
+                {/* Quick Add Common Skills */}
+                <div style={{ marginBottom: '32px' }}>
+                  <h4 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '12px', color: '#374151' }}>
+                    Quick Add Popular Skills
+                  </h4>
+                  {Object.entries(COMMON_SKILLS.technical).map(([category, skills]) => (
+                    <div key={category} style={{ marginBottom: '16px' }}>
+                      <p style={{ fontSize: '13px', fontWeight: '500', color: '#6B7280', marginBottom: '8px' }}>
+                        {category}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {skills.map(skill => (
+                          <button
+                            key={skill}
+                            onClick={() => addSkillWithProficiency(skill, 'technical', 3)}
+                            disabled={cvData.skillsWithProficiency.some(s => s.name === skill)}
+                            style={{
+                              padding: '6px 12px',
+                              fontSize: '13px',
+                              background: cvData.skillsWithProficiency.some(s => s.name === skill) ? '#E5E7EB' : '#EEF2FF',
+                              color: cvData.skillsWithProficiency.some(s => s.name === skill) ? '#9CA3AF' : '#4F46E5',
+                              border: 'none',
+                              borderRadius: '6px',
+                              cursor: cvData.skillsWithProficiency.some(s => s.name === skill) ? 'not-allowed' : 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {cvData.skillsWithProficiency.some(s => s.name === skill) ? '✓ ' : '+ '}{skill}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Custom Skill Input */}
+                <div className="form-group">
+                  <label>Add Custom Skill</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
                     <input
                       type="text"
-                      placeholder="JavaScript, React, Node.js..."
+                      placeholder="Type skill name and press Enter..."
+                      value={newSkillInput}
+                      onChange={(e) => setNewSkillInput(e.target.value)}
                       onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          addSkill('technical', e.target.value);
-                          e.target.value = '';
+                        if (e.key === 'Enter' && newSkillInput.trim()) {
+                          addSkillWithProficiency(newSkillInput.trim(), 'technical', 3);
+                          setNewSkillInput('');
                         }
                       }}
+                      style={{ flex: 1 }}
                     />
-                    <p className="form-hint">Press Enter to add a skill</p>
-                  </div>
-                  <div className="skills-list">
-                    {cvData.skills.technical.map((skill, index) => (
-                      <span key={index} className="skill-tag">
-                        {skill}
-                        <button
-                          className="skill-remove"
-                          onClick={() => removeSkill('technical', index)}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
                   </div>
                 </div>
 
-                {/* Soft Skills */}
-                <div className="skills-category">
-                  <h4>Soft Skills</h4>
-                  <div className="form-group">
-                    <label>Add Skill</label>
-                    <input
-                      type="text"
-                      placeholder="Leadership, Communication, Problem Solving..."
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          addSkill('soft', e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
+                {/* Empty State */}
+                {cvData.skillsWithProficiency.length === 0 && (
+                  <div style={{
+                    marginTop: '32px',
+                    padding: '40px 20px',
+                    textAlign: 'center',
+                    background: '#F9FAFB',
+                    borderRadius: '12px',
+                    border: '2px dashed #E5E7EB'
+                  }}>
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>⚡</div>
+                    <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>
+                      No skills added yet
+                    </h4>
+                    <p style={{ fontSize: '14px', color: '#6B7280', margin: 0 }}>
+                      Click the buttons above to add popular skills, or type a custom skill name
+                    </p>
                   </div>
-                  <div className="skills-list">
-                    {cvData.skills.soft.map((skill, index) => (
-                      <span key={index} className="skill-tag">
-                        {skill}
-                        <button
-                          className="skill-remove"
-                          onClick={() => removeSkill('soft', index)}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
+                )}
 
-                {/* Languages */}
-                <div className="skills-category">
-                  <h4>Languages</h4>
-                  <div className="form-group">
-                    <label>Add Language</label>
-                    <input
-                      type="text"
-                      placeholder="English (Native), Spanish (Fluent)..."
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          addSkill('languages', e.target.value);
-                          e.target.value = '';
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="skills-list">
-                    {cvData.skills.languages.map((skill, index) => (
-                      <span key={index} className="skill-tag">
-                        {skill}
-                        <button
-                          className="skill-remove"
-                          onClick={() => removeSkill('languages', index)}
-                        >
-                          ×
-                        </button>
-                      </span>
+                {/* Skills List with Proficiency Sliders */}
+                {cvData.skillsWithProficiency.length > 0 && (
+                  <div style={{ marginTop: '32px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: '600', marginBottom: '16px', color: '#374151' }}>
+                      Your Skills ({cvData.skillsWithProficiency.length})
+                    </h4>
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSkillsDragEnd}>
+                      <SortableContext items={cvData.skillsWithProficiency.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                        {cvData.skillsWithProficiency.map(skill => (
+                          <SortableFormItem key={skill.id} id={skill.id}>
+                            <div style={{
+                              padding: '0',
+                              background: 'transparent',
+                              borderRadius: '0',
+                              border: 'none'
+                            }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
+                              {skill.name}
+                            </span>
+                            <button
+                              onClick={() => removeSkillWithProficiency(skill.id)}
+                              style={{
+                                padding: '4px 8px',
+                                background: '#FEE2E2',
+                                color: '#DC2626',
+                                border: 'none',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontSize: '13px', color: '#6B7280', minWidth: '80px' }}>
+                              Proficiency:
+                            </span>
+                            <input
+                              type="range"
+                              min="1"
+                              max="5"
+                              value={skill.proficiency}
+                              onChange={(e) => updateSkillProficiency(skill.id, parseInt(e.target.value))}
+                              style={{
+                                flex: 1,
+                                height: '8px',
+                                borderRadius: '4px',
+                                outline: 'none',
+                                background: `linear-gradient(to right, #4F46E5 0%, #4F46E5 ${(skill.proficiency / 5) * 100}%, #E5E7EB ${(skill.proficiency / 5) * 100}%, #E5E7EB 100%)`
+                              }}
+                            />
+                            <div style={{ display: 'flex', gap: '4px', minWidth: '100px' }}>
+                              {[1, 2, 3, 4, 5].map(level => (
+                                <span
+                                  key={level}
+                                  style={{
+                                    fontSize: '16px',
+                                    color: level <= skill.proficiency ? '#FBBF24' : '#E5E7EB'
+                                  }}
+                                >
+                                  ★
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div style={{ marginTop: '8px', fontSize: '12px', color: '#6B7280' }}>
+                            {skill.proficiency === 1 && 'Beginner - Basic knowledge'}
+                            {skill.proficiency === 2 && 'Intermediate - Working knowledge'}
+                            {skill.proficiency === 3 && 'Proficient - Strong skills'}
+                            {skill.proficiency === 4 && 'Advanced - Expert level'}
+                            {skill.proficiency === 5 && 'Master - Industry expert'}
+                          </div>
+                        </div>
+                      </SortableFormItem>
                     ))}
+                  </SortableContext>
+                </DndContext>
+              </div>
+            )}
+
+                {/* Legacy Skills (for backward compatibility) */}
+                {(cvData.skills.technical.length > 0 || cvData.skills.soft.length > 0 || cvData.skills.languages.length > 0) && (
+                  <div style={{ marginTop: '32px', padding: '16px', background: '#FEF3C7', borderRadius: '12px', border: '1px solid #FCD34D' }}>
+                    <p style={{ fontSize: '13px', color: '#92400E', marginBottom: '8px', fontWeight: '500' }}>
+                      ⚠️ Legacy Skills Format
+                    </p>
+                    <p style={{ fontSize: '12px', color: '#78350F', marginBottom: '12px' }}>
+                      These skills are in the old format. Consider migrating them to the new format with proficiency levels.
+                    </p>
+                    {cvData.skills.technical.length > 0 && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '12px' }}>Technical:</strong> {cvData.skills.technical.join(', ')}
+                      </div>
+                    )}
+                    {cvData.skills.soft.length > 0 && (
+                      <div style={{ marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '12px' }}>Soft:</strong> {cvData.skills.soft.join(', ')}
+                      </div>
+                    )}
+                    {cvData.skills.languages.length > 0 && (
+                      <div>
+                        <strong style={{ fontSize: '12px' }}>Languages:</strong> {cvData.skills.languages.join(', ')}
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             )}
 
@@ -2188,11 +2544,13 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
                   <SortableContext items={cvData.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
                     {cvData.projects.map((project, index) => (
-                      // ======================================================
-                      // 3. SỬ DỤNG COMPONENT CHUNG
-                      // ======================================================
                       <SortableFormItem key={project.id} id={project.id}>
-                        <div className="project-item">
+                        <div style={{
+                          padding: '0',
+                          background: 'transparent',
+                          borderRadius: '0',
+                          border: 'none'
+                        }}>
                           <div className="item-header">
                             <h4>Project {index + 1}</h4>
                             <div style={{ display: 'flex', gap: '4px' }}>
@@ -2289,11 +2647,13 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCertificateDragEnd}>
                   <SortableContext items={cvData.certificates.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     {cvData.certificates.map((cert, index) => (
-                      // ======================================================
-                      // 3. SỬ DỤNG COMPONENT CHUNG
-                      // ======================================================
                       <SortableFormItem key={cert.id} id={cert.id}>
-                        <div className="certificate-item">
+                        <div style={{
+                          padding: '0',
+                          background: 'transparent',
+                          borderRadius: '0',
+                          border: 'none'
+                        }}>
                           <div className="item-header">
                             <h4>Certificate {index + 1}</h4>
                             <div style={{ display: 'flex', gap: '4px' }}>
@@ -2380,11 +2740,13 @@ const Editor = () => {
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActivityDragEnd}>
                   <SortableContext items={cvData.activities.map(a => a.id)} strategy={verticalListSortingStrategy}>
                     {cvData.activities.map((activity, index) => (
-                      // ======================================================
-                      // 3. SỬ DỤNG COMPONENT CHUNG
-                      // ======================================================
                       <SortableFormItem key={activity.id} id={activity.id}>
-                        <div className="activity-item">
+                        <div style={{
+                          padding: '0',
+                          background: 'transparent',
+                          borderRadius: '0',
+                          border: 'none'
+                        }}>
                           <div className="item-header">
                             <h4>Activity {index + 1}</h4>
                             <div style={{ display: 'flex', gap: '4px' }}>
@@ -2650,6 +3012,7 @@ const Editor = () => {
           <div className="realtime-preview-content">
             <div className="resume-preview-wrapper">
               <ResumePreview
+                ref={previewRef}
                 cvData={cvData}
                 customization={customization}
                 template={{
