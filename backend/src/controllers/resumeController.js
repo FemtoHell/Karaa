@@ -368,9 +368,12 @@ exports.duplicateResume = asyncHandler(async (req, res, next) => {
   // Populate template
   await resume.populate('template', 'name gradient color category');
 
+  const decryptedContent = decryptResumePersonalData(resume.content);
+
   // Transform to match original format
   const transformedResume = {
     ...resume.toObject(),
+    content: decryptedContent,
     id: resume._id,
     user_id: resume.user,
     template_id: resume.template?._id || null,
@@ -612,10 +615,12 @@ exports.getSharedResume = asyncHandler(async (req, res, next) => {
   resume.shareSettings.viewCount += 1;
   await resume.save();
 
+  const decryptedContent = decryptResumePersonalData(resume.content);
+
   // Transform response
   const responseData = {
     title: resume.title,
-    content: resume.content,
+    content: decryptedContent,
     customization: resume.customization,
     template: resume.template,
     allowDownload: resume.shareSettings.allowDownload,
@@ -733,12 +738,14 @@ exports.restoreVersion = asyncHandler(async (req, res, next) => {
 
   await resume.save();
 
+  const decryptedContent = decryptResumePersonalData(resume.content);
+
   res.status(200).json({
     success: true,
     message: `Restored to version ${version}`,
     data: {
       currentVersion: resume.version,
-      content: resume.content,
+      content: decryptedContent,
       customization: resume.customization
     }
   });
@@ -772,18 +779,21 @@ exports.compareVersions = asyncHandler(async (req, res, next) => {
     return next(new ErrorResponse('One or both versions not found', 404));
   }
 
+  const decryptedVersion1Content = decryptResumePersonalData(version1.content);
+  const decryptedVersion2Content = decryptResumePersonalData(version2.content);
+
   res.status(200).json({
     success: true,
     data: {
       version1: {
         version: version1.version,
-        content: version1.content,
+        content: decryptedVersion1Content,
         customization: version1.customization,
         createdAt: version1.createdAt
       },
       version2: {
         version: version2.version,
-        content: version2.content,
+        content: decryptedVersion2Content,
         customization: version2.customization,
         createdAt: version2.createdAt
       },

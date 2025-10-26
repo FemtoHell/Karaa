@@ -23,7 +23,7 @@
 // ================================================================================
 // REACT & ROUTING IMPORTS
 // ================================================================================
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useSearchParams, useParams, useNavigate } from 'react-router-dom';
 import './Editor.css';
 
@@ -330,69 +330,17 @@ const Editor = () => {
       summary: '',
       photo: '' // Base64 encoded photo
     },
-    experience: [
-      {
-        id: `exp-${Date.now()}`,
-        jobTitle: '',
-        company: '',
-        location: '',
-        startDate: '',
-        endDate: '',
-        current: false,
-        description: '',
-        achievements: [],
-        metrics: []
-      }
-    ],
-    education: [
-      {
-        id: `edu-${Date.now()}`,
-        degree: '',
-        school: '',
-        location: '',
-        startDate: '',
-        endDate: '',
-        gpa: '',
-        description: ''
-      }
-    ],
+    experience: [],
+    education: [],
     skills: {
       technical: [],
       soft: [],
       languages: []
     },
     skillsWithProficiency: [],
-    projects: [
-      {
-        id: `proj-${Date.now()}`,
-        name: '',
-        description: '',
-        technologies: '',
-        link: '',
-        startDate: '',
-        endDate: ''
-      }
-    ],
-    certificates: [
-      {
-        id: `cert-${Date.now()}`,
-        name: '',
-        issuer: '',
-        date: '',
-        link: '',
-        description: ''
-      }
-    ],
-    activities: [
-      {
-        id: `act-${Date.now()}`,
-        title: '',
-        organization: '',
-        startDate: '',
-        endDate: '',
-        description: ''
-      }
-    ]
+    projects: [],
+    certificates: [],
+    activities: []
   });
 
   // Use ref to prevent duplicate creation
@@ -1271,6 +1219,14 @@ const Editor = () => {
   const handleCertificateDragEnd = createArrayDragHandler('certificates');
   const handleActivityDragEnd = createArrayDragHandler('activities');
 
+  // Memoized items arrays for stable SortableContext references
+  const experienceIds = useMemo(() => cvData.experience.map(e => e.id), [cvData.experience]);
+  const educationIds = useMemo(() => cvData.education.map(e => e.id), [cvData.education]);
+  const skillsIds = useMemo(() => cvData.skillsWithProficiency.map(s => s.id), [cvData.skillsWithProficiency]);
+  const projectsIds = useMemo(() => cvData.projects.map(p => p.id), [cvData.projects]);
+  const certificatesIds = useMemo(() => cvData.certificates.map(c => c.id), [cvData.certificates]);
+  const activitiesIds = useMemo(() => cvData.activities.map(a => a.id), [cvData.activities]);
+
   // ============================================================================
   // DRAG & DROP HANDLERS (Preview Side - WYSIWYG)
   // ============================================================================
@@ -1835,7 +1791,7 @@ const Editor = () => {
                 </div>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleExperienceDragEnd}>
-                  <SortableContext items={cvData.experience.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={experienceIds} strategy={verticalListSortingStrategy}>
                     {cvData.experience.map((exp, index) => (
                       <SortableFormItem key={exp.id} id={exp.id}>
                         <div className="item-header">
@@ -2064,7 +2020,7 @@ const Editor = () => {
                 </div>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleEducationDragEnd}>
-                  <SortableContext items={cvData.education.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={educationIds} strategy={verticalListSortingStrategy}>
                     {cvData.education.map((edu, index) => (
                       <SortableFormItem key={edu.id} id={edu.id}>
                         <div className="item-header">
@@ -2246,7 +2202,7 @@ const Editor = () => {
                       Your Skills ({cvData.skillsWithProficiency.length})
                     </h4>
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSkillsDragEnd}>
-                      <SortableContext items={cvData.skillsWithProficiency.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                      <SortableContext items={skillsIds} strategy={verticalListSortingStrategy}>
                         {cvData.skillsWithProficiency.map(skill => (
                           <SortableFormItem key={skill.id} id={skill.id}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
@@ -2361,7 +2317,7 @@ const Editor = () => {
                 </div>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleProjectDragEnd}>
-                  <SortableContext items={cvData.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={projectsIds} strategy={verticalListSortingStrategy}>
                     {cvData.projects.map((project, index) => (
                       <SortableFormItem key={project.id} id={project.id}>
                         <div className="item-header">
@@ -2457,7 +2413,7 @@ const Editor = () => {
                 </div>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCertificateDragEnd}>
-                  <SortableContext items={cvData.certificates.map(c => c.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={certificatesIds} strategy={verticalListSortingStrategy}>
                     {cvData.certificates.map((cert, index) => (
                       <SortableFormItem key={cert.id} id={cert.id}>
                         <div className="item-header">
@@ -2543,7 +2499,7 @@ const Editor = () => {
                 </div>
 
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleActivityDragEnd}>
-                  <SortableContext items={cvData.activities.map(a => a.id)} strategy={verticalListSortingStrategy}>
+                  <SortableContext items={activitiesIds} strategy={verticalListSortingStrategy}>
                     {cvData.activities.map((activity, index) => (
                       <SortableFormItem key={activity.id} id={activity.id}>
                         <div className="item-header">
