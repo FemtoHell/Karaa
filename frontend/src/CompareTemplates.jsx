@@ -24,6 +24,7 @@ const CompareTemplates = () => {
       location: 'Hà Nội, Việt Nam',
       linkedin: 'linkedin.com/in/nguyenvanminh',
       website: 'nguyenvanminh.dev',
+      photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&q=80',
       summary: 'Full-stack Developer với hơn 5 năm kinh nghiệm phát triển ứng dụng web và mobile. Chuyên sâu về React, Node.js, và các công nghệ cloud hiện đại. Đam mê xây dựng sản phẩm có tác động thực sự và dẫn dắt đội ngũ kỹ thuật.'
     },
     experience: [
@@ -274,17 +275,16 @@ const CompareTemplates = () => {
                   <ResumePreview
                     cvData={sampleData}
                     customization={{
-                      font: template1Data.config?.fontFamily || 'Inter',
-                      fontSize: template1Data.config?.fontSize || 'medium',
-                      colorScheme: template1Data.color || 'blue',
-                      spacing: template1Data.config?.spacing || 'normal',
-                      layout: template1Data.config?.layout || 'single-column'
+                      font: template1Data.typography?.headingFont || 'Inter',
+                      fontSize: 'medium',
+                      colorScheme: template1Data.category || 'blue',
+                      spacing: 'normal',
+                      layout: template1Data.layout?.type || 'single-column',
+                      templateId: template1Data._id,
+                      photoStyle: template1Data.photoConfig?.style || 'circle',
+                      photoPosition: template1Data.photoConfig?.position || 'header'
                     }}
-                    template={{
-                      name: template1Data.name,
-                      color: template1Data.color,
-                      gradient: template1Data.gradient
-                    }}
+                    template={template1Data}
                   />
                 )}
               </div>
@@ -316,17 +316,16 @@ const CompareTemplates = () => {
                   <ResumePreview
                     cvData={sampleData}
                     customization={{
-                      font: template2Data.config?.fontFamily || 'Inter',
-                      fontSize: template2Data.config?.fontSize || 'medium',
-                      colorScheme: template2Data.color || 'blue',
-                      spacing: template2Data.config?.spacing || 'normal',
-                      layout: template2Data.config?.layout || 'single-column'
+                      font: template2Data.typography?.headingFont || 'Inter',
+                      fontSize: 'medium',
+                      colorScheme: template2Data.category || 'blue',
+                      spacing: 'normal',
+                      layout: template2Data.layout?.type || 'single-column',
+                      templateId: template2Data._id,
+                      photoStyle: template2Data.photoConfig?.style || 'circle',
+                      photoPosition: template2Data.photoConfig?.position || 'header'
                     }}
-                    template={{
-                      name: template2Data.name,
-                      color: template2Data.color,
-                      gradient: template2Data.gradient
-                    }}
+                    template={template2Data}
                   />
                 )}
               </div>

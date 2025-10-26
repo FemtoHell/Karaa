@@ -98,15 +98,6 @@ const CompareVersions = () => {
     // Use template from API or fallback to complete default template
     const templateConfig = template || DEFAULT_TEMPLATE;
 
-    // Force enable photo display in compare mode
-    const compareTemplate = {
-      ...templateConfig,
-      features: {
-        ...templateConfig.features,
-        hasPhoto: true
-      }
-    };
-
     return (
       <div className="resume-preview-container">
         <div className="preview-header">
@@ -124,7 +115,7 @@ const CompareVersions = () => {
           <ResumePreview
             cvData={content}
             customization={customization}
-            template={compareTemplate}
+            template={templateConfig}
             editable={false}
           />
         </div>
@@ -135,9 +126,29 @@ const CompareVersions = () => {
   const renderSummaryComparison = () => {
     if (!comparisonData) return null;
 
-    const { version1, version2 } = comparisonData;
+    const { version1, version2, template } = comparisonData;
     const v1Personal = version1.content?.personal || {};
     const v2Personal = version2.content?.personal || {};
+
+    // Get photo style from template or customization
+    const templateConfig = template || DEFAULT_TEMPLATE;
+    const photoStyle = version1.customization?.photoStyle ||
+                       templateConfig.photoConfig?.style ||
+                       'circle';
+
+    // Dynamic border-radius based on photo style (width/height in CSS for responsive)
+    const getBorderRadius = () => {
+      switch (photoStyle) {
+        case 'circle':
+          return '50%';
+        case 'rounded':
+          return '12px';
+        case 'square':
+          return '0';
+        default:
+          return '50%';
+      }
+    };
 
     const isDifferent = (field) => {
       return v1Personal[field] !== v2Personal[field];
@@ -154,7 +165,7 @@ const CompareVersions = () => {
             </div>
 
             {v1Personal.photo && (
-              <div className="summary-avatar">
+              <div className="summary-avatar" style={{ borderRadius: getBorderRadius() }}>
                 <img src={v1Personal.photo} alt={v1Personal.fullName || 'Avatar'} />
               </div>
             )}
@@ -186,7 +197,7 @@ const CompareVersions = () => {
             </div>
 
             {v2Personal.photo && (
-              <div className="summary-avatar">
+              <div className="summary-avatar" style={{ borderRadius: getBorderRadius() }}>
                 <img src={v2Personal.photo} alt={v2Personal.fullName || 'Avatar'} />
               </div>
             )}

@@ -1,308 +1,87 @@
 import React from 'react';
 import './MiniTemplatePreview.css';
+import ResumePreview from './ResumePreview';
 
 const MiniTemplatePreview = ({ template }) => {
-  // Sample minimal data for mini preview
+  // Sample data matching ResumePreview expectations
   const sampleData = {
     personal: {
       fullName: 'Nguyễn Văn Minh',
       email: 'nguyenvanminh@example.com',
       phone: '+84 912 345 678',
+      location: 'Hà Nội, Việt Nam',
+      linkedin: 'linkedin.com/in/nguyenvanminh',
+      website: 'nguyenvanminh.dev',
       photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=300&fit=crop&q=80',
-      summary: 'Full-stack Developer với hơn 5 năm kinh nghiệm chuyên về React và Node.js'
+      summary: 'Full-stack Developer với hơn 5 năm kinh nghiệm phát triển ứng dụng web và mobile. Chuyên sâu về React, Node.js, và các công nghệ cloud hiện đại.'
     },
-    experience: {
-      jobTitle: 'Senior Full-Stack Developer',
-      company: 'VNG Corporation',
-      period: '2022 - Hiện tại'
+    experience: [
+      {
+        id: 1,
+        jobTitle: 'Senior Full-Stack Developer',
+        company: 'VNG Corporation',
+        location: 'TP. Hồ Chí Minh',
+        startDate: '2022-03',
+        endDate: 'Present',
+        current: true,
+        description: '• Dẫn dắt nhóm phát triển nền tảng microservices\n• Tối ưu hiệu năng hệ thống, giảm 50% thời gian phản hồi API'
+      },
+      {
+        id: 2,
+        jobTitle: 'Full-Stack Developer',
+        company: 'FPT Software',
+        location: 'Hà Nội',
+        startDate: '2020-01',
+        endDate: '2022-02',
+        current: false,
+        description: '• Phát triển RESTful APIs với Node.js và MongoDB\n• Xây dựng responsive web apps với React'
+      }
+    ],
+    education: [
+      {
+        id: 1,
+        degree: 'Cử nhân Công nghệ Thông tin',
+        school: 'Đại học Bách Khoa Hà Nội',
+        location: 'Hà Nội',
+        startDate: '2015-09',
+        endDate: '2019-06',
+        gpa: '3.6/4.0',
+        description: 'Chuyên ngành: Kỹ thuật Phần mềm'
+      }
+    ],
+    skills: {
+      technical: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Docker', 'AWS', 'MongoDB', 'PostgreSQL'],
+      soft: ['Lãnh đạo nhóm', 'Giao tiếp hiệu quả', 'Giải quyết vấn đề'],
+      languages: ['Tiếng Việt (Bản ngữ)', 'Tiếng Anh (TOEIC 850)']
     },
-    education: {
-      degree: 'Cử nhân Công nghệ Thông tin',
-      school: 'ĐH Bách Khoa Hà Nội'
-    },
-    skills: ['JavaScript', 'React', 'Node.js', 'TypeScript', 'Docker', 'AWS']
+    projects: [
+      {
+        id: 1,
+        name: 'E-commerce Platform',
+        description: 'Xây dựng nền tảng thương mại điện tử với tích hợp thanh toán online',
+        technologies: 'React, Node.js, MongoDB, Redis',
+        startDate: '2023-03',
+        endDate: '2023-12'
+      }
+    ],
+    certificates: [
+      {
+        id: 1,
+        name: 'AWS Certified Solutions Architect',
+        issuer: 'Amazon Web Services',
+        date: '2023-06'
+      }
+    ]
   };
-
-  // Use template's primary color instead of extracting from gradient
-  const primaryColor = template.colors?.primary || '#3B82F6';
-  const templateColor = primaryColor;
-  const templateGradient = template.gradient || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-
-  const layoutType = template.layout?.type || 'single-column';
-  const sidebarBg = template.colors?.sidebarBg || '#F3F4F6';
-
-  // Photo configuration
-  const hasPhoto = template.features?.hasPhoto || false;
-  const photoStyle = template.photoConfig?.style || 'circle';
-  const photoPosition = template.photoConfig?.position || 'header';
-
-  // Helper function to render photo
-  const renderPhoto = (size = '40px', fontSize = '11px') => {
-    if (!hasPhoto || !sampleData.personal.photo) return null;
-
-    const photoStyles = {
-      circle: { borderRadius: '50%' },
-      rounded: { borderRadius: '8px' },
-      square: { borderRadius: '0' }
-    };
-
-    return (
-      <img
-        src={sampleData.personal.photo}
-        alt="Profile"
-        style={{
-          width: size,
-          height: size,
-          objectFit: 'cover',
-          border: '2px solid white',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          fontSize: fontSize,
-          ...photoStyles[photoStyle]
-        }}
-      />
-    );
-  };
-
-  // Render different layouts
-  const renderLayout = () => {
-    switch (layoutType) {
-      case 'two-column':
-        return renderTwoColumnLayout();
-      case 'two-column-equal':
-        return renderTwoColumnEqualLayout();
-      case 'timeline':
-        return renderTimelineLayout();
-      case 'modern-blocks':
-        return renderModernBlocksLayout();
-      case 'infographic':
-        return renderInfographicLayout();
-      case 'grid':
-        return renderGridLayout();
-      case 'single-column':
-      default:
-        return renderSingleColumnLayout();
-    }
-  };
-
-  const renderSingleColumnLayout = () => (
-    <>
-      <div className="mini-resume-header" style={{ background: templateGradient }}>
-        {hasPhoto && photoPosition === 'header' && (
-          <div style={{ marginBottom: '8px' }}>
-            {renderPhoto('50px', '14px')}
-          </div>
-        )}
-        <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
-        <div className="mini-resume-contact">{sampleData.personal.email}</div>
-      </div>
-      <div className="mini-resume-section">
-        <h2 className="mini-section-title" style={{ color: primaryColor }}>Summary</h2>
-        <p className="mini-summary-text">{sampleData.personal.summary}</p>
-      </div>
-      <div className="mini-resume-section">
-        <h2 className="mini-section-title" style={{ color: primaryColor }}>Experience</h2>
-        <div className="mini-item">
-          <h3 className="mini-job-title">{sampleData.experience.jobTitle}</h3>
-          <p className="mini-company-name">{sampleData.experience.company}</p>
-        </div>
-      </div>
-      <div className="mini-resume-section">
-        <h2 className="mini-section-title" style={{ color: primaryColor }}>Education</h2>
-        <div className="mini-item">
-          <h3>{sampleData.education.degree}</h3>
-        </div>
-      </div>
-    </>
-  );
-
-  const renderTwoColumnLayout = () => (
-    <div className="mini-two-column-layout">
-      <aside className="mini-sidebar" style={{ backgroundColor: sidebarBg, width: '35%' }}>
-        <div className="mini-resume-header-compact" style={{ background: templateGradient, padding: '12px 8px' }}>
-          {hasPhoto && photoPosition === 'sidebar' && (
-            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
-              {renderPhoto('35px', '10px')}
-            </div>
-          )}
-          <h1 className="mini-resume-name-small">{sampleData.personal.fullName}</h1>
-        </div>
-        <div className="mini-resume-section-small">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Skills</h2>
-          <div className="mini-skill-list">
-            {sampleData.skills.slice(0, 3).map((skill, i) => (
-              <div key={i} className="mini-skill-item">
-                <span>{skill}</span>
-                <div className="mini-skill-bar" style={{ width: `${90 - i * 10}%`, backgroundColor: primaryColor }}></div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
-      <main className="mini-main" style={{ width: '65%' }}>
-        <div className="mini-resume-section-small">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Experience</h2>
-          <div className="mini-item-small">
-            <h3 className="mini-job-title-small">{sampleData.experience.jobTitle}</h3>
-            <p className="mini-company-name-small">{sampleData.experience.company}</p>
-          </div>
-        </div>
-        <div className="mini-resume-section-small">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Education</h2>
-          <div className="mini-item-small">
-            <h3 className="mini-degree-small">{sampleData.education.degree}</h3>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-
-  const renderTwoColumnEqualLayout = () => (
-    <div className="mini-two-column-equal">
-      <div className="mini-column" style={{ width: '48%' }}>
-        <div className="mini-resume-header-compact" style={{ background: templateGradient, padding: '12px 8px' }}>
-          {hasPhoto && photoPosition === 'header' && (
-            <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
-              {renderPhoto('35px', '10px')}
-            </div>
-          )}
-          <h1 className="mini-resume-name-small">{sampleData.personal.fullName}</h1>
-        </div>
-        <div className="mini-resume-section-small">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Skills</h2>
-          <div className="mini-skill-tags-compact">
-            {sampleData.skills.slice(0, 3).map((skill, i) => (
-              <span key={i} className="mini-skill-tag-compact" style={{ borderColor: primaryColor, color: primaryColor }}>{skill}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="mini-column" style={{ width: '48%' }}>
-        <div className="mini-resume-section-small" style={{ marginTop: '8px' }}>
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Experience</h2>
-          <div className="mini-item-small">
-            <h3 className="mini-job-title-small">{sampleData.experience.jobTitle}</h3>
-            <p className="mini-company-name-small">{sampleData.experience.company}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderInfographicLayout = () => (
-    <>
-      <div className="mini-resume-header-modern" style={{ background: templateGradient, display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 8px' }}>
-        {hasPhoto && photoPosition === 'header' ? (
-          renderPhoto('30px', '9px')
-        ) : (
-          <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.3)' }}></div>
-        )}
-        <h1 className="mini-resume-name" style={{ fontSize: '11px' }}>{sampleData.personal.fullName}</h1>
-      </div>
-      <div className="mini-infographic-grid">
-        <div className="mini-info-card" style={{ backgroundColor: '#FFFFFF', padding: '8px', borderRadius: '6px' }}>
-          <h2 className="mini-section-title-small" style={{ color: primaryColor, fontSize: '9px' }}>💼 Experience</h2>
-          <h3 className="mini-job-title-small">{sampleData.experience.jobTitle}</h3>
-        </div>
-        <div className="mini-info-card" style={{ backgroundColor: '#FFFFFF', padding: '8px', borderRadius: '6px' }}>
-          <h2 className="mini-section-title-small" style={{ color: primaryColor, fontSize: '9px' }}>🎓 Education</h2>
-          <h3 className="mini-degree-small">{sampleData.education.degree}</h3>
-        </div>
-      </div>
-    </>
-  );
-
-  const renderTimelineLayout = () => (
-    <>
-      <div className="mini-resume-header" style={{ background: templateGradient }}>
-        {hasPhoto && photoPosition === 'header' && (
-          <div style={{ marginBottom: '8px' }}>
-            {renderPhoto('45px', '12px')}
-          </div>
-        )}
-        <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
-      </div>
-      <div className="mini-timeline-container">
-        <div className="mini-timeline-item" style={{ borderLeftColor: primaryColor }}>
-          <div className="mini-timeline-dot" style={{ backgroundColor: primaryColor }}></div>
-          <h3 className="mini-job-title">{sampleData.experience.jobTitle}</h3>
-          <p className="mini-company-name">{sampleData.experience.company}</p>
-          <span className="mini-period">{sampleData.experience.period}</span>
-        </div>
-        <div className="mini-timeline-item" style={{ borderLeftColor: primaryColor }}>
-          <div className="mini-timeline-dot" style={{ backgroundColor: primaryColor }}></div>
-          <h3>{sampleData.education.degree}</h3>
-          <p className="mini-company-name">{sampleData.education.school}</p>
-        </div>
-      </div>
-    </>
-  );
-
-  const renderModernBlocksLayout = () => (
-    <>
-      <div className="mini-resume-header-modern" style={{ background: templateGradient }}>
-        {hasPhoto && photoPosition === 'header' && (
-          <div style={{ marginBottom: '8px' }}>
-            {renderPhoto('45px', '12px')}
-          </div>
-        )}
-        <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
-      </div>
-      <div className="mini-blocks-container">
-        <div className="mini-block" style={{ borderLeftColor: primaryColor }}>
-          <h2 className="mini-section-title" style={{ color: primaryColor }}>Experience</h2>
-          <h3 className="mini-job-title">{sampleData.experience.jobTitle}</h3>
-          <p className="mini-company-name">{sampleData.experience.company}</p>
-        </div>
-        <div className="mini-block" style={{ borderLeftColor: primaryColor }}>
-          <h2 className="mini-section-title" style={{ color: primaryColor }}>Education</h2>
-          <h3>{sampleData.education.degree}</h3>
-        </div>
-        <div className="mini-block" style={{ borderLeftColor: primaryColor }}>
-          <h2 className="mini-section-title" style={{ color: primaryColor }}>Skills</h2>
-          <div className="mini-skill-tags-compact">
-            {sampleData.skills.slice(0, 4).map((skill, i) => (
-              <span key={i} className="mini-skill-tag-compact">{skill}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
-  const renderGridLayout = () => (
-    <>
-      <div className="mini-resume-header" style={{ background: templateGradient }}>
-        {hasPhoto && photoPosition === 'header' && (
-          <div style={{ marginBottom: '8px' }}>
-            {renderPhoto('45px', '12px')}
-          </div>
-        )}
-        <h1 className="mini-resume-name">{sampleData.personal.fullName}</h1>
-      </div>
-      <div className="mini-grid-container">
-        <div className="mini-grid-item">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Experience</h2>
-          <h3 className="mini-job-title-small">{sampleData.experience.jobTitle}</h3>
-        </div>
-        <div className="mini-grid-item">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Education</h2>
-          <h3 className="mini-degree-small">{sampleData.education.degree}</h3>
-        </div>
-        <div className="mini-grid-item">
-          <h2 className="mini-section-title-small" style={{ color: primaryColor }}>Skills</h2>
-          <p className="mini-skill-list-compact">{sampleData.skills.slice(0, 3).join(', ')}</p>
-        </div>
-      </div>
-    </>
-  );
 
   return (
     <div className="mini-template-wrapper">
-      <div 
-        className={`mini-resume-container layout-${layoutType}`}
-        style={{ '--template-color': templateColor }}
-      >
-        {renderLayout()}
+      <div className="mini-resume-container">
+        <ResumePreview
+          cvData={sampleData}
+          template={template}
+          editable={false}
+        />
       </div>
     </div>
   );
