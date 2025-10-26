@@ -101,7 +101,7 @@ const SortableFormItem = ({ id, children }) => {
       : CSS.Transform.toString(transform),
     transition: isDragging ? transition : `${transition}, box-shadow 0.2s ease, transform 0.2s ease`,
     position: 'relative',
-    padding: '16px 16px 16px 56px',
+    padding: '16px 16px 16px 60px',
     margin: '12px 0',
     backgroundColor: isDragging ? '#EEF2FF' : '#F9FAFB',
     border: `2px solid ${isDragging ? '#4F46E5' : '#E5E7EB'}`,
@@ -119,21 +119,26 @@ const SortableFormItem = ({ id, children }) => {
     left: '12px',
     top: '50%',
     transform: 'translateY(-50%)',
-    width: '32px',
+    width: '36px',
     height: '80%',
-    minHeight: '40px',
+    minHeight: '48px',
+    maxHeight: '120px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     background: '#FFFFFF',
-    border: '2px solid #E5E7EB',
+    border: '2px solid #D1D5DB',
     borderRadius: '8px',
     cursor: 'grab',
     touchAction: 'none',
     userSelect: 'none',
-    zIndex: 999,
-    pointerEvents: 'auto',
-    transition: 'all 0.2s ease',
+    WebkitUserSelect: 'none',
+    MozUserSelect: 'none',
+    msUserSelect: 'none',
+    zIndex: 10000, // VERY HIGH to ensure it's on top
+    pointerEvents: 'auto', // ALWAYS receive pointer events
+    transition: 'all 0.15s ease',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
   };
 
   const handleActiveStyle = {
@@ -141,7 +146,9 @@ const SortableFormItem = ({ id, children }) => {
     cursor: 'grabbing',
     background: '#EEF2FF',
     borderColor: '#4F46E5',
-    boxShadow: '0 2px 8px rgba(79, 70, 229, 0.2)',
+    borderWidth: '2px',
+    boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)',
+    transform: 'translateY(-50%) scale(1.05)',
   };
 
   return (
@@ -151,7 +158,7 @@ const SortableFormItem = ({ id, children }) => {
       role="listitem"
       aria-label="Draggable item"
     >
-      {/* DRAG HANDLE */}
+      {/* DRAG HANDLE - MUST be OUTSIDE and INDEPENDENT */}
       <div
         ref={setActivatorNodeRef}
         style={isDragging ? handleActiveStyle : handleStyle}
@@ -159,22 +166,30 @@ const SortableFormItem = ({ id, children }) => {
         {...listeners}
         role="button"
         tabIndex={0}
-        aria-label="Drag to reorder. Press space to grab, arrow keys to move, space to drop, escape to cancel"
-        aria-grabbed={isDragging}
-        aria-roledescription="sortable"
+        aria-label="Drag to reorder"
+        title="Drag to reorder"
+        onMouseDown={(e) => {
+          e.stopPropagation(); // Prevent any parent handlers
+        }}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <circle cx="7" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="5" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="10" r="2" fill="#9CA3AF"/>
-          <circle cx="7" cy="15" r="2" fill="#9CA3AF"/>
-          <circle cx="13" cy="15" r="2" fill="#9CA3AF"/>
+          <circle cx="7" cy="5" r="2" fill={isDragging ? "#4F46E5" : "#9CA3AF"}/>
+          <circle cx="13" cy="5" r="2" fill={isDragging ? "#4F46E5" : "#9CA3AF"}/>
+          <circle cx="7" cy="10" r="2" fill={isDragging ? "#4F46E5" : "#9CA3AF"}/>
+          <circle cx="13" cy="10" r="2" fill={isDragging ? "#4F46E5" : "#9CA3AF"}/>
+          <circle cx="7" cy="15" r="2" fill={isDragging ? "#4F46E5" : "#9CA3AF"}/>
+          <circle cx="13" cy="15" r="2" fill={isDragging ? "#4F46E5" : "#9CA3AF"}/>
         </svg>
       </div>
 
-      {/* CONTENT (Nội dung form sẽ được truyền vào đây) */}
-      {children}
+      {/* CONTENT - with pointer events enabled for interaction */}
+      <div style={{ 
+        pointerEvents: 'auto',
+        position: 'relative',
+        zIndex: 1
+      }}>
+        {children}
+      </div>
     </div>
   );
 };
@@ -1196,10 +1211,15 @@ const Editor = () => {
   };
 
   // Drag and Drop Sensors
+  // ============================================================================
+  // DRAG & DROP SENSORS
+  // ============================================================================
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px movement required - prevents conflict with form inputs
+        distance: 5, // Reduced to 5px for better responsiveness
+        delay: 0,
+        tolerance: 0
       },
     }),
     useSensor(KeyboardSensor, {
@@ -1818,27 +1838,19 @@ const Editor = () => {
                   <SortableContext items={cvData.experience.map(e => e.id)} strategy={verticalListSortingStrategy}>
                     {cvData.experience.map((exp, index) => (
                       <SortableFormItem key={exp.id} id={exp.id}>
-                        <div style={{
-                          padding: '0',
-                          background: 'transparent',
-                          borderRadius: '0',
-                          border: 'none'
-                        }}>
-                          <div className="item-header">
-                            <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
-                              Experience {index + 1}
-                            </h4>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              {cvData.experience.length > 1 && (
-                                <button
-                                  className="btn-remove"
-                                  onClick={() => removeExperience(exp.id)}
-                                >
-                                  ×
-                                </button>
-                              )}
-                            </div>
+                        <div className="item-header">
+                          <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#111827' }}>
+                            Experience {index + 1}
+                          </h4>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              className="btn-remove"
+                              onClick={() => removeExperience(exp.id)}
+                            >
+                              ×
+                            </button>
                           </div>
+                        </div>
 
                     <div className="form-group">
                       <label>Job Title *</label>
@@ -2029,7 +2041,6 @@ const Editor = () => {
                         </p>
                       </div>
                     )}
-                  </div>
                 </SortableFormItem>
               ))}
             </SortableContext>
@@ -2056,32 +2067,26 @@ const Editor = () => {
                   <SortableContext items={cvData.education.map(e => e.id)} strategy={verticalListSortingStrategy}>
                     {cvData.education.map((edu, index) => (
                       <SortableFormItem key={edu.id} id={edu.id}>
-                        <div style={{
-                          padding: '0',
-                          background: 'transparent',
-                          borderRadius: '0',
-                          border: 'none'
-                        }}>
-                          <div className="item-header">
-                            <h4>Education {index + 1}</h4>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <button
-                                className="btn-remove"
-                                onClick={() => removeEducation(edu.id)}
-                              >
-                                ×
-                              </button>
-                            </div>
+                        <div className="item-header">
+                          <h4>Education {index + 1}</h4>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              className="btn-remove"
+                              onClick={() => removeEducation(edu.id)}
+                            >
+                              ×
+                            </button>
                           </div>
+                        </div>
 
-                          <div className="form-group">
-                            <label>Degree *</label>
-                            <input
-                              type="text"
-                              placeholder="Bachelor of Science in Computer Science"
-                              value={edu.degree}
-                              onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                            />
+                        <div className="form-group">
+                          <label>Degree *</label>
+                          <input
+                            type="text"
+                            placeholder="Bachelor of Science in Computer Science"
+                            value={edu.degree}
+                            onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
+                          />
                           </div>
 
                           <div className="form-group">
@@ -2133,15 +2138,14 @@ const Editor = () => {
                             />
                           </div>
 
-                          <div className="form-group">
-                            <label>Description</label>
-                            <textarea
-                              rows="3"
-                              placeholder="Relevant coursework, honors, achievements..."
-                              value={edu.description}
-                              onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label>Description</label>
+                          <textarea
+                            rows="3"
+                            placeholder="Relevant coursework, honors, achievements..."
+                            value={edu.description}
+                            onChange={(e) => updateEducation(edu.id, 'description', e.target.value)}
+                          />
                         </div>
                       </SortableFormItem>
                     ))}
@@ -2245,12 +2249,6 @@ const Editor = () => {
                       <SortableContext items={cvData.skillsWithProficiency.map(s => s.id)} strategy={verticalListSortingStrategy}>
                         {cvData.skillsWithProficiency.map(skill => (
                           <SortableFormItem key={skill.id} id={skill.id}>
-                            <div style={{
-                              padding: '0',
-                              background: 'transparent',
-                              borderRadius: '0',
-                              border: 'none'
-                            }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                             <span style={{ fontSize: '14px', fontWeight: '600', color: '#111827' }}>
                               {skill.name}
@@ -2311,7 +2309,6 @@ const Editor = () => {
                             {skill.proficiency === 4 && 'Advanced - Expert level'}
                             {skill.proficiency === 5 && 'Master - Industry expert'}
                           </div>
-                        </div>
                       </SortableFormItem>
                     ))}
                   </SortableContext>
@@ -2367,35 +2364,29 @@ const Editor = () => {
                   <SortableContext items={cvData.projects.map(p => p.id)} strategy={verticalListSortingStrategy}>
                     {cvData.projects.map((project, index) => (
                       <SortableFormItem key={project.id} id={project.id}>
-                        <div style={{
-                          padding: '0',
-                          background: 'transparent',
-                          borderRadius: '0',
-                          border: 'none'
-                        }}>
-                          <div className="item-header">
-                            <h4>Project {index + 1}</h4>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <button
-                                className="btn-remove"
-                                onClick={() => removeProject(project.id)}
-                              >
-                                ×
-                              </button>
-                            </div>
+                        <div className="item-header">
+                          <h4>Project {index + 1}</h4>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              className="btn-remove"
+                              onClick={() => removeProject(project.id)}
+                            >
+                              ×
+                            </button>
                           </div>
+                        </div>
 
-                          <div className="form-group">
-                            <label>Project Name *</label>
-                            <input
-                              type="text"
-                              placeholder="E-commerce Platform"
-                              value={project.name}
-                              onChange={(e) => updateProject(project.id, 'name', e.target.value)}
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label>Project Name *</label>
+                          <input
+                            type="text"
+                            placeholder="E-commerce Platform"
+                            value={project.name}
+                            onChange={(e) => updateProject(project.id, 'name', e.target.value)}
+                          />
+                        </div>
 
-                          <div className="form-group">
+                        <div className="form-group">
                             <label>Description *</label>
                             <textarea
                               rows="3"
@@ -2425,23 +2416,22 @@ const Editor = () => {
                             />
                           </div>
 
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label>Start Date</label>
-                              <input
-                                type="month"
-                                value={project.startDate}
-                                onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label>End Date</label>
-                              <input
-                                type="month"
-                                value={project.endDate}
-                                onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
-                              />
-                            </div>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label>Start Date</label>
+                            <input
+                              type="month"
+                              value={project.startDate}
+                              onChange={(e) => updateProject(project.id, 'startDate', e.target.value)}
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label>End Date</label>
+                            <input
+                              type="month"
+                              value={project.endDate}
+                              onChange={(e) => updateProject(project.id, 'endDate', e.target.value)}
+                            />
                           </div>
                         </div>
                       </SortableFormItem>
@@ -2470,39 +2460,33 @@ const Editor = () => {
                   <SortableContext items={cvData.certificates.map(c => c.id)} strategy={verticalListSortingStrategy}>
                     {cvData.certificates.map((cert, index) => (
                       <SortableFormItem key={cert.id} id={cert.id}>
-                        <div style={{
-                          padding: '0',
-                          background: 'transparent',
-                          borderRadius: '0',
-                          border: 'none'
-                        }}>
-                          <div className="item-header">
-                            <h4>Certificate {index + 1}</h4>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <button
-                                className="btn-remove"
-                                onClick={() => removeCertificate(cert.id)}
-                              >
-                                ×
-                              </button>
-                            </div>
+                        <div className="item-header">
+                          <h4>Certificate {index + 1}</h4>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              className="btn-remove"
+                              onClick={() => removeCertificate(cert.id)}
+                            >
+                              ×
+                            </button>
                           </div>
+                        </div>
 
-                          <div className="form-group">
-                            <label>Certificate Name *</label>
-                            <input
-                              type="text"
-                              placeholder="AWS Certified Solutions Architect"
-                              value={cert.name}
-                              onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label>Certificate Name *</label>
+                          <input
+                            type="text"
+                            placeholder="AWS Certified Solutions Architect"
+                            value={cert.name}
+                            onChange={(e) => updateCertificate(cert.id, 'name', e.target.value)}
+                          />
+                        </div>
 
-                          <div className="form-group">
-                            <label>Issuing Organization *</label>
-                            <input
-                              type="text"
-                              placeholder="Amazon Web Services"
+                        <div className="form-group">
+                          <label>Issuing Organization *</label>
+                          <input
+                            type="text"
+                            placeholder="Amazon Web Services"
                               value={cert.issuer}
                               onChange={(e) => updateCertificate(cert.id, 'issuer', e.target.value)}
                             />
@@ -2527,15 +2511,14 @@ const Editor = () => {
                             />
                           </div>
 
-                          <div className="form-group">
-                            <label>Description</label>
-                            <textarea
-                              rows="3"
-                              placeholder="Brief description of what this certification covers..."
-                              value={cert.description}
-                              onChange={(e) => updateCertificate(cert.id, 'description', e.target.value)}
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label>Description</label>
+                          <textarea
+                            rows="3"
+                            placeholder="Brief description of what this certification covers..."
+                            value={cert.description}
+                            onChange={(e) => updateCertificate(cert.id, 'description', e.target.value)}
+                          />
                         </div>
                       </SortableFormItem>
                     ))}
@@ -2563,38 +2546,32 @@ const Editor = () => {
                   <SortableContext items={cvData.activities.map(a => a.id)} strategy={verticalListSortingStrategy}>
                     {cvData.activities.map((activity, index) => (
                       <SortableFormItem key={activity.id} id={activity.id}>
-                        <div style={{
-                          padding: '0',
-                          background: 'transparent',
-                          borderRadius: '0',
-                          border: 'none'
-                        }}>
-                          <div className="item-header">
-                            <h4>Activity {index + 1}</h4>
-                            <div style={{ display: 'flex', gap: '4px' }}>
-                              <button
-                                className="btn-remove"
-                                onClick={() => removeActivity(activity.id)}
-                              >
-                                ×
-                              </button>
-                            </div>
+                        <div className="item-header">
+                          <h4>Activity {index + 1}</h4>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              className="btn-remove"
+                              onClick={() => removeActivity(activity.id)}
+                            >
+                              ×
+                            </button>
                           </div>
+                        </div>
 
-                          <div className="form-group">
-                            <label>Title/Role *</label>
-                            <input
-                              type="text"
-                              placeholder="Volunteer Coordinator"
-                              value={activity.title}
-                              onChange={(e) => updateActivity(activity.id, 'title', e.target.value)}
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label>Title/Role *</label>
+                          <input
+                            type="text"
+                            placeholder="Volunteer Coordinator"
+                            value={activity.title}
+                            onChange={(e) => updateActivity(activity.id, 'title', e.target.value)}
+                          />
+                        </div>
 
-                          <div className="form-group">
-                            <label>Organization *</label>
-                            <input
-                              type="text"
+                        <div className="form-group">
+                          <label>Organization *</label>
+                          <input
+                            type="text"
                               placeholder="Red Cross"
                               value={activity.organization}
                               onChange={(e) => updateActivity(activity.id, 'organization', e.target.value)}
@@ -2620,15 +2597,14 @@ const Editor = () => {
                             </div>
                           </div>
 
-                          <div className="form-group">
-                            <label>Description</label>
-                            <textarea
-                              rows="3"
-                              placeholder="Describe your role and contributions..."
-                              value={activity.description}
-                              onChange={(e) => updateActivity(activity.id, 'description', e.target.value)}
-                            />
-                          </div>
+                        <div className="form-group">
+                          <label>Description</label>
+                          <textarea
+                            rows="3"
+                            placeholder="Describe your role and contributions..."
+                            value={activity.description}
+                            onChange={(e) => updateActivity(activity.id, 'description', e.target.value)}
+                          />
                         </div>
                       </SortableFormItem>
                     ))}
